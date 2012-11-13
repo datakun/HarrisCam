@@ -496,8 +496,6 @@ public class MainActivity extends Activity {
 	}
 
 	private void takePictureNow() {
-		mCamera.autoFocus(mAutoFocusCallback);
-
 		mCamera.takePicture(null, null, mPictureCallbackJpeg);
 	}
 
