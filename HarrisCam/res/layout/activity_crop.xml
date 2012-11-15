@@ -21,13 +21,6 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/llEmpty"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="horizontal" >
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/llCropButtons"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -68,10 +61,10 @@
             android:gravity="center" >
 
             <ImageButton
-                android:id="@+id/ibScale"
+                android:id="@+id/ibShare"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:background="@drawable/scale_square" />
+                android:background="@drawable/share" />
         </LinearLayout>
 
         <LinearLayout
