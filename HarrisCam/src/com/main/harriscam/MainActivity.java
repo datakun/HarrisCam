@@ -1,44 +1,49 @@
 package com.main.harriscam;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.*;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.*;
-import android.hardware.*;
+import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
-import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
 import android.os.*;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
-@SuppressLint("HandlerLeak")
+@SuppressLint({ "HandlerLeak", "WorldReadableFiles" })
 public class MainActivity extends Activity {
 	boolean bEnd = false;
 	Handler mHandler;
 
 	private Preview mPreview;
-	Camera mCamera;
 
 	// Constant about state and properties
 	private static final int FLASH_OFF = 0;
 	private static final int FLASH_ON = 1;
 	private static final int FLASH_AUTO = 2;
-	private static final int ACTIVITY_CROP = 0;
-	private static final int SAVE_HIGH = 600;
-	private static final int SAVE_MIDDLE = 480;
-	private static final int SAVE_LOW = 360;
+	public static final int SAVE_HIGH = 840;
+	public static final int SAVE_MIDDLE = 600;
+	public static final int SAVE_LOW = 360;
 	private static final int AUDIO_FOCUS = 0;
+	private static final int ACTIVITY_CROP = 0;
+	private static final int ACTIVITY_SETTINGS = 1;
+	private static final int DIALOG_VERSION = 0;
+
+	private static final int RESULT_FAILED = 999;
 
 	// ID about view
 	private static final int ID_UPPERLAYOUT = 101;
@@ -56,10 +61,9 @@ public class MainActivity extends Activity {
 	Camera.PictureCallback mPictureCallbackRaw;
 	Camera.AutoFocusCallback mAutoFocusCallback;
 	byte byOriImage[][]; // Opened JPEG byte file is here.
-	public static String strTempFilename[]; // Temporary image filename is here.
-	public static Bitmap bitOriImage[]; // Opened Bitmap is here.
 	public static String strOriFilename; // Opened original image filenameis here.
-	Bitmap bitResImage; // Result Bitmap is here!
+	public static Bitmap bitOpened[];
+	public static Bitmap bitResultImage;
 	long LastTime; // Difference time.
 	boolean bAutoCapture = true; // Using an autoshot?
 	int nAutoInterval = 500; // Autoshot time interval.
@@ -75,26 +79,38 @@ public class MainActivity extends Activity {
 	public static boolean bFrontCam = false; // Using an front camera?
 	int bFlash = FLASH_OFF; // Flashlight state.
 
-	// Sensor for auto focus.
-	private SensorManager sm;
-	private Sensor oriSensor;
-	private SensorEventListener oriL;
-	private long nLastTime;
-	private float lastOX, lastOY, lastOZ;
-
 	Intent iCropActivity;
+	Intent iSettingsActivity;
 
 	// I wanna play a auto focus sound!@#@!
 	private SoundPool mSoundPool;
 	private HashMap<Integer, Integer> mSoundPoolMap;
 
 	// Advanced Users settings
-	boolean bOriginalAutoSave = true;
+	public static boolean bOriginalAutoSave = true;
 	public static int nSaveResolution = SAVE_MIDDLE;
-	boolean bScaledSquare = true;
-	int nCameraOffset = 0;
-	int nImageOffset = 0;
-	boolean bAutoFocusBeep = true;
+	public static boolean bScaledSquare = true;
+	public static int nCameraOffset = 0;
+	public static int nImageOffset = 0;
+	public static boolean bAutoFocusBeep = true;
+	public static boolean bAutoUpdate = false;
+	public static String strAppVersion = null;
+	public static String strLastestVersion = null;
+	public static Locale lcLanguage = null;
+
+	public static String strFilePath = null;
+	public static int nSampleSize;
+
+	ProgressDialog dlgProgress;
+	ApplyHarrisShutter threadApplyHarris;
+
+	public static String strVersionAddress = "http://cfs.tistory.com/custom/blog/75/751637/skin/images/harrisversion.html";
+	HttpURLConnection connVersionCheck;
+
+	public static boolean bStarted = false;
+	public static boolean bLastestVersion = false;
+
+	public static LocalString lsSTRINGs = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -107,15 +123,9 @@ public class MainActivity extends Activity {
 		displayHeight = display.getHeight();
 
 		iCropActivity = new Intent(this, CropActivity.class);
+		iSettingsActivity = new Intent(this, SettingsActivity.class);
 
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-		sm = (SensorManager) getSystemService(SENSOR_SERVICE); // SensorManager
-		oriSensor = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
-		nLastTime = System.currentTimeMillis();
-		oriL = new oriListener(); // Accelerometer Listener
-		sm.registerListener(oriL, oriSensor, SensorManager.SENSOR_DELAY_NORMAL); // Register Orientation Listener
-		lastOX = lastOY = lastOZ = 0;
 
 		// For finish this application.
 		mHandler = new Handler() {
@@ -127,8 +137,7 @@ public class MainActivity extends Activity {
 		};
 
 		byOriImage = new byte[3][];
-		strTempFilename = new String[3];
-		bitOriImage = new Bitmap[3];
+		bitOpened = new Bitmap[3];
 
 		mSoundPool = new SoundPool(16, AudioManager.STREAM_MUSIC, 0);
 		mSoundPoolMap = new HashMap<Integer, Integer>();
@@ -138,54 +147,51 @@ public class MainActivity extends Activity {
 		mPictureCallbackJpeg = new Camera.PictureCallback() {
 
 			public void onPictureTaken(byte[] data, Camera camera) {
-				LastTime = System.currentTimeMillis();
 
 				byOriImage[nTimes] = data;
 
-				saveImage();
+				try {
 
-				if (camera != null) {
-					camera.lock();
-					try {
+					if (camera != null) {
+						camera.lock();
 						camera.startPreview();
-					} catch (Exception e) {
-					}
-				}
-
-				if (bAutoCapture == true) {
-					while (System.currentTimeMillis() - LastTime <= nAutoInterval) {
 					}
 
-					LastTime = System.currentTimeMillis();
+					if (bAutoCapture == true) {
+						while (System.currentTimeMillis() - LastTime <= nAutoInterval) {
+						}
 
-					if (nTimes < 2) {
-						nTimes++;
-						camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
-					} else {
-						showToast("Apply the harris shutter.");
-						nTimes = 0;
+						LastTime = System.currentTimeMillis();
 
-						strOriFilename = strTempFilename[0];
+						if (nTimes < 2) {
+							if (camera != null) {
+								nTimes++;
+								camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
+							}
+						} else {
+							nTimes = 0;
 
-						openCropActivity();
-					}
-				} else {
-					if (nTimes < 2) {
-						nTimes++;
-
-						if (nTimes == 1) {
-							ibShutter.setBackgroundResource(R.drawable.shutter_2);
-						} else if (nTimes == 2) {
-							ibShutter.setBackgroundResource(R.drawable.shutter_1);
+							readyOpenImage();
 						}
 					} else {
-						showToast("Apply the harris shutter.");
-						nTimes = 0;
+						if (nTimes < 2) {
+							if (camera != null) {
+								nTimes++;
 
-						strOriFilename = strTempFilename[0];
+								if (nTimes == 1) {
+									ibShutter.setBackgroundResource(R.drawable.shutter_2);
+								} else if (nTimes == 2) {
+									ibShutter.setBackgroundResource(R.drawable.shutter_1);
+								}
+							}
+						} else {
+							nTimes = 0;
 
-						openCropActivity();
+							readyOpenImage();
+						}
 					}
+				} catch (Exception e) {
+					showToast("Camera settings failed.");
 				}
 			}
 		};
@@ -210,19 +216,43 @@ public class MainActivity extends Activity {
 				if (bAutoFocusBeep == true) {
 					// mSoundPool.play(mSoundPoolMap.get(AUDIO_FOCUS), 0.3f, 0.3f, 1, 0, 1f);
 				}
+
+				LastTime = System.currentTimeMillis();
+				camera.takePicture(null, null, mPictureCallbackJpeg);
 			}
 		};
 
-		flPreview = (FrameLayout) findViewById(R.id.flPreview);
+		llButtons = llUpperButtons = llPreview = llUpperBlind = llLowerBlind = null;
+		ibShutter = ibTurn = ibAutoshot = ibFlash = ibSettings = null;
+
+		strAppVersion = getResources().getString(R.string.app_version);
+
+		lcLanguage = getResources().getConfiguration().locale;
+		lsSTRINGs = new LocalString(lcLanguage.toString());
+
 		mPreview = new Preview(this);
-		// flPreview.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-		// ViewGroup.LayoutParams.MATCH_PARENT));
+		flPreview = (FrameLayout) findViewById(R.id.flPreview);
 		flPreview.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayHeight));
 		flPreview.addView(mPreview, new LinearLayout.LayoutParams(displayWidth, displayHeight));
 
 		settingBlindLayout();
 		settingUpperButtons();
 		settingLowerButtons();
+
+		File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Pictures/HarrisCam");
+		dir.mkdirs();
+		strFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/Harris_";
+
+		try {
+			FileInputStream fi = openFileInput("harrissettings");
+			fi.close();
+		} catch (FileNotFoundException e) {
+			saveSettings();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		loadSettings();
 
 		ibSettings.setOnTouchListener(new View.OnTouchListener() {
 
@@ -259,8 +289,8 @@ public class MainActivity extends Activity {
 							v.setBackgroundResource(R.drawable.shutter_3);
 						}
 
-						if (mCamera != null) {
-							mCamera.takePicture(null, null, mPictureCallbackJpeg);
+						if (mPreview.mCamera != null) {
+							mPreview.mCamera.autoFocus(mAutoFocusCallback);
 						}
 
 						break;
@@ -282,9 +312,10 @@ public class MainActivity extends Activity {
 						v.setBackgroundResource(R.drawable.turnover1);
 
 						if (bFrontCam == false) {
-							openFrontCamera(true);
+							openFrontCamera();
+
 						} else {
-							openFrontCamera(false);
+							openFrontCamera();
 						}
 
 						break;
@@ -298,7 +329,7 @@ public class MainActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				try {
-					mCamera.autoFocus(mAutoFocusCallback);
+					mPreview.mCamera.autoFocus(null);
 				} catch (Exception e) {
 
 				}
@@ -317,29 +348,38 @@ public class MainActivity extends Activity {
 						break;
 					case MotionEvent.ACTION_UP:
 						if (bAutoCapture == true && nAutoInterval == 2000) {
-							deleteTempFiles();
 
 							bAutoCapture = false;
 							v.setBackgroundResource(R.drawable.manual);
 							ibShutter.setBackgroundResource(R.drawable.shutter_3);
 							nAutoInterval = 0;
 						} else {
-							deleteTempFiles();
+							switch (nAutoInterval) {
+								case 0:
+									bAutoCapture = true;
 
-							bAutoCapture = true;
-							if (nAutoInterval == 0) {
-								nAutoInterval = 500;
-								v.setBackgroundResource(R.drawable.auto05);
-								ibShutter.setBackgroundResource(R.drawable.shutter_auto);
-							} else if (nAutoInterval == 500) {
-								nAutoInterval = 1000;
-								v.setBackgroundResource(R.drawable.auto10);
-							} else if (nAutoInterval == 1000) {
-								nAutoInterval = 1500;
-								v.setBackgroundResource(R.drawable.auto15);
-							} else if (nAutoInterval == 1500) {
-								nAutoInterval = 2000;
-								v.setBackgroundResource(R.drawable.auto20);
+									deleteAllBitmap();
+
+									nAutoInterval = 500;
+									v.setBackgroundResource(R.drawable.auto05);
+									ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+
+									break;
+								case 500:
+									nAutoInterval = 1000;
+									v.setBackgroundResource(R.drawable.auto10);
+
+									break;
+								case 1000:
+									nAutoInterval = 1500;
+									v.setBackgroundResource(R.drawable.auto15);
+
+									break;
+								case 1500:
+									nAutoInterval = 2000;
+									v.setBackgroundResource(R.drawable.auto20);
+
+									break;
 							}
 						}
 
@@ -353,35 +393,150 @@ public class MainActivity extends Activity {
 		ibFlash.setOnTouchListener(new View.OnTouchListener() {
 
 			public boolean onTouch(View v, MotionEvent event) {
-				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
+				Camera.Parameters parameter = mPreview.mCamera.getParameters();
 
-						break;
-					case MotionEvent.ACTION_UP:
-						Parameters p = mCamera.getParameters();
+				if (parameter.getFlashMode() != null) {
+					switch (event.getAction()) {
+						case MotionEvent.ACTION_DOWN:
 
-						if (bFlash == FLASH_OFF) {
-							bFlash = FLASH_AUTO;
-							v.setBackgroundResource(R.drawable.flash_auto);
-							p.setFlashMode(Parameters.FLASH_MODE_AUTO);
-						} else if (bFlash == FLASH_AUTO) {
-							bFlash = FLASH_ON;
-							v.setBackgroundResource(R.drawable.flash_on);
-							p.setFlashMode(Parameters.FLASH_MODE_ON);
-						} else {
-							bFlash = FLASH_OFF;
-							v.setBackgroundResource(R.drawable.flash_off);
-							p.setFlashMode(Parameters.FLASH_MODE_OFF);
-						}
+							break;
+						case MotionEvent.ACTION_UP:
+							Parameters p = mPreview.mCamera.getParameters();
 
-						mCamera.setParameters(p);
+							if (bFlash == FLASH_OFF) {
+								bFlash = FLASH_AUTO;
+								v.setBackgroundResource(R.drawable.flash_auto);
+								p.setFlashMode(Parameters.FLASH_MODE_AUTO);
+							} else if (bFlash == FLASH_AUTO) {
+								bFlash = FLASH_ON;
+								v.setBackgroundResource(R.drawable.flash_on);
+								p.setFlashMode(Parameters.FLASH_MODE_ON);
+							} else {
+								bFlash = FLASH_OFF;
+								v.setBackgroundResource(R.drawable.flash_off);
+								p.setFlashMode(Parameters.FLASH_MODE_OFF);
+							}
 
-						break;
+							mPreview.mCamera.setParameters(p);
+
+							break;
+					}
 				}
 
 				return false;
 			}
 		});
+
+		if (bStarted == false) {
+			bStarted = true;
+
+			isLastestVersion();
+		}
+	}
+
+	class ConnectionThread extends Thread {
+		String mAddr;
+		String mResult;
+
+		ConnectionThread(String addr) {
+			mAddr = addr;
+			mResult = "";
+		}
+
+		public void run() {
+
+			try {
+				URL url = new URL(strVersionAddress);
+				connVersionCheck = (HttpURLConnection) url.openConnection();
+				if (connVersionCheck != null) {
+					connVersionCheck.setConnectTimeout(10000);
+					connVersionCheck.setUseCaches(false);
+
+					if (connVersionCheck.getResponseCode() == HttpURLConnection.HTTP_OK) {
+						BufferedReader br = new BufferedReader(new InputStreamReader(connVersionCheck.getInputStream()));
+						Boolean bVersion = false;
+
+						String strTemp = null;
+						do {
+							strTemp = br.readLine();
+
+							if (bVersion) {
+								MainActivity.strLastestVersion = strTemp;
+
+								break;
+							}
+
+							if (strTemp.equals("harris:")) {
+								bVersion = true;
+							}
+						} while (strTemp != null);
+
+						br.close();
+					}
+					connVersionCheck.disconnect();
+				}
+			}
+
+			catch (Exception ex) {
+				Log.e("Version T.T", ex.toString());
+			}
+
+			mFindVersion.sendEmptyMessage(0);
+		}
+	}
+
+	Handler mFindVersion = new Handler() {
+
+		public void handleMessage(Message msg) {
+			if (MainActivity.strAppVersion.equals(MainActivity.strLastestVersion) == false) {
+				bLastestVersion = false;
+
+				if (bAutoUpdate == true) {
+					showDialog(DIALOG_VERSION);
+				}
+			} else {
+				bLastestVersion = true;
+			}
+		}
+	};
+
+	private void isLastestVersion() {
+		ConnectionThread mThread;
+
+		mThread = new ConnectionThread(strVersionAddress);
+		mThread.start();
+	}
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		switch (id) {
+			case DIALOG_VERSION:
+				return new AlertDialog.Builder(this).setTitle(lsSTRINGs.mUpdating).setMessage(lsSTRINGs.mUpdateAsking).setCancelable(true)
+						.setPositiveButton(lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
+
+							public void onClick(DialogInterface dialog, int whichButton) {
+								Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.main.harriscam"));
+
+								startActivity(intent);
+								bStarted = false;
+
+								dialog.dismiss();
+							}
+
+						}).setNegativeButton(lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
+
+							public void onClick(DialogInterface dialog, int whichButton) {
+								bAutoUpdate = false;
+
+								saveSettings();
+
+								dialog.cancel();
+							}
+
+						}).create();
+		}
+
+		return super.onCreateDialog(id);
 	}
 
 	private void settingUpperButtons() {
@@ -390,36 +545,36 @@ public class MainActivity extends Activity {
 		llUpperButtons.setBackgroundResource(R.drawable.background);
 		llUpperButtons.setOrientation(LinearLayout.HORIZONTAL);
 		llUpperButtons.setGravity(Gravity.LEFT);
-		llUpperButtons.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 5));
+		llUpperButtons.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 
 		ibFlash = new ImageButton(this);
 		ibFlash.setId(ID_FLASH);
 		ibFlash.setBackgroundResource(R.drawable.flash_off);
-		ibFlash.setLayoutParams(new LinearLayout.LayoutParams((int) (displayWidth / 3.5), displayWidth / 7));
+		ibFlash.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 4, displayWidth / 8));
 
 		ibAutoshot = new ImageButton(this);
-		ibAutoshot.setId(ID_FLASH);
+		ibAutoshot.setId(ID_AUTOSHOT);
 		ibAutoshot.setBackgroundResource(R.drawable.auto05);
-		ibAutoshot.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
+		ibAutoshot.setLayoutParams(new LinearLayout.LayoutParams((int) (displayWidth / 3.5), displayWidth / 7));
 
 		flPreview.addView(llUpperButtons);
 
 		LinearLayout llLeft = new LinearLayout(this);
 		llLeft.setOrientation(LinearLayout.HORIZONTAL);
 		llLeft.setGravity(Gravity.CENTER);
-		llLeft.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llLeft.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 		llLeft.addView(ibFlash);
 
 		LinearLayout llMid = new LinearLayout(this);
 		llMid.setOrientation(LinearLayout.HORIZONTAL);
 		llMid.setGravity(Gravity.CENTER);
-		llMid.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llMid.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 		llMid.addView(ibAutoshot);
 
 		LinearLayout llRight = new LinearLayout(this);
 		llRight.setOrientation(LinearLayout.HORIZONTAL);
 		llRight.setGravity(Gravity.CENTER);
-		llRight.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llRight.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 
 		llUpperButtons.addView(llLeft);
 		llUpperButtons.addView(llMid);
@@ -431,45 +586,45 @@ public class MainActivity extends Activity {
 		llButtons.setId(ID_LOWERLAYOUT);
 		llButtons.setBackgroundResource(R.drawable.background);
 		llButtons.setOrientation(LinearLayout.HORIZONTAL);
-		llButtons.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 5));
+		llButtons.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 
 		ibSettings = new ImageButton(this);
 		ibSettings.setId(ID_SETTINGS);
 		ibSettings.setBackgroundResource(R.drawable.settings);
-		ibSettings.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
+		ibSettings.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 7, displayWidth / 7));
 
 		ibShutter = new ImageButton(this);
 		ibShutter.setId(ID_SHUTTER);
 		ibShutter.setBackgroundResource(R.drawable.shutter_auto);
-		ibShutter.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 5, displayWidth / 5));
+		ibShutter.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
 
 		ibTurn = new ImageButton(this);
 		ibTurn.setId(ID_TURNOVER);
 		ibTurn.setBackgroundResource(R.drawable.turnover1);
-		ibTurn.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
+		ibTurn.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 7, displayWidth / 7));
 
 		flPreview.addView(llButtons);
 		FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) llButtons.getLayoutParams();
 		flp.gravity = Gravity.TOP;
-		flp.setMargins(0, displayHeight - displayWidth / 5, 0, 0);
+		flp.setMargins(0, displayHeight - displayWidth / 6, 0, 0);
 		llButtons.setLayoutParams(flp);
 
 		LinearLayout llLeft = new LinearLayout(this);
 		llLeft.setOrientation(LinearLayout.HORIZONTAL);
 		llLeft.setGravity(Gravity.CENTER);
-		llLeft.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llLeft.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 		llLeft.addView(ibSettings);
 
 		LinearLayout llMid = new LinearLayout(this);
 		llMid.setOrientation(LinearLayout.HORIZONTAL);
 		llMid.setGravity(Gravity.CENTER);
-		llMid.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llMid.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 		llMid.addView(ibShutter);
 
 		LinearLayout llRight = new LinearLayout(this);
 		llRight.setOrientation(LinearLayout.HORIZONTAL);
 		llRight.setGravity(Gravity.CENTER);
-		llRight.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 5));
+		llRight.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
 		llRight.addView(ibTurn);
 
 		llButtons.addView(llLeft);
@@ -480,9 +635,9 @@ public class MainActivity extends Activity {
 	private void settingBlindLayout() {
 		int nBlindHeight = displayHeight - 2 * (displayWidth / 5);
 
-		if (bScaledSquare == true) {
+		if (bScaledSquare == true) { // square scale
 			nBlindHeight = (nBlindHeight - displayWidth) / 2;
-		} else {
+		} else { // 3:4 scale
 			nBlindHeight = (nBlindHeight - (4 * displayWidth) / 3) / 2;
 		}
 
@@ -506,19 +661,11 @@ public class MainActivity extends Activity {
 		flp.gravity = Gravity.TOP;
 		flp.setMargins(0, displayHeight - nCameraOffset, 0, 0);
 		llLowerBlind.setLayoutParams(flp);
-	}
 
-	public static void deleteTempFiles() {
-		for (int i = 0; i < 3; i++) {
-			if (strTempFilename[i] != null) {
-				File temp = new File(strTempFilename[i]);
-				temp.delete();
-			}
-		}
 	}
 
 	private void openSettingsPreference() {
-
+		startActivityForResult(iSettingsActivity, ACTIVITY_SETTINGS);
 	}
 
 	private void openCropActivity() {
@@ -527,19 +674,38 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode == RESULT_CANCELED) {
-			showToast("Save canceled");
-		} else if (resultCode == RESULT_OK) {
-			sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + CropActivity.strCropImage)));
+		switch (requestCode) {
+			case ACTIVITY_CROP:
+				switch (resultCode) {
+					case RESULT_CANCELED:
+						showToast(lsSTRINGs.mSaveCancel);
 
-			showToast("Save successful");
-		}
+						break;
+					case RESULT_OK:
+						sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + CropActivity.strCropImage)));
+						showToast(lsSTRINGs.mSaveSuccess);
 
-		if (bOriginalAutoSave == false) {
-			File temp = new File(strOriFilename);
-			temp.delete();
-		} else {
-			sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + strOriFilename)));
+						break;
+					case RESULT_FAILED:
+						showToast(lsSTRINGs.mSaveFailed);
+
+						break;
+				}
+
+				if (bOriginalAutoSave == false) {
+					File temp = new File(strOriFilename);
+					temp.delete();
+				} else {
+					sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + strOriFilename)));
+				}
+
+				break;
+
+			case ACTIVITY_SETTINGS:
+				// resetBlindLayout();
+				saveSettings();
+
+				break;
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);
@@ -547,108 +713,144 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onResume() {
-		deleteTempFiles();
-
-		if (bOriginalAutoSave == false) {
-			File temp = new File(strOriFilename);
-			temp.delete();
-		} else {
-			sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + strOriFilename)));
-		}
+		deleteAllBitmap();
 
 		super.onResume();
 	}
 
-	private void saveImage() {
+	private void deleteAllBitmap() {
+		for (int i = 0; i < 3; i++) {
+			if (bitOpened[i] != null) {
+				bitOpened[i].recycle();
+				bitOpened[i] = null;
+			}
+		}
+
+		if (bitResultImage != null) {
+			bitResultImage.recycle();
+			bitResultImage = null;
+		}
+
+		System.gc();
+
+		nTimes = 0;
+	}
+
+	private void readyOpenImage() {
 		try {
-			File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Pictures/HarrisCam");
-			dir.mkdirs();
+			for (int i = 0; i < 3; i++) {
+				String strFilename = strFilePath + System.currentTimeMillis() + ".jpg";
 
-			String strFilename = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/Harris_"
-					+ System.currentTimeMillis() + ".jpg";
-			FileOutputStream fio = new FileOutputStream(strFilename);
+				Bitmap bitTemp = BitmapFactory.decodeByteArray(byOriImage[i], 0, byOriImage[i].length);
 
-			fio.write(byOriImage[nTimes]);
-			fio.close();
-			fio = null;
+				int nWidth = bitTemp.getWidth();
+				int nHeight = bitTemp.getHeight();
+				int nTargetWidth;
 
-			bitOriImage[nTimes] = BitmapFactory.decodeFile(strFilename);
+				Bitmap bitTemp2 = null;
 
-			int nWidth = bitOriImage[nTimes].getWidth();
-			int nHeight = bitOriImage[nTimes].getHeight();
+				if (nWidth > nHeight) {
+					nTargetWidth = nHeight;
+					nImageOffset = (nCameraOffset * nWidth) / displayHeight;
+					if (bScaledSquare == true) {
+						bitTemp2 = Bitmap.createBitmap(bitTemp, nImageOffset, 0, nHeight, nHeight);
+					} else {
+						bitTemp2 = Bitmap.createBitmap(bitTemp, nImageOffset, 0, nWidth - 2 * nImageOffset, nHeight);
+					}
+				} else if (nWidth < nHeight) {
+					nTargetWidth = nWidth;
+					nImageOffset = (nCameraOffset * nHeight) / displayWidth;
+					if (bScaledSquare == true) {
+						bitTemp2 = Bitmap.createBitmap(bitTemp, 0, nImageOffset, nWidth, nWidth);
+					} else {
+						bitTemp2 = Bitmap.createBitmap(bitTemp, 0, nImageOffset, nWidth, nHeight - 2 * nImageOffset);
+					}
+				} else {
+					nTargetWidth = nWidth;
+					nImageOffset = (nCameraOffset * nHeight) / displayWidth;
+					bitTemp2 = Bitmap.createBitmap(bitTemp, 0, 0, nWidth, nWidth);
+				}
 
-			// bitOriImage[nTimes] = Bitmap.createBitmap(bitOriImage[nTimes], nCameraOffset, 0, nHeight, nHeight);
+				nWidth = bitTemp2.getWidth();
+				nHeight = bitTemp2.getHeight();
 
-			if (nWidth > nHeight) {
-				nImageOffset = (nCameraOffset * nWidth) / displayHeight;
-				bitOriImage[nTimes] = Bitmap.createBitmap(bitOriImage[nTimes], nImageOffset, 0, nHeight, nHeight);
-			} else {
-				nImageOffset = (nCameraOffset * nHeight) / displayWidth;
-				bitOriImage[nTimes] = Bitmap.createBitmap(bitOriImage[nTimes], 0, nImageOffset, nWidth, nWidth);
+				Matrix matrix = new Matrix();
+				float fScaledRate = (float) MainActivity.nSaveResolution / nTargetWidth;
+				matrix.postScale(fScaledRate, fScaledRate);
+				if (bFrontCam == false) {
+					matrix.postRotate(90);
+				} else {
+					matrix.postRotate(270);
+				}
+
+				bitOpened[i] = Bitmap.createBitmap(bitTemp2, 0, 0, nWidth, nHeight, matrix, true);
+
+				if (i == 0) {
+					strOriFilename = strFilename;
+				}
+
+				if (bitTemp != null) {
+					bitTemp.recycle();
+					bitTemp = null;
+				}
+				if (bitTemp2 != null) {
+					bitTemp2.recycle();
+					bitTemp2 = null;
+				}
+
+				System.gc();
 			}
 
-			nWidth = bitOriImage[nTimes].getWidth();
-			nHeight = bitOriImage[nTimes].getHeight();
-
-			Matrix matrix = new Matrix();
-			matrix.postScale(1, 1);
-			if (bFrontCam == false) {
-				matrix.postRotate(90);
-			} else {
-				matrix.postRotate(270);
-			}
-
-			File temp = new File(strFilename);
-			temp.delete();
-
-			fio = new FileOutputStream(strFilename);
-
-			bitResImage = Bitmap.createBitmap(bitOriImage[nTimes], 0, 0, nWidth, nHeight, matrix, true);
-			bitResImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
-			strTempFilename[nTimes] = strFilename;
-
-			fio.close();
-			System.gc();
+			dlgProgress = new ProgressDialog(MainActivity.this);
+			dlgProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			dlgProgress.setMessage(lsSTRINGs.mApplyHarris);
+			dlgProgress.setCancelable(false);
+			dlgProgress.show();
+			threadApplyHarris = new ApplyHarrisShutter();
+			threadApplyHarris.start();
 		} catch (Exception e) {
 			showToast(e.toString(), Toast.LENGTH_LONG);
 		}
 	}
 
-	private class oriListener implements SensorEventListener {
-		public void onSensorChanged(SensorEvent event) {
-			float fOX, fOY, fOZ;
-			long currentTime = System.currentTimeMillis();
-			long gabOfTime = (currentTime - nLastTime);
+	private class ApplyHarrisShutter extends Thread {
+		int nProgress;
 
-			fOX = event.values[0];
-			fOY = event.values[1];
-			fOZ = event.values[2];
-
-			if (Math.abs(lastOX + lastOY + lastOZ - (fOX + fOY + fOZ)) > 8) {
-				if (gabOfTime > 1000) {
-
-					nLastTime = currentTime;
-
-					try {
-						mCamera.autoFocus(null);
-					} catch (Throwable t) {
-
-					}
-
-					lastOX = fOX;
-					lastOY = fOY;
-					lastOZ = fOZ;
-				}
-			}
-
+		public ApplyHarrisShutter() {
+			nProgress = 0;
 		}
 
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		public void run() {
+			try {
+				bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
 
+				for (int i = 0; i < bitResultImage.getHeight(); i++) {
+					for (int j = 0; j < bitResultImage.getWidth(); j++) {
+						int nRed = Color.red(MainActivity.bitOpened[1].getPixel(j, i));
+						int nGreen = Color.green(MainActivity.bitOpened[0].getPixel(j, i));
+						int nBlue = Color.blue(MainActivity.bitOpened[2].getPixel(j, i));
+
+						bitResultImage.setPixel(j, i, Color.argb(255, nRed, nGreen, nBlue));
+					}
+
+					if (i % (bitResultImage.getHeight() / 100) == 0) {
+						nProgress += 1;
+						dlgProgress.setProgress(nProgress);
+					}
+				}
+
+			} catch (Exception e) {
+				showToast(e.toString());
+			}
+
+			dlgProgress.dismiss();
+			nProgress = 0;
+
+			openCropActivity();
 		}
 	}
 
-	public void openFrontCamera(boolean bFront) {
+	public void openFrontCamera() {
 		int cameraCount = 0;
 		int camNum = 0;
 		Camera.CameraInfo ciCamera = new Camera.CameraInfo();
@@ -657,35 +859,39 @@ public class MainActivity extends Activity {
 		for (int i = 0; i < cameraCount; i++) {
 			Camera.getCameraInfo(i, ciCamera);
 
-			if (bFront == true) {
+			if (bFrontCam == false) {
 				if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 					camNum = i;
-				}
 
-				bFrontCam = true;
+					bFrontCam = true;
+
+					break;
+				}
 			} else {
 				if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
 					camNum = i;
-				}
 
-				bFrontCam = false;
+					bFrontCam = false;
+
+					break;
+				}
 			}
 		}
 
 		try {
-			mCamera.release();
-			mCamera = null;
+			mPreview.mCamera.release();
+			mPreview.mCamera = null;
 
-			mCamera = Camera.open(camNum);
-			mCamera.setDisplayOrientation(90);
+			mPreview.mCamera = Camera.open(camNum);
+			mPreview.mCamera.setDisplayOrientation(90);
 			try {
-				mCamera.setPreviewDisplay(mPreview.mHolder);
+				mPreview.mCamera.setPreviewDisplay(mPreview.mHolder);
 			} catch (IOException exception) {
-				mCamera.release();
-				mCamera = null;
+				mPreview.mCamera.release();
+				mPreview.mCamera = null;
 			}
 
-			mCamera.startPreview();
+			mPreview.mCamera.startPreview();
 		} catch (RuntimeException e) {
 			showToast(e.toString());
 		}
@@ -700,6 +906,7 @@ public class MainActivity extends Activity {
 
 	class Preview extends SurfaceView implements SurfaceHolder.Callback {
 		SurfaceHolder mHolder;
+		Camera mCamera;
 
 		Preview(Context context) {
 			super(context);
@@ -711,43 +918,73 @@ public class MainActivity extends Activity {
 		}
 
 		public void surfaceCreated(SurfaceHolder holder) {
-			// Surface has been created, set a position to drawing preview.
-			mCamera = Camera.open();
-			mCamera.setDisplayOrientation(90);
 			try {
+				int cameraCount = 0;
+				int camNum = 0;
+				Camera.CameraInfo ciCamera = new Camera.CameraInfo();
+				cameraCount = Camera.getNumberOfCameras();
+
+				for (int i = 0; i < cameraCount; i++) {
+					Camera.getCameraInfo(i, ciCamera);
+
+					if (bFrontCam == false) {
+						if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+							camNum = i;
+
+							break;
+						}
+					} else {
+						if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+							camNum = i;
+
+							break;
+						}
+					}
+				}
+
+				// Surface has been created, set a position to drawing preview.
+				mCamera = Camera.open(camNum);
+				mCamera.setDisplayOrientation(90);
+
 				mCamera.setPreviewDisplay(holder);
 
 				Camera.Parameters parameters = mCamera.getParameters();
 
 				List<Size> sizes = parameters.getSupportedPictureSizes();
 				Size optimalSize;
-				optimalSize = getOptimalPreviewSize(sizes, displayWidth, displayHeight);
+				optimalSize = getOptimalPreviewSize(sizes, SAVE_HIGH, SAVE_HIGH);
 				parameters.setPictureSize(optimalSize.width, optimalSize.height);
 				mCamera.setParameters(parameters);
 			} catch (IOException exception) {
 				mCamera.release();
 				mCamera = null;
+
+				showToast("Camera settings failed.");
 			}
 		}
 
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			// If surface has been destroyed, release a camera resource.
-			mCamera.stopPreview();
-			mCamera.release();
-			mCamera = null;
+			if (mCamera != null) {
+				mCamera.stopPreview();
+				mCamera.release();
+				mCamera = null;
+			}
 		}
 
 		public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
 			// I know preview size!!! So I'll change size.
-			Camera.Parameters parameters = mCamera.getParameters();
+			if (mCamera != null) {
+				Camera.Parameters parameters = mCamera.getParameters();
 
-			List<Size> sizes = parameters.getSupportedPreviewSizes();
-			Size optimalSize = getOptimalPreviewSize(sizes, w, h);
-			parameters.setPreviewSize(optimalSize.width, optimalSize.height);
+				List<Size> sizes = parameters.getSupportedPreviewSizes();
+				Size optimalSize = getOptimalPreviewSize(sizes, w, h);
+				parameters.setPreviewSize(optimalSize.width, optimalSize.height);
 
-			// parameters.setPreviewSize(w, h);
-			mCamera.setParameters(parameters);
-			mCamera.startPreview();
+				// parameters.setPreviewSize(w, h);
+				mCamera.setParameters(parameters);
+				mCamera.startPreview();
+			}
 		}
 
 	}
@@ -800,7 +1037,7 @@ public class MainActivity extends Activity {
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			if (bEnd == false) {
-				showToast("Do you want to close this app? One more 'Back'");
+				showToast(lsSTRINGs.mFinish);
 
 				bEnd = true;
 				mHandler.sendEmptyMessageDelayed(0, 2000);
@@ -809,6 +1046,9 @@ public class MainActivity extends Activity {
 			} else {
 				finish();
 			}
+		} else if (keyCode == KeyEvent.KEYCODE_HOME) {
+			dlgProgress.dismiss();
+			finish();
 		}
 
 		return super.onKeyDown(keyCode, event);
@@ -816,15 +1056,115 @@ public class MainActivity extends Activity {
 
 	@Override
 	public void finish() {
-		if (mCamera != null) {
-			mCamera.stopPreview();
-			mCamera.release();
-			mCamera = null;
+		if (mPreview.mCamera != null) {
+			mPreview.mCamera.stopPreview();
+			mPreview.mCamera.release();
+			mPreview.mCamera = null;
 		}
 
 		android.os.Process.killProcess(android.os.Process.myPid());
 
 		super.finish();
+	}
+
+	private void loadSettings() {
+		String strAutoSave = null;
+		String strResolution = null;
+		String strScaled = null;
+		String strAutoUpdate = null;
+
+		try {
+			FileInputStream fi = openFileInput("harrissettings");
+			int nFileSize = fi.available();
+			byte[] byData = new byte[nFileSize];
+
+			if (fi.read(byData) != -1) {
+				strAutoSave = new String(byData, 0, 1);
+				if (strAutoSave.compareTo("o") == 0) {
+					bOriginalAutoSave = true;
+				} else {
+					bOriginalAutoSave = false;
+				}
+
+				strResolution = new String(byData, 1, 1);
+				if (strResolution.compareTo("l") == 0) {
+					nSaveResolution = SAVE_LOW;
+				} else if (strResolution.compareTo("h") == 0) {
+					nSaveResolution = SAVE_HIGH;
+				} else {
+					nSaveResolution = SAVE_MIDDLE;
+				}
+
+				strScaled = new String(byData, 2, 1);
+				if (strScaled.compareTo("o") == 0) {
+					bScaledSquare = true;
+				} else {
+					bScaledSquare = false;
+				}
+
+				strAutoUpdate = new String(byData, 3, 1);
+				if (strAutoUpdate.compareTo("o") == 0) {
+					bAutoUpdate = true;
+				} else {
+					bAutoUpdate = false;
+				}
+			}
+
+			fi.close();
+		} catch (Exception e) {
+			showToast("Settings load failed.");
+		}
+	}
+
+	private void saveSettings() {
+		String strAutoSave = null;
+		String strResolution = null;
+		String strScaled = null;
+		String strAutoUpdate = null;
+
+		if (bOriginalAutoSave == true) {
+			strAutoSave = "o";
+		} else {
+			strAutoSave = "x";
+		}
+
+		switch (nSaveResolution) {
+			case SAVE_LOW:
+				strResolution = "l";
+
+				break;
+			case SAVE_MIDDLE:
+				strResolution = "m";
+
+				break;
+			case SAVE_HIGH:
+				strResolution = "h";
+
+				break;
+		}
+
+		if (bScaledSquare == true) {
+			strScaled = "o";
+		} else {
+			strScaled = "x";
+		}
+
+		if (bAutoUpdate == true) {
+			strAutoUpdate = "o";
+		} else {
+			strAutoUpdate = "x";
+		}
+
+		try {
+			FileOutputStream fo = openFileOutput("harrissettings", Context.MODE_WORLD_READABLE);
+			fo.write(strAutoSave.getBytes());
+			fo.write(strResolution.getBytes());
+			fo.write(strScaled.getBytes());
+			fo.write(strAutoUpdate.getBytes());
+			fo.close();
+		} catch (Exception e) {
+			showToast("Settings save failed.");
+		}
 	}
 
 }

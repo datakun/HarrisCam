@@ -8,11 +8,10 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.*;
-import android.graphics.Bitmap.Config;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,9 +22,9 @@ public class CropActivity extends Activity {
 	ImageButton ibCancel, ibRotate, ibShare, ibApply;
 	ImageView ivCropView;
 
-	Bitmap bitCropImage; // Result cropped Bitmap is here!
+	Bitmap bitResultImage;
 	public static String strCropImage = null; // Result cropped image filename is here.
-	String strTempFilename[];
+	public static String strShareImage = null; // Result share image filename is here.
 	float fHeightRate = 1; // Image scale rate.
 	float fWidthRate = 1;
 	int nImageWidth = 0; // Image size
@@ -34,9 +33,13 @@ public class CropActivity extends Activity {
 	int displayWidth; // Device's display size information.
 	int displayHeight;
 
+	boolean bVertical = true;
+
 	private static final int DIALOG_APPLY = 0;
 	private static final int DIALOG_CANCEL = 1;
 	private static final int INTENT_SHARE = 0;
+
+	private static final int RESULT_FAILED = 999;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -56,23 +59,31 @@ public class CropActivity extends Activity {
 
 		ivCropView = (ImageView) findViewById(R.id.ivCropView);
 
-		adjustViewSize(llCropView, displayWidth, displayHeight - displayWidth / 4);
-		adjustViewSize(llCropButtons, displayWidth, displayWidth / 4);
+		adjustViewSize(llCropView, displayWidth, displayHeight - displayWidth / 5);
+		adjustViewSize(llCropButtons, displayWidth, displayWidth / 5);
 
-		adjustViewSize(ibCancel, displayWidth / 5, displayWidth / 5);
-		adjustViewSize(ibRotate, displayWidth / 5, displayWidth / 5);
-		adjustViewSize(ibShare, displayWidth / 5, displayWidth / 5);
-		adjustViewSize(ibApply, displayWidth / 5, displayWidth / 5);
+		adjustViewSize(ibCancel, displayWidth / 6, displayWidth / 6);
+		adjustViewSize(ibRotate, displayWidth / 6, displayWidth / 6);
+		adjustViewSize(ibShare, displayWidth / 6, displayWidth / 6);
+		adjustViewSize(ibApply, displayWidth / 6, displayWidth / 6);
 
-		adjustViewSize(ivCropView, displayWidth, displayWidth);
+		if (MainActivity.bScaledSquare == true) {
+			adjustViewSize(ivCropView, displayWidth, displayWidth);
+		} else {
+			adjustViewSize(ivCropView, displayWidth, displayWidth * 4 / 3);
+		}
 
-		strTempFilename = MainActivity.strTempFilename;
+		nImageHeight = MainActivity.bitOpened[0].getHeight();
+		nImageWidth = MainActivity.bitOpened[0].getWidth();
 
-		initCropImage();
-
-		bitCropImage = applyHarrisShutter();
-		bitCropImage = Bitmap.createBitmap(bitCropImage, 0, 0, nImageWidth, nImageHeight);
-		ivCropView.setImageBitmap(bitCropImage);
+		bitResultImage = Bitmap.createBitmap(MainActivity.bitResultImage);
+		if (bitResultImage == null) {
+			setResult(RESULT_FAILED);
+			finish();
+		} else {
+			showToast(MainActivity.lsSTRINGs.cApplySuccess);
+		}
+		ivCropView.setImageBitmap(bitResultImage);
 
 		ibCancel.setOnTouchListener(new View.OnTouchListener() {
 
@@ -105,20 +116,7 @@ public class CropActivity extends Activity {
 					case MotionEvent.ACTION_UP:
 						v.setBackgroundResource(R.drawable.rotate);
 
-						try {
-							Matrix matrix = new Matrix();
-							matrix.postRotate(90);
-							matrix.postScale(1, 1);
-
-							int nWidth = bitCropImage.getWidth();
-							int nHeight = bitCropImage.getHeight();
-
-							bitCropImage = Bitmap.createBitmap(bitCropImage, 0, 0, nWidth, nHeight, matrix, true);
-							ivCropView.setImageBitmap(bitCropImage);
-
-						} catch (Exception e) {
-							showToast(e.toString());
-						}
+						rotateImage();
 
 						break;
 				}
@@ -166,27 +164,56 @@ public class CropActivity extends Activity {
 				return false;
 			}
 		});
+	}
 
+	private void rotateImage() {
+		Matrix matrix = new Matrix();
+		matrix.postRotate(90);
+		matrix.postScale(1, 1);
+
+		try {
+			Bitmap bitTemp = Bitmap.createBitmap(bitResultImage);
+
+			bitResultImage.recycle();
+			bitResultImage = null;
+			System.gc();
+
+			bitResultImage = Bitmap.createBitmap(bitTemp, 0, 0, nImageWidth, nImageHeight, matrix, true);
+			ivCropView.setImageBitmap(bitResultImage);
+
+			bitTemp.recycle();
+			bitTemp = null;
+			System.gc();
+		} catch (Exception e) {
+			showToast(e.toString());
+		}
+
+		nImageWidth = bitResultImage.getWidth();
+		nImageHeight = bitResultImage.getHeight();
+
+		if (MainActivity.bScaledSquare == false) {
+			if (bVertical == true) {
+				bVertical = false;
+				adjustViewSize(ivCropView, displayWidth, displayWidth * 3 / 4);
+			} else {
+				bVertical = true;
+				adjustViewSize(ivCropView, displayWidth, displayWidth * 4 / 3);
+			}
+		}
 	}
 
 	private void shareImage() {
-		if (strCropImage != null) {
-			File file = new File(strCropImage);
-			file.delete();
-		}
-
-		saveApplyImage();
-
-		try {
-			Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-			Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-			File temp = new File(strCropImage);
-			Uri uri = Uri.fromFile(temp);
-			sharingIntent.setType("image/jpg");
-			sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
-			startActivityForResult(Intent.createChooser(sharingIntent, "Select an App to send"), INTENT_SHARE);
-		} catch (Exception e) {
-			showToast(e.toString(), Toast.LENGTH_LONG);
+		if (saveTemporaryImage() == true) {
+			try {
+				Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+				File temp = new File(strShareImage);
+				Uri uri = Uri.fromFile(temp);
+				sharingIntent.setType("image/jpg");
+				sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+				startActivityForResult(Intent.createChooser(sharingIntent, MainActivity.lsSTRINGs.cShareMessage), INTENT_SHARE);
+			} catch (Exception e) {
+				showToast(e.toString(), Toast.LENGTH_LONG);
+			}
 		}
 	}
 
@@ -194,17 +221,10 @@ public class CropActivity extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 			case INTENT_SHARE:
-
-				switch (resultCode) {
-					case RESULT_CANCELED:
-
-						if (strCropImage != null) {
-							File file = new File(strCropImage);
-							file.delete();
-						}
-						showToast("Share canceled");
-
-						break;
+				if (strShareImage != null) {
+					File file = new File(strShareImage);
+					file.delete();
+					strShareImage = null;
 				}
 
 				break;
@@ -222,29 +242,27 @@ public class CropActivity extends Activity {
 		switch (id) {
 			case DIALOG_APPLY:
 				builder = new AlertDialog.Builder(this);
-				builder.setMessage("Do you want to apply and save?");
+				builder.setMessage(MainActivity.lsSTRINGs.cImageSave);
 				builder.setCancelable(false);
-				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
 
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
 					}
 				});
-				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
 					public void onClick(DialogInterface dialog, int which) {
-						if (strCropImage != null) {
-							File file = new File(strCropImage);
-							file.delete();
+
+						if (saveApplyImage() == true) {
+
+							Intent i = getIntent();
+							i.putExtra("image", strCropImage);
+							setResult(RESULT_OK);
+							finish();
 						}
 
-						saveApplyImage();
-
-						Intent i = getIntent();
-						i.putExtra("image", strCropImage);
-						setResult(RESULT_OK);
 						dialog.dismiss();
-						finish();
 					}
 				});
 				dialog = builder.create();
@@ -252,20 +270,21 @@ public class CropActivity extends Activity {
 				break;
 			case DIALOG_CANCEL:
 				builder = new AlertDialog.Builder(this);
-				builder.setMessage("Do you want to cancel?");
+				builder.setMessage(MainActivity.lsSTRINGs.cImageCancel);
 				builder.setCancelable(false);
-				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
 
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
 					}
 				});
-				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
 					public void onClick(DialogInterface dialog, int which) {
 						if (strCropImage != null) {
 							File file = new File(strCropImage);
 							file.delete();
+							strCropImage = null;
 						}
 
 						setResult(RESULT_CANCELED);
@@ -281,91 +300,56 @@ public class CropActivity extends Activity {
 		return dialog;
 	}
 
-	private void saveApplyImage() {
+	private boolean saveTemporaryImage() {
+		boolean bResult = false;
+
+		strShareImage = MainActivity.strFilePath + "tempshare.jpg";
+
 		try {
-			strCropImage = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/Harris_croped_"
-					+ System.currentTimeMillis() + ".jpg";
+			FileOutputStream fio = new FileOutputStream(strShareImage);
 
-			bitCropImage = Bitmap.createBitmap(bitCropImage, 0, 0, nImageWidth, nImageHeight);
-
-			FileOutputStream fio = new FileOutputStream(strCropImage);
-
-			bitCropImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
+			bitResultImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
 
 			fio.close();
+
+			bResult = true;
+		} catch (Exception e) {
+			showToast(e.toString());
+		}
+
+		return bResult;
+	}
+
+	private boolean saveApplyImage() {
+		boolean bResult = false;
+
+		strCropImage = MainActivity.strFilePath + "Shutter_" + System.currentTimeMillis() + ".jpg";
+
+		try {
+			FileOutputStream fio = new FileOutputStream(MainActivity.strOriFilename);
+
+			MainActivity.bitOpened[0].compress(Bitmap.CompressFormat.JPEG, 100, fio);
+
+			fio.close();
+			fio = null;
+
+			fio = new FileOutputStream(strCropImage);
+
+			bitResultImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
+
+			fio.close();
+			fio = null;
+
+			bitResultImage.recycle();
+			bitResultImage = null;
 			System.gc();
-		} catch (Exception e) {
-			showToast(e.toString());
-		}
-	}
 
-	private void initCropImage() {
-		try {
-			for (int i = 0; i < 3; i++) {
-				String strFilename = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/Harris_croped_"
-						+ System.currentTimeMillis() + ".jpg";
-
-				int nWidth = MainActivity.bitOriImage[i].getWidth();
-				int nHeight = MainActivity.bitOriImage[i].getHeight();
-
-				Matrix matrix = new Matrix();
-				float fScaledRate = (float) MainActivity.nSaveResolution / nHeight;
-				if (MainActivity.bFrontCam == false) {
-					matrix.postRotate(90);
-				} else {
-					matrix.postRotate(270);
-				}
-				matrix.postScale(fScaledRate, fScaledRate);
-
-				if (i > 0) {
-					File file = new File(strTempFilename[i]);
-					file.delete();
-					System.gc();
-				}
-
-				FileOutputStream fio = new FileOutputStream(strFilename);
-
-				Bitmap bitResImage = Bitmap.createBitmap(MainActivity.bitOriImage[i], 0, 0, nWidth, nHeight, matrix, true);
-				bitResImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
-				strTempFilename[i] = strFilename;
-
-				fio.close();
-				System.gc();
-			}
-			Bitmap bitBMP = BitmapFactory.decodeFile(strTempFilename[0]);
-			nImageHeight = bitBMP.getHeight();
-			nImageWidth = bitBMP.getWidth();
-			fHeightRate = MainActivity.displayHeight / nImageHeight;
-			fWidthRate = MainActivity.displayWidth / nImageWidth;
-			MainActivity.strTempFilename = strTempFilename;
-		} catch (Exception e) {
-			showToast(e.toString());
-		}
-	}
-
-	private Bitmap applyHarrisShutter() {
-
-		Bitmap bitResult = BitmapFactory.decodeFile(strTempFilename[0]).copy(Config.ARGB_8888, true);
-
-		try {
-			Bitmap bitRed = BitmapFactory.decodeFile(strTempFilename[1]);
-			Bitmap bitGreen = BitmapFactory.decodeFile(strTempFilename[0]);
-			Bitmap bitBlue = BitmapFactory.decodeFile(strTempFilename[2]);
-
-			for (int i = 0; i < bitResult.getHeight(); i++) {
-				for (int j = 0; j < bitResult.getWidth(); j++) {
-					int nRed = Color.red(bitRed.getPixel(j, i));
-					int nGreen = Color.green(bitGreen.getPixel(j, i));
-					int nBlue = Color.blue(bitBlue.getPixel(j, i));
-
-					bitResult.setPixel(j, i, Color.argb(255, nRed, nGreen, nBlue));
-				}
-			}
+			bResult = true;
 		} catch (Exception e) {
 			showToast(e.toString());
 		}
 
-		return bitResult;
+		return bResult;
 	}
 
 	public void adjustViewSize(View view, int nWidth, int nHeight) {
