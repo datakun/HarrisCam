@@ -255,7 +255,6 @@ public class CropActivity extends Activity {
 					public void onClick(DialogInterface dialog, int which) {
 
 						if (saveApplyImage() == true) {
-
 							Intent i = getIntent();
 							i.putExtra("image", strCropImage);
 							setResult(RESULT_OK);
@@ -286,7 +285,7 @@ public class CropActivity extends Activity {
 							file.delete();
 							strCropImage = null;
 						}
-
+						
 						setResult(RESULT_CANCELED);
 						dialog.dismiss();
 						finish();
@@ -342,7 +341,6 @@ public class CropActivity extends Activity {
 
 			bitResultImage.recycle();
 			bitResultImage = null;
-			System.gc();
 
 			bResult = true;
 		} catch (Exception e) {

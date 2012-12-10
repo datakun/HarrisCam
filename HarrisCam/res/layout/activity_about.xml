@@ -29,14 +29,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/about" />
-
+            <!--
             <TextView
                 android:id="@+id/tvAbout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_horizontal"
                 android:textColor="#444444"
-                android:textSize="20dip" />
+                android:textSize="20dip" />
+            -->
         </LinearLayout>
     </ScrollView>
 

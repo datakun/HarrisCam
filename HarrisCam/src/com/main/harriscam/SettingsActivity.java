@@ -1,7 +1,5 @@
 package com.main.harriscam;
 
-import java.net.HttpURLConnection;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -9,8 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.KeyEvent;
-import android.view.View;
+import android.view.*;
 import android.widget.*;
 
 public class SettingsActivity extends Activity {
@@ -135,64 +132,110 @@ public class SettingsActivity extends Activity {
 		 * 
 		 * } });
 		 */
-		ibSettingsClose.setOnClickListener(new View.OnClickListener() {
 
-			public void onClick(View v) {
-				setResult(RESULT_OK);
-				finish();
+		ibSettingsClose.setOnTouchListener(new View.OnTouchListener() {
 
-			}
-		});
-
-		ibAutoSave.setOnClickListener(new View.OnClickListener() {
-
-			public void onClick(View v) {
-				if (MainActivity.bOriginalAutoSave == true) {
-					MainActivity.bOriginalAutoSave = false;
-					v.setBackgroundResource(R.drawable.btn_off);
-				} else {
-					MainActivity.bOriginalAutoSave = true;
-					v.setBackgroundResource(R.drawable.btn_on);
-				}
-
-			}
-		});
-
-		ibResolution.setOnClickListener(new View.OnClickListener() {
-
-			public void onClick(View v) {
-				switch (MainActivity.nSaveResolution) {
-					case MainActivity.SAVE_LOW:
-						MainActivity.nSaveResolution = MainActivity.SAVE_MIDDLE;
-						v.setBackgroundResource(R.drawable.res_mid);
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN:
+						v.setBackgroundResource(R.drawable.btn_push);
 
 						break;
-					case MainActivity.SAVE_MIDDLE:
-						MainActivity.nSaveResolution = MainActivity.SAVE_HIGH;
-						v.setBackgroundResource(R.drawable.res_high);
-
-						break;
-					case MainActivity.SAVE_HIGH:
-						MainActivity.nSaveResolution = MainActivity.SAVE_LOW;
-						v.setBackgroundResource(R.drawable.res_low);
+					case MotionEvent.ACTION_UP:
+						v.setBackgroundResource(R.drawable.close);
+						setResult(RESULT_OK);
+						finish();
 
 						break;
 				}
 
+				return false;
 			}
 		});
 
-		ibAutoUpdate.setOnClickListener(new View.OnClickListener() {
+		ibAutoSave.setOnTouchListener(new View.OnTouchListener() {
 
-			public void onClick(View v) {
-				if (MainActivity.bAutoUpdate == true) {
-					MainActivity.bAutoUpdate = false;
-					v.setBackgroundResource(R.drawable.btn_off);
-				} else {
-					MainActivity.bAutoUpdate = true;
-					v.setBackgroundResource(R.drawable.btn_on);
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN:
+						v.setBackgroundResource(R.drawable.btn_push);
+
+						break;
+					case MotionEvent.ACTION_UP:
+						v.setBackgroundResource(R.drawable.btn_on);
+						if (MainActivity.bOriginalAutoSave == true) {
+							MainActivity.bOriginalAutoSave = false;
+							v.setBackgroundResource(R.drawable.btn_off);
+						} else {
+							MainActivity.bOriginalAutoSave = true;
+							v.setBackgroundResource(R.drawable.btn_on);
+						}
+
+						break;
+
 				}
 
+				return false;
+			}
+		});
+
+		ibResolution.setOnTouchListener(new View.OnTouchListener() {
+
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN:
+						v.setBackgroundResource(R.drawable.btn_push);
+
+						break;
+					case MotionEvent.ACTION_UP:
+						switch (MainActivity.nSaveResolution) {
+							case MainActivity.SAVE_LOW:
+								MainActivity.nSaveResolution = MainActivity.SAVE_MIDDLE;
+								v.setBackgroundResource(R.drawable.res_mid);
+
+								break;
+							case MainActivity.SAVE_MIDDLE:
+								MainActivity.nSaveResolution = MainActivity.SAVE_HIGH;
+								v.setBackgroundResource(R.drawable.res_high);
+
+								break;
+							case MainActivity.SAVE_HIGH:
+								MainActivity.nSaveResolution = MainActivity.SAVE_LOW;
+								v.setBackgroundResource(R.drawable.res_low);
+
+								break;
+						}
+
+						break;
+
+				}
+
+				return false;
+			}
+		});
+
+		ibAutoUpdate.setOnTouchListener(new View.OnTouchListener() {
+
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+					case MotionEvent.ACTION_DOWN:
+						v.setBackgroundResource(R.drawable.btn_push);
+
+						break;
+					case MotionEvent.ACTION_UP:
+						if (MainActivity.bAutoUpdate == true) {
+							MainActivity.bAutoUpdate = false;
+							v.setBackgroundResource(R.drawable.btn_off);
+						} else {
+							MainActivity.bAutoUpdate = true;
+							v.setBackgroundResource(R.drawable.btn_on);
+						}
+
+						break;
+
+				}
+
+				return false;
 			}
 		});
 
@@ -207,7 +250,7 @@ public class SettingsActivity extends Activity {
 		llVersion.setOnClickListener(new View.OnClickListener() {
 
 			public void onClick(View v) {
-				if (MainActivity.bLastestVersion == true) {
+				if (MainActivity.bLatestVersion == true) {
 					showToast(MainActivity.lsSTRINGs.sLVersion);
 				} else {
 					updateVersion();
@@ -223,7 +266,7 @@ public class SettingsActivity extends Activity {
 
 	private void updateVersion() {
 		float fMyVersion = Float.parseFloat(MainActivity.strAppVersion);
-		float fServerVersion = Float.parseFloat(MainActivity.strLastestVersion);
+		float fServerVersion = Float.parseFloat(MainActivity.strLatestVersion);
 
 		if (fServerVersion > fMyVersion) {
 			showDialog(DIALOG_VERSION);

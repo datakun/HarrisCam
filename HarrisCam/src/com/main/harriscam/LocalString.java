@@ -17,9 +17,9 @@ public class LocalString {
 	private static final String cropImageSave[] = { "Do you want to save?", "사진을 저장하시겠습니까?" };
 	private static final String cropImageCancel[] = { "Do you want to cancel?", "작업을 취소하시겠습니까?" };
 
-	private static final String mainUpdating[] = { "Updating Lastest Version", "최신 버전 업데이트" };
+	private static final String mainUpdating[] = { "Updating Latest Version", "최신 버전 업데이트" };
 	private static final String mainUpdateAsking[] = {
-			"Do you want to update the lastest version? (If you want to off this alarm. Click 'No')",
+			"Do you want to update the latest version? (If you want to off this alarm. Click 'No')",
 			"최신 버전으로 업데이트 하시겠습니까? (최신 버전 알람을 끄려면 '아니오'를 누르세요.)" };
 	private static final String mainSaveCancel[] = { "Save canceled...", "저장 취소..." };
 	private static final String mainSaveSuccess[] = { "Save successful!", "저장 성공!" };
@@ -28,7 +28,7 @@ public class LocalString {
 	private static final String mainApplyHarris[] = { "Applying the Effect...", "효과 적용 중..." };
 
 	private static final String setLVersion[] = { "This is the latest version.", "최신 버전입니다." };
-	private static final String setUpdateAsking[] = { "Do you want to update the lastest version?", "최신 버전으로 업데이트 하시겠습니까?" };
+	private static final String setUpdateAsking[] = { "Do you want to update the latest version?", "최신 버전으로 업데이트 하시겠습니까?" };
 
 	public String aYes;
 	public String aNo;

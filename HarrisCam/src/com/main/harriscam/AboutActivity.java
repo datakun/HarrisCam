@@ -7,7 +7,7 @@ import android.widget.*;
 
 public class AboutActivity extends Activity {
 	ImageView ivAbout;
-	TextView tvAbout;
+	// TextView tvAbout;
 	LinearLayout llAboutTitle;
 
 	int displayWidth; // Device's display size information.
@@ -22,11 +22,11 @@ public class AboutActivity extends Activity {
 		displayHeight = MainActivity.displayHeight;
 
 		ivAbout = (ImageView) findViewById(R.id.ivAbout);
-		ivAbout.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth));
+		ivAbout.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth * 2));
 
-		tvAbout = (TextView) findViewById(R.id.tvAbout);
+		// tvAbout = (TextView) findViewById(R.id.tvAbout);
 
-		tvAbout.setText(MainActivity.lsSTRINGs.aAbout);
+		// tvAbout.setText(MainActivity.lsSTRINGs.aAbout);
 
 		llAboutTitle = (LinearLayout) findViewById(R.id.llAboutTitle);
 		llAboutTitle.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
@@ -38,11 +38,10 @@ public class AboutActivity extends Activity {
 			}
 		});
 
-		tvAbout.setOnClickListener(new View.OnClickListener() {
-
-			public void onClick(View v) {
-				finish();
-			}
-		});
+		/*
+		 * tvAbout.setOnClickListener(new View.OnClickListener() {
+		 * 
+		 * public void onClick(View v) { finish(); } });
+		 */
 	}
 }

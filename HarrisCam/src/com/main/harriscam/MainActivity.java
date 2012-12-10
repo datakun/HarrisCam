@@ -24,8 +24,15 @@ import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
-@SuppressLint({ "HandlerLeak", "WorldReadableFiles" })
+@SuppressLint("HandlerLeak")
 public class MainActivity extends Activity {
+	// Load a library
+	static {
+		System.loadLibrary("imgeffects");
+	}
+
+	private static native void applyHarris(Bitmap bitG, Bitmap bitR, Bitmap bitB);
+
 	boolean bEnd = false;
 	Handler mHandler;
 
@@ -95,20 +102,19 @@ public class MainActivity extends Activity {
 	public static boolean bAutoFocusBeep = true;
 	public static boolean bAutoUpdate = false;
 	public static String strAppVersion = null;
-	public static String strLastestVersion = null;
+	public static String strLatestVersion = null;
 	public static Locale lcLanguage = null;
 
 	public static String strFilePath = null;
 	public static int nSampleSize;
 
-	ProgressDialog dlgProgress;
 	ApplyHarrisShutter threadApplyHarris;
 
 	public static String strVersionAddress = "http://cfs.tistory.com/custom/blog/75/751637/skin/images/harrisversion.html";
 	HttpURLConnection connVersionCheck;
 
 	public static boolean bStarted = false;
-	public static boolean bLastestVersion = false;
+	public static boolean bLatestVersion = false;
 
 	public static LocalString lsSTRINGs = null;
 
@@ -125,6 +131,7 @@ public class MainActivity extends Activity {
 		iCropActivity = new Intent(this, CropActivity.class);
 		iSettingsActivity = new Intent(this, SettingsActivity.class);
 
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// For finish this application.
@@ -147,6 +154,11 @@ public class MainActivity extends Activity {
 		mPictureCallbackJpeg = new Camera.PictureCallback() {
 
 			public void onPictureTaken(byte[] data, Camera camera) {
+				if (nTimes == 0) {
+					ibShutter.setBackgroundResource(R.drawable.shutter_2);
+				} else if (nTimes == 1) {
+					ibShutter.setBackgroundResource(R.drawable.shutter_1);
+				}
 
 				byOriImage[nTimes] = data;
 
@@ -169,7 +181,7 @@ public class MainActivity extends Activity {
 								camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
 							}
 						} else {
-							nTimes = 0;
+							ibShutter.setBackgroundResource(R.drawable.shutter_auto);
 
 							readyOpenImage();
 						}
@@ -185,7 +197,7 @@ public class MainActivity extends Activity {
 								}
 							}
 						} else {
-							nTimes = 0;
+							ibShutter.setBackgroundResource(R.drawable.shutter_3);
 
 							readyOpenImage();
 						}
@@ -264,6 +276,8 @@ public class MainActivity extends Activity {
 						break;
 					case MotionEvent.ACTION_UP:
 						v.setBackgroundResource(R.drawable.settings);
+						getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+						clearScreen();
 
 						openSettingsPreference();
 
@@ -284,8 +298,6 @@ public class MainActivity extends Activity {
 						break;
 					case MotionEvent.ACTION_UP:
 						if (bAutoCapture == true) {
-							v.setBackgroundResource(R.drawable.shutter_auto);
-						} else if (nTimes == 2) {
 							v.setBackgroundResource(R.drawable.shutter_3);
 						}
 
@@ -401,23 +413,26 @@ public class MainActivity extends Activity {
 
 							break;
 						case MotionEvent.ACTION_UP:
-							Parameters p = mPreview.mCamera.getParameters();
 
 							if (bFlash == FLASH_OFF) {
 								bFlash = FLASH_AUTO;
 								v.setBackgroundResource(R.drawable.flash_auto);
-								p.setFlashMode(Parameters.FLASH_MODE_AUTO);
+								parameter.setFlashMode(Parameters.FLASH_MODE_AUTO);
 							} else if (bFlash == FLASH_AUTO) {
 								bFlash = FLASH_ON;
 								v.setBackgroundResource(R.drawable.flash_on);
-								p.setFlashMode(Parameters.FLASH_MODE_ON);
+								parameter.setFlashMode(Parameters.FLASH_MODE_ON);
 							} else {
 								bFlash = FLASH_OFF;
 								v.setBackgroundResource(R.drawable.flash_off);
-								p.setFlashMode(Parameters.FLASH_MODE_OFF);
+								parameter.setFlashMode(Parameters.FLASH_MODE_OFF);
 							}
 
-							mPreview.mCamera.setParameters(p);
+							try {
+								mPreview.mCamera.setParameters(parameter);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 
 							break;
 					}
@@ -430,7 +445,7 @@ public class MainActivity extends Activity {
 		if (bStarted == false) {
 			bStarted = true;
 
-			isLastestVersion();
+			isLatestVersion();
 		}
 	}
 
@@ -461,7 +476,7 @@ public class MainActivity extends Activity {
 							strTemp = br.readLine();
 
 							if (bVersion) {
-								MainActivity.strLastestVersion = strTemp;
+								strLatestVersion = strTemp;
 
 								break;
 							}
@@ -488,19 +503,37 @@ public class MainActivity extends Activity {
 	Handler mFindVersion = new Handler() {
 
 		public void handleMessage(Message msg) {
-			if (MainActivity.strAppVersion.equals(MainActivity.strLastestVersion) == false) {
-				bLastestVersion = false;
+			if (strAppVersion.equals(strLatestVersion) == false) {
+				if (strAppVersion != null && strLatestVersion != null) {
+					float fMyVersion = 0f;
+					float fServerVersion = 0f;
+					
+					try {
+						fMyVersion = Float.parseFloat(strAppVersion);
+						fServerVersion = Float.parseFloat(strLatestVersion);
+					} catch (NumberFormatException e) {
+						e.printStackTrace();
+					}
 
-				if (bAutoUpdate == true) {
-					showDialog(DIALOG_VERSION);
+					if (fServerVersion > fMyVersion) { // This is not latest version
+						bLatestVersion = false;
+
+						if (bAutoUpdate == true) {
+							showDialog(DIALOG_VERSION);
+						}
+					} else { // Test version
+						bLatestVersion = true;
+					}
+				} else {
+					bLatestVersion = false;
 				}
-			} else {
-				bLastestVersion = true;
+			} else { // This is latest version
+				bLatestVersion = true;
 			}
 		}
 	};
 
-	private void isLastestVersion() {
+	private void isLatestVersion() {
 		ConnectionThread mThread;
 
 		mThread = new ConnectionThread(strVersionAddress);
@@ -664,6 +697,22 @@ public class MainActivity extends Activity {
 
 	}
 
+	private void clearScreen() {
+		llUpperButtons.setVisibility(View.INVISIBLE);
+		llButtons.setVisibility(View.INVISIBLE);
+		llUpperBlind.setVisibility(View.INVISIBLE);
+		llLowerBlind.setVisibility(View.INVISIBLE);
+		flPreview.setVisibility(View.INVISIBLE);
+	}
+
+	private void drawScreen() {
+		llUpperButtons.setVisibility(View.VISIBLE);
+		llButtons.setVisibility(View.VISIBLE);
+		llUpperBlind.setVisibility(View.VISIBLE);
+		llLowerBlind.setVisibility(View.VISIBLE);
+		flPreview.setVisibility(View.VISIBLE);
+	}
+
 	private void openSettingsPreference() {
 		startActivityForResult(iSettingsActivity, ACTIVITY_SETTINGS);
 	}
@@ -680,10 +729,14 @@ public class MainActivity extends Activity {
 					case RESULT_CANCELED:
 						showToast(lsSTRINGs.mSaveCancel);
 
+						MainActivity.deleteAllBitmap();
+
 						break;
 					case RESULT_OK:
 						sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + CropActivity.strCropImage)));
 						showToast(lsSTRINGs.mSaveSuccess);
+
+						MainActivity.deleteAllBitmap();
 
 						break;
 					case RESULT_FAILED:
@@ -702,7 +755,8 @@ public class MainActivity extends Activity {
 				break;
 
 			case ACTIVITY_SETTINGS:
-				// resetBlindLayout();
+				getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+				drawScreen();
 				saveSettings();
 
 				break;
@@ -713,12 +767,11 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onResume() {
-		deleteAllBitmap();
 
 		super.onResume();
 	}
 
-	private void deleteAllBitmap() {
+	public static void deleteAllBitmap() {
 		for (int i = 0; i < 3; i++) {
 			if (bitOpened[i] != null) {
 				bitOpened[i].recycle();
@@ -738,6 +791,8 @@ public class MainActivity extends Activity {
 
 	private void readyOpenImage() {
 		try {
+			nTimes = 0;
+
 			for (int i = 0; i < 3; i++) {
 				String strFilename = strFilePath + System.currentTimeMillis() + ".jpg";
 
@@ -801,11 +856,6 @@ public class MainActivity extends Activity {
 				System.gc();
 			}
 
-			dlgProgress = new ProgressDialog(MainActivity.this);
-			dlgProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			dlgProgress.setMessage(lsSTRINGs.mApplyHarris);
-			dlgProgress.setCancelable(false);
-			dlgProgress.show();
 			threadApplyHarris = new ApplyHarrisShutter();
 			threadApplyHarris.start();
 		} catch (Exception e) {
@@ -814,37 +864,19 @@ public class MainActivity extends Activity {
 	}
 
 	private class ApplyHarrisShutter extends Thread {
-		int nProgress;
 
 		public ApplyHarrisShutter() {
-			nProgress = 0;
+
 		}
 
 		public void run() {
 			try {
 				bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
 
-				for (int i = 0; i < bitResultImage.getHeight(); i++) {
-					for (int j = 0; j < bitResultImage.getWidth(); j++) {
-						int nRed = Color.red(MainActivity.bitOpened[1].getPixel(j, i));
-						int nGreen = Color.green(MainActivity.bitOpened[0].getPixel(j, i));
-						int nBlue = Color.blue(MainActivity.bitOpened[2].getPixel(j, i));
-
-						bitResultImage.setPixel(j, i, Color.argb(255, nRed, nGreen, nBlue));
-					}
-
-					if (i % (bitResultImage.getHeight() / 100) == 0) {
-						nProgress += 1;
-						dlgProgress.setProgress(nProgress);
-					}
-				}
-
+				applyHarris(bitResultImage, MainActivity.bitOpened[1], MainActivity.bitOpened[2]);
 			} catch (Exception e) {
 				showToast(e.toString());
 			}
-
-			dlgProgress.dismiss();
-			nProgress = 0;
 
 			openCropActivity();
 		}
@@ -919,31 +951,8 @@ public class MainActivity extends Activity {
 
 		public void surfaceCreated(SurfaceHolder holder) {
 			try {
-				int cameraCount = 0;
-				int camNum = 0;
-				Camera.CameraInfo ciCamera = new Camera.CameraInfo();
-				cameraCount = Camera.getNumberOfCameras();
-
-				for (int i = 0; i < cameraCount; i++) {
-					Camera.getCameraInfo(i, ciCamera);
-
-					if (bFrontCam == false) {
-						if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-							camNum = i;
-
-							break;
-						}
-					} else {
-						if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-							camNum = i;
-
-							break;
-						}
-					}
-				}
-
 				// Surface has been created, set a position to drawing preview.
-				mCamera = Camera.open(camNum);
+				mCamera = Camera.open(0);
 				mCamera.setDisplayOrientation(90);
 
 				mCamera.setPreviewDisplay(holder);
@@ -1047,7 +1056,6 @@ public class MainActivity extends Activity {
 				finish();
 			}
 		} else if (keyCode == KeyEvent.KEYCODE_HOME) {
-			dlgProgress.dismiss();
 			finish();
 		}
 
@@ -1065,6 +1073,17 @@ public class MainActivity extends Activity {
 		android.os.Process.killProcess(android.os.Process.myPid());
 
 		super.finish();
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (mPreview.mCamera != null) {
+			mPreview.mCamera.stopPreview();
+			mPreview.mCamera.release();
+			mPreview.mCamera = null;
+		}
+
+		super.onDestroy();
 	}
 
 	private void loadSettings() {

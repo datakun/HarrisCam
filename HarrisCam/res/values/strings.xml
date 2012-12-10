@@ -4,6 +4,6 @@
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_main">Harris Cam</string>
-    <string name="app_version">3.7</string>
+    <string name="app_version">4.0</string>
 
 </resources>
