@@ -7,11 +7,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class SettingsActivity extends Activity {
-	LinearLayout llTitleSettings, llCameraMode, llAutoSave, llResolution, llAbout, llVersion, llAutoUpdate;
+	LinearLayout llTitleSettings, llCameraMode, llAutoSave, llResolution, llFeedBack, llVersion, llAutoUpdate;
 	ImageButton ibSettingsClose, ibCameraMode, ibAutoSave, ibResolution, ibAutoUpdate;
 	TextView tvVersion;
 	ImageView ivTitleCamera, ivTitleHarris;
@@ -35,7 +42,7 @@ public class SettingsActivity extends Activity {
 		// llCameraMode = (LinearLayout) findViewById(R.id.llCameraMode);
 		llAutoSave = (LinearLayout) findViewById(R.id.llAutoSave);
 		llResolution = (LinearLayout) findViewById(R.id.llResolution);
-		llAbout = (LinearLayout) findViewById(R.id.llAbout);
+		llFeedBack = (LinearLayout) findViewById(R.id.llFeedBack);
 		llVersion = (LinearLayout) findViewById(R.id.llVersion);
 		llAutoUpdate = (LinearLayout) findViewById(R.id.llAutoUpdate);
 
@@ -49,17 +56,20 @@ public class SettingsActivity extends Activity {
 		ivTitleHarris = (ImageView) findViewById(R.id.ivTitleHarrisCam);
 
 		tvVersion = (TextView) findViewById(R.id.tvVersion);
+		tvVersion.setText(MainActivity.strAppVersion);
 
 		llTitleSettings.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
-		// llCameraMode.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
+		// llCameraMode.setLayoutParams(new
+		// LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 		llAutoSave.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 		llResolution.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
-		llAbout.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
+		llFeedBack.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 		llVersion.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 		llAutoUpdate.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 
 		ibSettingsClose.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
-		// ibCameraMode.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
+		// ibCameraMode.setLayoutParams(new
+		// LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
 		ibAutoSave.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
 		ibResolution.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
 		ibAutoUpdate.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 6, displayWidth / 6));
@@ -69,11 +79,12 @@ public class SettingsActivity extends Activity {
 		ivTitleCamera.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 		ivTitleHarris.setLayoutParams(new LinearLayout.LayoutParams(displayWidth, displayWidth / 6));
 
-		llAbout.setClickable(true);
+		llFeedBack.setClickable(true);
 		llVersion.setClickable(true);
 		/*
-		 * if (MainActivity.bScaledSquare == true) { ibCameraMode.setBackgroundResource(R.drawable.scale_square); } else
-		 * { ibCameraMode.setBackgroundResource(R.drawable.scale_rectangle); }
+		 * if (MainActivity.bScaledSquare == true) {
+		 * ibCameraMode.setBackgroundResource(R.drawable.scale_square); } else {
+		 * ibCameraMode.setBackgroundResource(R.drawable.scale_rectangle); }
 		 */
 		if (MainActivity.bOriginalAutoSave == true) {
 			ibAutoSave.setBackgroundResource(R.drawable.btn_on);
@@ -84,18 +95,18 @@ public class SettingsActivity extends Activity {
 		iAboutActivity = new Intent(this, AboutActivity.class);
 
 		switch (MainActivity.nSaveResolution) {
-			case MainActivity.SAVE_LOW:
-				ibResolution.setBackgroundResource(R.drawable.res_low);
+		case MainActivity.SAVE_LOW:
+			ibResolution.setBackgroundResource(R.drawable.res_low);
 
-				break;
-			case MainActivity.SAVE_MIDDLE:
-				ibResolution.setBackgroundResource(R.drawable.res_mid);
+			break;
+		case MainActivity.SAVE_MIDDLE:
+			ibResolution.setBackgroundResource(R.drawable.res_mid);
 
-				break;
-			case MainActivity.SAVE_HIGH:
-				ibResolution.setBackgroundResource(R.drawable.res_high);
+			break;
+		case MainActivity.SAVE_HIGH:
+			ibResolution.setBackgroundResource(R.drawable.res_high);
 
-				break;
+			break;
 		}
 
 		if (MainActivity.bAutoUpdate == true) {
@@ -108,8 +119,9 @@ public class SettingsActivity extends Activity {
 		lp.leftMargin = displayWidth - displayWidth / 5;
 		ibSettingsClose.setLayoutParams(lp);
 		/*
-		 * lp = (LinearLayout.LayoutParams) ibCameraMode.getLayoutParams(); lp.leftMargin = displayWidth - displayWidth
-		 * / 5; ibCameraMode.setLayoutParams(lp);
+		 * lp = (LinearLayout.LayoutParams) ibCameraMode.getLayoutParams();
+		 * lp.leftMargin = displayWidth - displayWidth / 5;
+		 * ibCameraMode.setLayoutParams(lp);
 		 */
 		lp = (LinearLayout.LayoutParams) ibAutoSave.getLayoutParams();
 		lp.leftMargin = displayWidth - displayWidth / 5;
@@ -126,8 +138,10 @@ public class SettingsActivity extends Activity {
 		/*
 		 * ibCameraMode.setOnClickListener(new View.OnClickListener() {
 		 * 
-		 * public void onClick(View v) { if (MainActivity.bScaledSquare == true) { MainActivity.bScaledSquare = false;
-		 * v.setBackgroundResource(R.drawable.scale_rectangle); } else { MainActivity.bScaledSquare = true;
+		 * public void onClick(View v) { if (MainActivity.bScaledSquare == true)
+		 * { MainActivity.bScaledSquare = false;
+		 * v.setBackgroundResource(R.drawable.scale_rectangle); } else {
+		 * MainActivity.bScaledSquare = true;
 		 * v.setBackgroundResource(R.drawable.scale_square); }
 		 * 
 		 * } });
@@ -137,16 +151,16 @@ public class SettingsActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.btn_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.btn_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.close);
-						setResult(RESULT_OK);
-						finish();
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.close);
+					setResult(RESULT_OK);
+					finish();
 
-						break;
+					break;
 				}
 
 				return false;
@@ -157,21 +171,21 @@ public class SettingsActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.btn_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.btn_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.btn_on);
+					if (MainActivity.bOriginalAutoSave == true) {
+						MainActivity.bOriginalAutoSave = false;
+						v.setBackgroundResource(R.drawable.btn_off);
+					} else {
+						MainActivity.bOriginalAutoSave = true;
 						v.setBackgroundResource(R.drawable.btn_on);
-						if (MainActivity.bOriginalAutoSave == true) {
-							MainActivity.bOriginalAutoSave = false;
-							v.setBackgroundResource(R.drawable.btn_off);
-						} else {
-							MainActivity.bOriginalAutoSave = true;
-							v.setBackgroundResource(R.drawable.btn_on);
-						}
+					}
 
-						break;
+					break;
 
 				}
 
@@ -183,30 +197,30 @@ public class SettingsActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.btn_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.btn_push);
+
+					break;
+				case MotionEvent.ACTION_UP:
+					switch (MainActivity.nSaveResolution) {
+					case MainActivity.SAVE_LOW:
+						MainActivity.nSaveResolution = MainActivity.SAVE_MIDDLE;
+						v.setBackgroundResource(R.drawable.res_mid);
 
 						break;
-					case MotionEvent.ACTION_UP:
-						switch (MainActivity.nSaveResolution) {
-							case MainActivity.SAVE_LOW:
-								MainActivity.nSaveResolution = MainActivity.SAVE_MIDDLE;
-								v.setBackgroundResource(R.drawable.res_mid);
-
-								break;
-							case MainActivity.SAVE_MIDDLE:
-								MainActivity.nSaveResolution = MainActivity.SAVE_HIGH;
-								v.setBackgroundResource(R.drawable.res_high);
-
-								break;
-							case MainActivity.SAVE_HIGH:
-								MainActivity.nSaveResolution = MainActivity.SAVE_LOW;
-								v.setBackgroundResource(R.drawable.res_low);
-
-								break;
-						}
+					case MainActivity.SAVE_MIDDLE:
+						MainActivity.nSaveResolution = MainActivity.SAVE_HIGH;
+						v.setBackgroundResource(R.drawable.res_high);
 
 						break;
+					case MainActivity.SAVE_HIGH:
+						MainActivity.nSaveResolution = MainActivity.SAVE_LOW;
+						v.setBackgroundResource(R.drawable.res_low);
+
+						break;
+					}
+
+					break;
 
 				}
 
@@ -218,20 +232,20 @@ public class SettingsActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.btn_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.btn_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						if (MainActivity.bAutoUpdate == true) {
-							MainActivity.bAutoUpdate = false;
-							v.setBackgroundResource(R.drawable.btn_off);
-						} else {
-							MainActivity.bAutoUpdate = true;
-							v.setBackgroundResource(R.drawable.btn_on);
-						}
+					break;
+				case MotionEvent.ACTION_UP:
+					if (MainActivity.bAutoUpdate == true) {
+						MainActivity.bAutoUpdate = false;
+						v.setBackgroundResource(R.drawable.btn_off);
+					} else {
+						MainActivity.bAutoUpdate = true;
+						v.setBackgroundResource(R.drawable.btn_on);
+					}
 
-						break;
+					break;
 
 				}
 
@@ -239,7 +253,7 @@ public class SettingsActivity extends Activity {
 			}
 		});
 
-		llAbout.setOnClickListener(new View.OnClickListener() {
+		llFeedBack.setOnClickListener(new View.OnClickListener() {
 
 			public void onClick(View v) {
 				openAboutActivity();
@@ -265,8 +279,14 @@ public class SettingsActivity extends Activity {
 	}
 
 	private void updateVersion() {
-		float fMyVersion = Float.parseFloat(MainActivity.strAppVersion);
-		float fServerVersion = Float.parseFloat(MainActivity.strLatestVersion);
+		float fMyVersion = 0f;
+		float fServerVersion = 0f;
+		try {
+			fMyVersion = Float.parseFloat(MainActivity.strAppVersion);
+			fServerVersion = Float.parseFloat(MainActivity.strLatestVersion);
+		} catch (Exception e) {
+			Log.e("Failed parseFloat in Settings...", e.toString());
+		}
 
 		if (fServerVersion > fMyVersion) {
 			showDialog(DIALOG_VERSION);
@@ -294,28 +314,29 @@ public class SettingsActivity extends Activity {
 	@Override
 	protected Dialog onCreateDialog(int id) {
 		switch (id) {
-			case DIALOG_VERSION:
-				return new AlertDialog.Builder(this).setTitle(MainActivity.lsSTRINGs.mUpdating)
-						.setMessage(MainActivity.lsSTRINGs.sUpdateAsking).setCancelable(true)
-						.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
+		case DIALOG_VERSION:
+			return new AlertDialog.Builder(this).setTitle(MainActivity.lsSTRINGs.mUpdating)
+					.setMessage(MainActivity.lsSTRINGs.sUpdateAsking).setCancelable(true)
+					.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
-							public void onClick(DialogInterface dialog, int whichButton) {
-								Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.main.harriscam"));
+						public void onClick(DialogInterface dialog, int whichButton) {
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+									.parse("market://details?id=com.main.harriscam"));
 
-								startActivity(intent);
-								MainActivity.bStarted = false;
+							startActivity(intent);
+							MainActivity.bStarted = false;
 
-								dialog.dismiss();
-							}
+							dialog.dismiss();
+						}
 
-						}).setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
+					}).setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
 
-							public void onClick(DialogInterface dialog, int whichButton) {
+						public void onClick(DialogInterface dialog, int whichButton) {
 
-								dialog.cancel();
-							}
+							dialog.cancel();
+						}
 
-						}).create();
+					}).create();
 		}
 
 		return super.onCreateDialog(id);

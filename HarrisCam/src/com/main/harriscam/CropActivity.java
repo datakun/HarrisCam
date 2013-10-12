@@ -23,8 +23,10 @@ public class CropActivity extends Activity {
 	ImageView ivCropView;
 
 	Bitmap bitResultImage;
-	public static String strCropImage = null; // Result cropped image filename is here.
-	public static String strShareImage = null; // Result share image filename is here.
+	public static String strCropImage = null; // Result cropped image filename
+												// is here.
+	public static String strShareImage = null; // Result share image filename is
+												// here.
 	float fHeightRate = 1; // Image scale rate.
 	float fWidthRate = 1;
 	int nImageWidth = 0; // Image size
@@ -76,29 +78,35 @@ public class CropActivity extends Activity {
 		nImageHeight = MainActivity.bitOpened[0].getHeight();
 		nImageWidth = MainActivity.bitOpened[0].getWidth();
 
-		bitResultImage = Bitmap.createBitmap(MainActivity.bitResultImage);
-		if (bitResultImage == null) {
+		try {
+			bitResultImage = Bitmap.createBitmap(MainActivity.bitResultImage);
+		} catch (OutOfMemoryError e) {
+			showToast("Memory space is full... Try again.");
+
+			MainActivity.deleteAllBitmap();
+
 			setResult(RESULT_FAILED);
 			finish();
-		} else {
-			showToast(MainActivity.lsSTRINGs.cApplySuccess);
 		}
+
+		showToast(MainActivity.lsSTRINGs.cApplySuccess);
+
 		ivCropView.setImageBitmap(bitResultImage);
 
 		ibCancel.setOnTouchListener(new View.OnTouchListener() {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.cancel_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.cancel_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.cancel);
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.cancel);
 
-						showDialog(DIALOG_CANCEL);
+					showDialog(DIALOG_CANCEL);
 
-						break;
+					break;
 				}
 
 				return false;
@@ -109,16 +117,16 @@ public class CropActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.rotate_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.rotate_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.rotate);
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.rotate);
 
-						rotateImage();
+					rotateImage();
 
-						break;
+					break;
 				}
 
 				return false;
@@ -129,16 +137,16 @@ public class CropActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.share_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.share_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.share);
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.share);
 
-						shareImage();
+					shareImage();
 
-						break;
+					break;
 				}
 
 				return false;
@@ -149,16 +157,16 @@ public class CropActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.apply_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.apply_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.apply);
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.apply);
 
-						showDialog(DIALOG_APPLY);
+					showDialog(DIALOG_APPLY);
 
-						break;
+					break;
 				}
 
 				return false;
@@ -174,18 +182,27 @@ public class CropActivity extends Activity {
 		try {
 			Bitmap bitTemp = Bitmap.createBitmap(bitResultImage);
 
-			bitResultImage.recycle();
-			bitResultImage = null;
+			if (bitResultImage != null) {
+				bitResultImage.recycle();
+				bitResultImage = null;
+			}
 			System.gc();
 
 			bitResultImage = Bitmap.createBitmap(bitTemp, 0, 0, nImageWidth, nImageHeight, matrix, true);
 			ivCropView.setImageBitmap(bitResultImage);
 
-			bitTemp.recycle();
-			bitTemp = null;
+			if (bitTemp != null) {
+				bitTemp.recycle();
+				bitTemp = null;
+			}
 			System.gc();
-		} catch (Exception e) {
-			showToast(e.toString());
+		} catch (OutOfMemoryError e) {
+			showToast("Memory space is full... Try again.");
+
+			MainActivity.deleteAllBitmap();
+
+			setResult(RESULT_FAILED);
+			finish();
 		}
 
 		nImageWidth = bitResultImage.getWidth();
@@ -210,7 +227,8 @@ public class CropActivity extends Activity {
 				Uri uri = Uri.fromFile(temp);
 				sharingIntent.setType("image/jpg");
 				sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
-				startActivityForResult(Intent.createChooser(sharingIntent, MainActivity.lsSTRINGs.cShareMessage), INTENT_SHARE);
+				startActivityForResult(Intent.createChooser(sharingIntent, MainActivity.lsSTRINGs.cShareMessage),
+						INTENT_SHARE);
 			} catch (Exception e) {
 				showToast(e.toString(), Toast.LENGTH_LONG);
 			}
@@ -220,14 +238,14 @@ public class CropActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
-			case INTENT_SHARE:
-				if (strShareImage != null) {
-					File file = new File(strShareImage);
-					file.delete();
-					strShareImage = null;
-				}
+		case INTENT_SHARE:
+			if (strShareImage != null) {
+				File file = new File(strShareImage);
+				file.delete();
+				strShareImage = null;
+			}
 
-				break;
+			break;
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);
@@ -240,60 +258,60 @@ public class CropActivity extends Activity {
 		AlertDialog.Builder builder;
 
 		switch (id) {
-			case DIALOG_APPLY:
-				builder = new AlertDialog.Builder(this);
-				builder.setMessage(MainActivity.lsSTRINGs.cImageSave);
-				builder.setCancelable(false);
-				builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
+		case DIALOG_APPLY:
+			builder = new AlertDialog.Builder(this);
+			builder.setMessage(MainActivity.lsSTRINGs.cImageSave);
+			builder.setCancelable(false);
+			builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
 
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+				}
+			});
+			builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
-					public void onClick(DialogInterface dialog, int which) {
+				public void onClick(DialogInterface dialog, int which) {
 
-						if (saveApplyImage() == true) {
-							Intent i = getIntent();
-							i.putExtra("image", strCropImage);
-							setResult(RESULT_OK);
-							finish();
-						}
-
-						dialog.dismiss();
-					}
-				});
-				dialog = builder.create();
-
-				break;
-			case DIALOG_CANCEL:
-				builder = new AlertDialog.Builder(this);
-				builder.setMessage(MainActivity.lsSTRINGs.cImageCancel);
-				builder.setCancelable(false);
-				builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
-
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
-
-					public void onClick(DialogInterface dialog, int which) {
-						if (strCropImage != null) {
-							File file = new File(strCropImage);
-							file.delete();
-							strCropImage = null;
-						}
-						
-						setResult(RESULT_CANCELED);
-						dialog.dismiss();
+					if (saveApplyImage() == true) {
+						Intent i = getIntent();
+						i.putExtra("image", strCropImage);
+						setResult(RESULT_OK);
 						finish();
 					}
-				});
-				dialog = builder.create();
 
-				break;
+					dialog.dismiss();
+				}
+			});
+			dialog = builder.create();
+
+			break;
+		case DIALOG_CANCEL:
+			builder = new AlertDialog.Builder(this);
+			builder.setMessage(MainActivity.lsSTRINGs.cImageCancel);
+			builder.setCancelable(false);
+			builder.setNegativeButton(MainActivity.lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
+
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+				}
+			});
+			builder.setPositiveButton(MainActivity.lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
+
+				public void onClick(DialogInterface dialog, int which) {
+					if (strCropImage != null) {
+						File file = new File(strCropImage);
+						file.delete();
+						strCropImage = null;
+					}
+
+					setResult(RESULT_CANCELED);
+					dialog.dismiss();
+					finish();
+				}
+			});
+			dialog = builder.create();
+
+			break;
 		}
 
 		return dialog;
@@ -310,6 +328,7 @@ public class CropActivity extends Activity {
 			bitResultImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
 
 			fio.close();
+			fio = null;
 
 			bResult = true;
 		} catch (Exception e) {
@@ -325,13 +344,26 @@ public class CropActivity extends Activity {
 		strCropImage = MainActivity.strFilePath + "Shutter_" + System.currentTimeMillis() + ".jpg";
 
 		try {
-			FileOutputStream fio = new FileOutputStream(MainActivity.strOriFilename);
+			FileOutputStream fio = null;
 
-			MainActivity.bitOpened[0].compress(Bitmap.CompressFormat.JPEG, 100, fio);
+			// Original file save.
+			if (MainActivity.bOriginalAutoSave == true) {
+				fio = new FileOutputStream(MainActivity.strOriFilename);
 
-			fio.close();
-			fio = null;
+				MainActivity.bitOpened[0].compress(Bitmap.CompressFormat.JPEG, 100, fio);
 
+				if (fio != null) {
+					fio.close();
+					fio = null;
+				}
+
+				sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://"
+						+ MainActivity.strOriFilename)));
+
+				showToast(MainActivity.lsSTRINGs.mSaveSuccess);
+			}
+
+			// Result file save.
 			fio = new FileOutputStream(strCropImage);
 
 			bitResultImage.compress(Bitmap.CompressFormat.JPEG, 100, fio);
@@ -339,12 +371,17 @@ public class CropActivity extends Activity {
 			fio.close();
 			fio = null;
 
-			bitResultImage.recycle();
-			bitResultImage = null;
+			sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + CropActivity.strCropImage)));
+
+			showToast(MainActivity.lsSTRINGs.mSaveSuccess);
+
+			deleteCropBitmap();
 
 			bResult = true;
 		} catch (Exception e) {
 			showToast(e.toString());
+
+			deleteCropBitmap();
 		}
 
 		return bResult;
@@ -372,5 +409,21 @@ public class CropActivity extends Activity {
 		}
 
 		return super.onKeyDown(keyCode, event);
+	}
+
+	@Override
+	protected void onDestroy() {
+		deleteCropBitmap();
+
+		System.gc();
+
+		super.onDestroy();
+	}
+
+	private void deleteCropBitmap() {
+		if (bitResultImage != null) {
+			bitResultImage.recycle();
+			bitResultImage = null;
+		}
 	}
 }

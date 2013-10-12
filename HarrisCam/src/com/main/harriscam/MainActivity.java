@@ -1,30 +1,54 @@
 package com.main.harriscam;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import android.annotation.SuppressLint;
-import android.app.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.*;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
-import android.os.*;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
-import android.view.*;
-import android.widget.*;
+import android.view.Display;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
-@SuppressLint("HandlerLeak")
 public class MainActivity extends Activity {
 	// Load a library
 	static {
@@ -32,6 +56,8 @@ public class MainActivity extends Activity {
 	}
 
 	private static native void applyHarris(Bitmap bitG, Bitmap bitR, Bitmap bitB);
+
+	private static native void applyScreen(Bitmap bitG, Bitmap bitR, Bitmap bitB);
 
 	boolean bEnd = false;
 	Handler mHandler;
@@ -68,7 +94,9 @@ public class MainActivity extends Activity {
 	Camera.PictureCallback mPictureCallbackRaw;
 	Camera.AutoFocusCallback mAutoFocusCallback;
 	byte byOriImage[][]; // Opened JPEG byte file is here.
-	public static String strOriFilename; // Opened original image filenameis here.
+	// Opened original image filename is here.
+	public static String strOriFilename;
+	// 0: First Shot, 1: Second Shot, 2: Last Shot
 	public static Bitmap bitOpened[];
 	public static Bitmap bitResultImage;
 	long LastTime; // Difference time.
@@ -104,6 +132,7 @@ public class MainActivity extends Activity {
 	public static String strAppVersion = null;
 	public static String strLatestVersion = null;
 	public static Locale lcLanguage = null;
+	public static PackageInfo piPackageInfo = null;
 
 	public static String strFilePath = null;
 	public static int nSampleSize;
@@ -226,7 +255,8 @@ public class MainActivity extends Activity {
 
 			public void onAutoFocus(boolean success, Camera camera) {
 				if (bAutoFocusBeep == true) {
-					// mSoundPool.play(mSoundPoolMap.get(AUDIO_FOCUS), 0.3f, 0.3f, 1, 0, 1f);
+					// mSoundPool.play(mSoundPoolMap.get(AUDIO_FOCUS), 0.3f,
+					// 0.3f, 1, 0, 1f);
 				}
 
 				LastTime = System.currentTimeMillis();
@@ -237,7 +267,13 @@ public class MainActivity extends Activity {
 		llButtons = llUpperButtons = llPreview = llUpperBlind = llLowerBlind = null;
 		ibShutter = ibTurn = ibAutoshot = ibFlash = ibSettings = null;
 
-		strAppVersion = getResources().getString(R.string.app_version);
+		try {
+			piPackageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+		} catch (NameNotFoundException e1) {
+			Log.e("Can't found package information...", e1.toString());
+		}
+
+		strAppVersion = piPackageInfo.versionName;
 
 		lcLanguage = getResources().getConfiguration().locale;
 		lsSTRINGs = new LocalString(lcLanguage.toString());
@@ -270,18 +306,18 @@ public class MainActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.settings_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.settings_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.settings);
-						getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-						clearScreen();
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.settings);
+					getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					clearScreen();
 
-						openSettingsPreference();
+					openSettingsPreference();
 
-						break;
+					break;
 				}
 
 				return false;
@@ -292,20 +328,20 @@ public class MainActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.shutter_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.shutter_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						if (bAutoCapture == true) {
-							v.setBackgroundResource(R.drawable.shutter_3);
-						}
+					break;
+				case MotionEvent.ACTION_UP:
+					if (bAutoCapture == true) {
+						v.setBackgroundResource(R.drawable.shutter_3);
+					}
 
-						if (mPreview.mCamera != null) {
-							mPreview.mCamera.autoFocus(mAutoFocusCallback);
-						}
+					if (mPreview.mCamera != null) {
+						mPreview.mCamera.autoFocus(mAutoFocusCallback);
+					}
 
-						break;
+					break;
 				}
 
 				return false;
@@ -316,21 +352,21 @@ public class MainActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.turnover1_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.turnover1_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						v.setBackgroundResource(R.drawable.turnover1);
+					break;
+				case MotionEvent.ACTION_UP:
+					v.setBackgroundResource(R.drawable.turnover1);
 
-						if (bFrontCam == false) {
-							openFrontCamera();
+					if (bFrontCam == false) {
+						openFrontCamera();
 
-						} else {
-							openFrontCamera();
-						}
+					} else {
+						openFrontCamera();
+					}
 
-						break;
+					break;
 				}
 
 				return false;
@@ -354,48 +390,48 @@ public class MainActivity extends Activity {
 
 			public boolean onTouch(View v, MotionEvent event) {
 				switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						v.setBackgroundResource(R.drawable.shot_push);
+				case MotionEvent.ACTION_DOWN:
+					v.setBackgroundResource(R.drawable.shot_push);
 
-						break;
-					case MotionEvent.ACTION_UP:
-						if (bAutoCapture == true && nAutoInterval == 2000) {
+					break;
+				case MotionEvent.ACTION_UP:
+					if (bAutoCapture == true && nAutoInterval == 2000) {
 
-							bAutoCapture = false;
-							v.setBackgroundResource(R.drawable.manual);
-							ibShutter.setBackgroundResource(R.drawable.shutter_3);
-							nAutoInterval = 0;
-						} else {
-							switch (nAutoInterval) {
-								case 0:
-									bAutoCapture = true;
+						bAutoCapture = false;
+						v.setBackgroundResource(R.drawable.manual);
+						ibShutter.setBackgroundResource(R.drawable.shutter_3);
+						nAutoInterval = 0;
+					} else {
+						switch (nAutoInterval) {
+						case 0:
+							bAutoCapture = true;
 
-									deleteAllBitmap();
+							deleteAllBitmap();
 
-									nAutoInterval = 500;
-									v.setBackgroundResource(R.drawable.auto05);
-									ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+							nAutoInterval = 500;
+							v.setBackgroundResource(R.drawable.auto05);
+							ibShutter.setBackgroundResource(R.drawable.shutter_auto);
 
-									break;
-								case 500:
-									nAutoInterval = 1000;
-									v.setBackgroundResource(R.drawable.auto10);
+							break;
+						case 500:
+							nAutoInterval = 1000;
+							v.setBackgroundResource(R.drawable.auto10);
 
-									break;
-								case 1000:
-									nAutoInterval = 1500;
-									v.setBackgroundResource(R.drawable.auto15);
+							break;
+						case 1000:
+							nAutoInterval = 1500;
+							v.setBackgroundResource(R.drawable.auto15);
 
-									break;
-								case 1500:
-									nAutoInterval = 2000;
-									v.setBackgroundResource(R.drawable.auto20);
+							break;
+						case 1500:
+							nAutoInterval = 2000;
+							v.setBackgroundResource(R.drawable.auto20);
 
-									break;
-							}
+							break;
 						}
+					}
 
-						break;
+					break;
 				}
 
 				return false;
@@ -409,32 +445,32 @@ public class MainActivity extends Activity {
 
 				if (parameter.getFlashMode() != null) {
 					switch (event.getAction()) {
-						case MotionEvent.ACTION_DOWN:
+					case MotionEvent.ACTION_DOWN:
 
-							break;
-						case MotionEvent.ACTION_UP:
+						break;
+					case MotionEvent.ACTION_UP:
 
-							if (bFlash == FLASH_OFF) {
-								bFlash = FLASH_AUTO;
-								v.setBackgroundResource(R.drawable.flash_auto);
-								parameter.setFlashMode(Parameters.FLASH_MODE_AUTO);
-							} else if (bFlash == FLASH_AUTO) {
-								bFlash = FLASH_ON;
-								v.setBackgroundResource(R.drawable.flash_on);
-								parameter.setFlashMode(Parameters.FLASH_MODE_ON);
-							} else {
-								bFlash = FLASH_OFF;
-								v.setBackgroundResource(R.drawable.flash_off);
-								parameter.setFlashMode(Parameters.FLASH_MODE_OFF);
-							}
+						if (bFlash == FLASH_OFF) {
+							bFlash = FLASH_AUTO;
+							v.setBackgroundResource(R.drawable.flash_auto);
+							parameter.setFlashMode(Parameters.FLASH_MODE_AUTO);
+						} else if (bFlash == FLASH_AUTO) {
+							bFlash = FLASH_ON;
+							v.setBackgroundResource(R.drawable.flash_on);
+							parameter.setFlashMode(Parameters.FLASH_MODE_ON);
+						} else {
+							bFlash = FLASH_OFF;
+							v.setBackgroundResource(R.drawable.flash_off);
+							parameter.setFlashMode(Parameters.FLASH_MODE_OFF);
+						}
 
-							try {
-								mPreview.mCamera.setParameters(parameter);
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+						try {
+							mPreview.mCamera.setParameters(parameter);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 
-							break;
+						break;
 					}
 				}
 
@@ -507,15 +543,16 @@ public class MainActivity extends Activity {
 				if (strAppVersion != null && strLatestVersion != null) {
 					float fMyVersion = 0f;
 					float fServerVersion = 0f;
-					
+
 					try {
 						fMyVersion = Float.parseFloat(strAppVersion);
 						fServerVersion = Float.parseFloat(strLatestVersion);
-					} catch (NumberFormatException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						Log.e("Failed parseFloat in Main...", e.toString());
 					}
 
-					if (fServerVersion > fMyVersion) { // This is not latest version
+					if (fServerVersion > fMyVersion) { // This is not latest
+														// version
 						bLatestVersion = false;
 
 						if (bAutoUpdate == true) {
@@ -543,30 +580,31 @@ public class MainActivity extends Activity {
 	@Override
 	protected Dialog onCreateDialog(int id) {
 		switch (id) {
-			case DIALOG_VERSION:
-				return new AlertDialog.Builder(this).setTitle(lsSTRINGs.mUpdating).setMessage(lsSTRINGs.mUpdateAsking).setCancelable(true)
-						.setPositiveButton(lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
+		case DIALOG_VERSION:
+			return new AlertDialog.Builder(this).setTitle(lsSTRINGs.mUpdating).setMessage(lsSTRINGs.mUpdateAsking)
+					.setCancelable(true).setPositiveButton(lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
-							public void onClick(DialogInterface dialog, int whichButton) {
-								Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.main.harriscam"));
+						public void onClick(DialogInterface dialog, int whichButton) {
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+									.parse("market://details?id=com.main.harriscam"));
 
-								startActivity(intent);
-								bStarted = false;
+							startActivity(intent);
+							bStarted = false;
 
-								dialog.dismiss();
-							}
+							dialog.dismiss();
+						}
 
-						}).setNegativeButton(lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
+					}).setNegativeButton(lsSTRINGs.aNo, new DialogInterface.OnClickListener() {
 
-							public void onClick(DialogInterface dialog, int whichButton) {
-								bAutoUpdate = false;
+						public void onClick(DialogInterface dialog, int whichButton) {
+							bAutoUpdate = false;
 
-								saveSettings();
+							saveSettings();
 
-								dialog.cancel();
-							}
+							dialog.cancel();
+						}
 
-						}).create();
+					}).create();
 		}
 
 		return super.onCreateDialog(id);
@@ -714,52 +752,52 @@ public class MainActivity extends Activity {
 	}
 
 	private void openSettingsPreference() {
+		if (iSettingsActivity == null) {
+			iSettingsActivity = new Intent(this, SettingsActivity.class);
+		}
+
 		startActivityForResult(iSettingsActivity, ACTIVITY_SETTINGS);
 	}
 
 	private void openCropActivity() {
+		if (iCropActivity == null) {
+			iCropActivity = new Intent(this, CropActivity.class);
+		}
+
 		startActivityForResult(iCropActivity, ACTIVITY_CROP);
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
-			case ACTIVITY_CROP:
-				switch (resultCode) {
-					case RESULT_CANCELED:
-						showToast(lsSTRINGs.mSaveCancel);
+		case ACTIVITY_CROP:
+			switch (resultCode) {
+			case RESULT_CANCELED:
+				showToast(lsSTRINGs.mSaveCancel);
 
-						MainActivity.deleteAllBitmap();
-
-						break;
-					case RESULT_OK:
-						sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + CropActivity.strCropImage)));
-						showToast(lsSTRINGs.mSaveSuccess);
-
-						MainActivity.deleteAllBitmap();
-
-						break;
-					case RESULT_FAILED:
-						showToast(lsSTRINGs.mSaveFailed);
-
-						break;
-				}
-
-				if (bOriginalAutoSave == false) {
-					File temp = new File(strOriFilename);
-					temp.delete();
-				} else {
-					sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + strOriFilename)));
-				}
+				MainActivity.deleteAllBitmap();
 
 				break;
+			case RESULT_OK:
+				showToast(lsSTRINGs.mSaveSuccess);
 
-			case ACTIVITY_SETTINGS:
-				getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-				drawScreen();
-				saveSettings();
+				MainActivity.deleteAllBitmap();
 
 				break;
+			case RESULT_FAILED:
+				showToast(lsSTRINGs.mSaveFailed);
+
+				break;
+			}
+
+			break;
+
+		case ACTIVITY_SETTINGS:
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			drawScreen();
+			saveSettings();
+
+			break;
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);
@@ -792,10 +830,9 @@ public class MainActivity extends Activity {
 	private void readyOpenImage() {
 		try {
 			nTimes = 0;
+			strOriFilename = strFilePath + System.currentTimeMillis() + ".jpg";
 
 			for (int i = 0; i < 3; i++) {
-				String strFilename = strFilePath + System.currentTimeMillis() + ".jpg";
-
 				Bitmap bitTemp = BitmapFactory.decodeByteArray(byOriImage[i], 0, byOriImage[i].length);
 
 				int nWidth = bitTemp.getWidth();
@@ -826,6 +863,11 @@ public class MainActivity extends Activity {
 					bitTemp2 = Bitmap.createBitmap(bitTemp, 0, 0, nWidth, nWidth);
 				}
 
+				if (bitTemp != null) {
+					bitTemp.recycle();
+					bitTemp = null;
+				}
+
 				nWidth = bitTemp2.getWidth();
 				nHeight = bitTemp2.getHeight();
 
@@ -840,14 +882,6 @@ public class MainActivity extends Activity {
 
 				bitOpened[i] = Bitmap.createBitmap(bitTemp2, 0, 0, nWidth, nHeight, matrix, true);
 
-				if (i == 0) {
-					strOriFilename = strFilename;
-				}
-
-				if (bitTemp != null) {
-					bitTemp.recycle();
-					bitTemp = null;
-				}
 				if (bitTemp2 != null) {
 					bitTemp2.recycle();
 					bitTemp2 = null;
@@ -858,8 +892,10 @@ public class MainActivity extends Activity {
 
 			threadApplyHarris = new ApplyHarrisShutter();
 			threadApplyHarris.start();
-		} catch (Exception e) {
-			showToast(e.toString(), Toast.LENGTH_LONG);
+		} catch (OutOfMemoryError e) {
+			showToast("Memory space is full... Try again.");
+
+			MainActivity.deleteAllBitmap();
 		}
 	}
 
@@ -874,8 +910,10 @@ public class MainActivity extends Activity {
 				bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
 
 				applyHarris(bitResultImage, MainActivity.bitOpened[1], MainActivity.bitOpened[2]);
-			} catch (Exception e) {
-				showToast(e.toString());
+			} catch (OutOfMemoryError e) {
+				showToast("Memory space is full... Try again.");
+
+				MainActivity.deleteAllBitmap();
 			}
 
 			openCropActivity();
@@ -1070,6 +1108,8 @@ public class MainActivity extends Activity {
 			mPreview.mCamera = null;
 		}
 
+		deleteAllBitmap();
+
 		android.os.Process.killProcess(android.os.Process.myPid());
 
 		super.finish();
@@ -1082,6 +1122,8 @@ public class MainActivity extends Activity {
 			mPreview.mCamera.release();
 			mPreview.mCamera = null;
 		}
+
+		deleteAllBitmap();
 
 		super.onDestroy();
 	}
@@ -1148,18 +1190,18 @@ public class MainActivity extends Activity {
 		}
 
 		switch (nSaveResolution) {
-			case SAVE_LOW:
-				strResolution = "l";
+		case SAVE_LOW:
+			strResolution = "l";
 
-				break;
-			case SAVE_MIDDLE:
-				strResolution = "m";
+			break;
+		case SAVE_MIDDLE:
+			strResolution = "m";
 
-				break;
-			case SAVE_HIGH:
-				strResolution = "h";
+			break;
+		case SAVE_HIGH:
+			strResolution = "h";
 
-				break;
+			break;
 		}
 
 		if (bScaledSquare == true) {
