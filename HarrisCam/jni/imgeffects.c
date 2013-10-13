@@ -8,6 +8,7 @@
 #include <math.h>
 
 #define A() (0xFF000000)
+#define AA(a) ( (a)&(0xFF000000) )
 #define B(b) ( (b)&(0xFF0000) )
 #define G(g) ( (g)&(0xFF00) )
 #define R(r) ( (r)&(0xFF) )
@@ -19,9 +20,8 @@
 #define BYTEtoRED(r) ( (r)&(0xFF) ) // r : uint8_t
 #define COLOR(r, g, b) ( A() | (B(b)) | (G(g)) | (R(r)) ) // r, g, b : uint32_t
 #define GRAYCOLOR(c) ( A() | (B((c)<<(16))) | (G((c)<<(8))) | (R((c))) ) // c : uint8_t
-#define OPACITY(f, o, b) ( ((f)*(o)) + ((b)*((1)-(o))) ) // f : front value(uint8_t), o : opacity(0~1), b : background value(uint8_t)
-#define RB(n) ( A() | (B(n)) | (R(n)) ) // n : uint32_t
-#define GB(n) ( A() | (B(n)) | (G(n)) ) // n : uint32_t
+#define RB(n) ( (0xFFFF00FF)&(n) ) // n : uint32_t
+#define GB(n) ( (0xFFFFFF00)&(n) ) // n : uint32_t
 
 uint8_t weightedGrayValue(float fR, float fG, float fB, uint32_t rgbValue);
 uint32_t screenMerge(uint32_t nBitBack, uint32_t nBitFront, uint8_t opacity);
@@ -60,17 +60,25 @@ JNIEXPORT void JNICALL Java_com_main_harriscam_MainActivity_applyHarris(JNIEnv *
 	AndroidBitmap_unlockPixels(env, bitB);
 }
 
-JNIEXPORT void JNICALL Java_com_main_harriscam_MainActivity_applyScreen(JNIEnv * env, jobject obj, jobject bitRGB)
+JNIEXPORT void JNICALL Java_com_main_harriscam_MainActivity_applyScreen(JNIEnv * env, jobject obj, jobject bitResult, jobject bitOrigin, jobject bitTemp)
 {
 	AndroidBitmapInfo lBitmapInfo;
-	void * lBitmapRGB;
+	void * lBitmapResult;
+	void * lBitmapOrigin;
+	void * lBitmapTemp;
 
-	AndroidBitmap_getInfo(env, bitRGB, &lBitmapInfo);
-	AndroidBitmap_lockPixels(env, bitRGB, &lBitmapRGB);
+	AndroidBitmap_getInfo(env, bitResult, &lBitmapInfo);
+	AndroidBitmap_lockPixels(env, bitResult, &lBitmapResult);
+	AndroidBitmap_lockPixels(env, bitOrigin, &lBitmapOrigin);
+	AndroidBitmap_lockPixels(env, bitTemp, &lBitmapTemp);
 
-	uint32_t* nBitRGB;
+	uint32_t* nBitResult;
+	uint32_t* nBitOrigin;
+	uint32_t* nBitTemp;
 
-	nBitRGB = (uint32_t *)lBitmapRGB;
+	nBitResult = (uint32_t *)lBitmapResult;
+	nBitOrigin = (uint32_t *)lBitmapOrigin;
+	nBitTemp = (uint32_t *)lBitmapTemp;
 
 	uint32_t GrayValue = 0;
 
@@ -80,38 +88,49 @@ JNIEXPORT void JNICALL Java_com_main_harriscam_MainActivity_applyScreen(JNIEnv *
 	{
 		for (x=0; x<lBitmapInfo.width; x++)
 		{
-			GrayValue = weightedGrayValue(0.3, 0.3, 0.4, nBitRGB[y*lBitmapInfo.width+x]);
-			nBitRGB[y*lBitmapInfo.width+x] = GRAYCOLOR(GrayValue);
-
-			if (x >= offset) {
-				uint32_t rgbRB = RB(nBitRGB[y*lBitmapInfo.width+x - offset]);
-				nBitRGB[y*lBitmapInfo.width+x] = screenMerge(nBitRGB[y*lBitmapInfo.width+x], rgbRB, 127);
-			}
-
-			if (x < lBitmapInfo.width - offset) {
-				uint32_t rgbGB = GB(nBitRGB[y*lBitmapInfo.width+x + offset]);
-				nBitRGB[y*lBitmapInfo.width+x] = screenMerge(nBitRGB[y*lBitmapInfo.width+x], rgbGB, 127);
-			}
+			// Background
+			GrayValue = weightedGrayValue(0.3, 0.3, 0.4, nBitOrigin[y*lBitmapInfo.width+x]);
+			nBitTemp[y*lBitmapInfo.width+x] = GRAYCOLOR(GrayValue);
 		}
 	}
 
-	AndroidBitmap_unlockPixels(env, bitRGB);
+	uint32_t OpacityR = 0;
+	uint32_t OpacityG = 0;
+	uint32_t OpacityB = 0;
+
+	float fOpacity = 0.0;
+
+	for (y=0; y<lBitmapInfo.height; y++)
+	{
+		for (x=0; x<lBitmapInfo.width; x++)
+		{
+			if (offset <= x && x < lBitmapInfo.width - offset) {
+				uint32_t rgbGB = GB(nBitTemp[y*lBitmapInfo.width+x + offset]);
+				uint32_t rgbRB = RB(nBitTemp[y*lBitmapInfo.width+x - offset]);
+				nBitResult[y*lBitmapInfo.width+x] = COLOR(rgbRB, rgbGB, rgbGB);
+			}
+			else {
+				nBitResult[y*lBitmapInfo.width+x] = 0xFF000000;
+			}
+
+			// Apply Shutter Opacity
+			if (0 <= (y % 8) && (y % 8) < 4)
+			{
+				OpacityR = R((uint32_t)((uint32_t)(10) + R(nBitResult[y*lBitmapInfo.width+x]) * 0.95));
+				OpacityG = G((uint32_t)(((uint32_t)(10)<<8) + G(nBitResult[y*lBitmapInfo.width+x]) * 0.95));
+				OpacityB = B((uint32_t)(((uint32_t)(10)<<16) + B(nBitResult[y*lBitmapInfo.width+x]) * 0.95));
+				nBitResult[y*lBitmapInfo.width+x] = COLOR(OpacityR, OpacityG, OpacityB);
+			}
+			
+		}
+	}
+
+	AndroidBitmap_unlockPixels(env, bitResult);
+	AndroidBitmap_unlockPixels(env, bitOrigin);
+	AndroidBitmap_unlockPixels(env, bitTemp);
 }
 
 uint8_t weightedGrayValue(float fR, float fG, float fB, uint32_t rgbValue)
 {
 	return BLUEtoBYTE(rgbValue) * fB + GREENtoBYTE(rgbValue) * fG + REDtoBYTE(rgbValue) * fR;
-}
-
-uint32_t screenMerge(uint32_t nBitBack, uint32_t nBitFront, uint8_t opacity)
-{
-	uint8_t cFrontRed = REDtoBYTE(nBitFront) * ((float)opacity / 255.0);
-	uint8_t cFrontGreen = GREENtoBYTE(nBitFront) * ((float)opacity / 255.0);
-	uint8_t cFrontBlue = BLUEtoBYTE(nBitFront) * ((float)opacity / 255.0);
-
-	uint8_t cBackRed = REDtoBYTE(nBitBack) * (1.0 - ((float)opacity / 255.0));
-	uint8_t cBackGreen = GREENtoBYTE(nBitBack) * (1.0 - ((float)opacity / 255.0));
-	uint8_t cBackBlue = BLUEtoBYTE(nBitBack) * (1.0 - ((float)opacity / 255.0));
-
-	return COLOR(BYTEtoBLUE(cFrontBlue), BYTEtoGREEN(cFrontGreen), BYTEtoRED(cFrontRed));
 }

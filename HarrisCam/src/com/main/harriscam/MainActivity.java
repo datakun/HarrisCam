@@ -32,6 +32,7 @@ import android.hardware.Camera.Size;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -56,9 +57,11 @@ public class MainActivity extends Activity {
 		System.loadLibrary("imgeffects");
 	}
 
+	// Harris Shutter Effect
 	private static native void applyHarris(Bitmap bitG, Bitmap bitR, Bitmap bitB);
 
-	private static native void applyScreen(Bitmap bitRGB);
+	// Old Screen Effect
+	private static native void applyScreen(Bitmap bitResult, Bitmap bitOrigin, Bitmap bitTemp);
 
 	boolean bEnd = false;
 	Handler mHandler;
@@ -89,6 +92,7 @@ public class MainActivity extends Activity {
 	private static final int ID_UPPERBLIND = 107;
 	private static final int ID_LOWERBLIND = 108;
 	private static final int ID_SETTINGS = 109;
+	private static final int ID_MODE = 109;
 
 	Camera.PictureCallback mPictureCallbackJpeg;
 	Camera.ShutterCallback mShutterCallback;
@@ -104,10 +108,11 @@ public class MainActivity extends Activity {
 	boolean bAutoCapture = true; // Using an autoshot?
 	int nAutoInterval = 500; // Autoshot time interval.
 	public static int nTimes = 0; // Manual shot times.
+	boolean bMultiMode = true; // Using harris mode?
 
 	LinearLayout llButtons, llUpperButtons, llPreview, llUpperBlind, llLowerBlind;
 	FrameLayout flPreview;
-	public static ImageButton ibShutter, ibTurn, ibAutoshot, ibFlash, ibSettings;
+	public static ImageButton ibShutter, ibTurn, ibAutoshot, ibFlash, ibSettings, ibMode;
 
 	public static int displayWidth = 0; // Device's display size information.
 	public static int displayHeight = 0;
@@ -199,38 +204,42 @@ public class MainActivity extends Activity {
 						camera.startPreview();
 					}
 
-					if (bAutoCapture == true) {
-						while (System.currentTimeMillis() - LastTime <= nAutoInterval) {
-						}
+					if (bMultiMode == true) {
+						if (bAutoCapture == true) {
+							while (System.currentTimeMillis() - LastTime <= nAutoInterval) {
+							}
 
-						LastTime = System.currentTimeMillis();
+							LastTime = System.currentTimeMillis();
 
-						if (nTimes < 2) {
-							if (camera != null) {
-								nTimes++;
-								camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
+							if (nTimes < 2) {
+								if (camera != null) {
+									nTimes++;
+									camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
+								}
+							} else {
+								ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+
+								readyOpenImage();
 							}
 						} else {
-							ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+							if (nTimes < 2) {
+								if (camera != null) {
+									nTimes++;
 
-							readyOpenImage();
+									if (nTimes == 1) {
+										ibShutter.setBackgroundResource(R.drawable.shutter_2);
+									} else if (nTimes == 2) {
+										ibShutter.setBackgroundResource(R.drawable.shutter_1);
+									}
+								}
+							} else {
+								ibShutter.setBackgroundResource(R.drawable.shutter_3);
+
+								readyOpenImage();
+							}
 						}
 					} else {
-						if (nTimes < 2) {
-							if (camera != null) {
-								nTimes++;
-
-								if (nTimes == 1) {
-									ibShutter.setBackgroundResource(R.drawable.shutter_2);
-								} else if (nTimes == 2) {
-									ibShutter.setBackgroundResource(R.drawable.shutter_1);
-								}
-							}
-						} else {
-							ibShutter.setBackgroundResource(R.drawable.shutter_3);
-
-							readyOpenImage();
-						}
+						readyOpenImage();
 					}
 				} catch (Exception e) {
 					showToast("Camera settings failed.");
@@ -266,7 +275,7 @@ public class MainActivity extends Activity {
 		};
 
 		llButtons = llUpperButtons = llPreview = llUpperBlind = llLowerBlind = null;
-		ibShutter = ibTurn = ibAutoshot = ibFlash = ibSettings = null;
+		ibShutter = ibTurn = ibAutoshot = ibFlash = ibSettings = ibMode = null;
 
 		try {
 			piPackageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -479,6 +488,34 @@ public class MainActivity extends Activity {
 			}
 		});
 
+		ibMode.setOnTouchListener(new View.OnTouchListener() {
+
+			public boolean onTouch(View v, MotionEvent event) {
+
+				switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+
+					break;
+				case MotionEvent.ACTION_UP:
+					if (bMultiMode == true) {
+						bMultiMode = false;
+						v.setBackgroundResource(R.drawable.mode_single);
+						ibAutoshot.setVisibility(View.INVISIBLE);
+						ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+					} else {
+						bMultiMode = true;
+						v.setBackgroundResource(R.drawable.mode_multi);
+						ibAutoshot.setVisibility(View.VISIBLE);
+						ibShutter.setBackgroundResource(R.drawable.shutter_auto);
+					}
+
+					break;
+				}
+
+				return false;
+			}
+		});
+
 		if (bStarted == false) {
 			bStarted = true;
 
@@ -586,8 +623,7 @@ public class MainActivity extends Activity {
 					.setCancelable(true).setPositiveButton(lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
 						public void onClick(DialogInterface dialog, int whichButton) {
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
-									.parse("market://details?id=com.main.harriscam"));
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.main.harriscam"));
 
 							startActivity(intent);
 							bStarted = false;
@@ -629,6 +665,11 @@ public class MainActivity extends Activity {
 		ibAutoshot.setBackgroundResource(R.drawable.auto05);
 		ibAutoshot.setLayoutParams(new LinearLayout.LayoutParams((int) (displayWidth / 3.5), displayWidth / 7));
 
+		ibMode = new ImageButton(this);
+		ibMode.setId(ID_MODE);
+		ibMode.setBackgroundResource(R.drawable.mode_multi);
+		ibMode.setLayoutParams(new LinearLayout.LayoutParams((int) (displayWidth / 4), displayWidth / 8));
+
 		flPreview.addView(llUpperButtons);
 
 		LinearLayout llLeft = new LinearLayout(this);
@@ -647,6 +688,7 @@ public class MainActivity extends Activity {
 		llRight.setOrientation(LinearLayout.HORIZONTAL);
 		llRight.setGravity(Gravity.CENTER);
 		llRight.setLayoutParams(new LinearLayout.LayoutParams(displayWidth / 3, displayWidth / 6));
+		llRight.addView(ibMode);
 
 		llUpperButtons.addView(llLeft);
 		llUpperButtons.addView(llMid);
@@ -890,7 +932,15 @@ public class MainActivity extends Activity {
 					bitTemp2 = null;
 				}
 
+				if (byOriImage[i] != null) {
+					byOriImage[i] = null;
+				}
+
 				System.gc();
+
+				if (bMultiMode == false) {
+					break;
+				}
 			}
 
 			threadApplyHarris = new ApplyHarrisShutter();
@@ -910,11 +960,25 @@ public class MainActivity extends Activity {
 
 		public void run() {
 			try {
-				bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
 
-				// applyHarris(bitResultImage, MainActivity.bitOpened[1],
-				// MainActivity.bitOpened[2]);
-				applyScreen(bitResultImage);
+				// Old Screen Mode
+				if (bMultiMode == false) {
+					Bitmap bitTempImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
+					bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
+
+					applyScreen(bitResultImage, MainActivity.bitOpened[0], bitTempImage);
+
+					if (bitTempImage != null) {
+						bitTempImage.recycle();
+						bitTempImage = null;
+					}
+
+					System.gc();
+				} else { // Harris Shutter Mode
+					bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
+
+					applyHarris(bitResultImage, MainActivity.bitOpened[1], MainActivity.bitOpened[2]);
+				}
 			} catch (OutOfMemoryError e) {
 				showToast("Memory space is full... Try again.");
 
