@@ -623,7 +623,8 @@ public class MainActivity extends Activity {
 					.setCancelable(true).setPositiveButton(lsSTRINGs.aYes, new DialogInterface.OnClickListener() {
 
 						public void onClick(DialogInterface dialog, int whichButton) {
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.main.harriscam"));
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+									.parse("market://details?id=com.main.harriscam"));
 
 							startActivity(intent);
 							bStarted = false;
@@ -1102,8 +1103,21 @@ public class MainActivity extends Activity {
 				Size optimalSize = getOptimalPreviewSize(sizes, w, h);
 				parameters.setPreviewSize(optimalSize.width, optimalSize.height);
 
+				if (bFlash == FLASH_OFF) {
+					parameters.setFlashMode(Parameters.FLASH_MODE_OFF);
+				} else if (bFlash == FLASH_AUTO) {
+					parameters.setFlashMode(Parameters.FLASH_MODE_AUTO);
+				} else {
+					parameters.setFlashMode(Parameters.FLASH_MODE_ON);
+				}
+
 				// parameters.setPreviewSize(w, h);
-				mCamera.setParameters(parameters);
+
+				try {
+					mCamera.setParameters(parameters);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				mCamera.startPreview();
 
 				// If before camera setting is front camera.
