@@ -32,8 +32,8 @@ public class CropActivity extends Activity {
 	int nImageWidth = 0; // Image size
 	int nImageHeight = 0;
 
-	int displayWidth; // Device's display size information.
-	int displayHeight;
+	int displayWidth = 0; // Device's display size information.
+	int displayHeight = 0;
 
 	boolean bVertical = true;
 
@@ -341,7 +341,7 @@ public class CropActivity extends Activity {
 	private boolean saveApplyImage() {
 		boolean bResult = false;
 
-		strCropImage = MainActivity.strFilePath + "Shutter_" + System.currentTimeMillis() + ".jpg";
+		strCropImage = MainActivity.strOriFilename.substring(0, MainActivity.strOriFilename.length() - 4) + "_fx.jpg";
 
 		try {
 			FileOutputStream fio = null;

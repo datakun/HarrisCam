@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,7 +58,7 @@ public class MainActivity extends Activity {
 
 	private static native void applyHarris(Bitmap bitG, Bitmap bitR, Bitmap bitB);
 
-	private static native void applyScreen(Bitmap bitG, Bitmap bitR, Bitmap bitB);
+	private static native void applyScreen(Bitmap bitRGB);
 
 	boolean bEnd = false;
 	Handler mHandler;
@@ -108,8 +109,8 @@ public class MainActivity extends Activity {
 	FrameLayout flPreview;
 	public static ImageButton ibShutter, ibTurn, ibAutoshot, ibFlash, ibSettings;
 
-	public static int displayWidth; // Device's display size information.
-	public static int displayHeight;
+	public static int displayWidth = 0; // Device's display size information.
+	public static int displayHeight = 0;
 
 	public static boolean bFrontCam = false; // Using an front camera?
 	int bFlash = FLASH_OFF; // Flashlight state.
@@ -135,7 +136,7 @@ public class MainActivity extends Activity {
 	public static PackageInfo piPackageInfo = null;
 
 	public static String strFilePath = null;
-	public static int nSampleSize;
+	public static int nSampleSize = 0;
 
 	ApplyHarrisShutter threadApplyHarris;
 
@@ -289,7 +290,7 @@ public class MainActivity extends Activity {
 
 		File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Pictures/HarrisCam");
 		dir.mkdirs();
-		strFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/Harris_";
+		strFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/HarrisCam/HarrisCam_";
 
 		try {
 			FileInputStream fi = openFileInput("harrissettings");
@@ -529,7 +530,7 @@ public class MainActivity extends Activity {
 			}
 
 			catch (Exception ex) {
-				Log.e("Version T.T", ex.toString());
+				Log.e("Failed get a latest version.", ex.toString());
 			}
 
 			mFindVersion.sendEmptyMessage(0);
@@ -830,14 +831,16 @@ public class MainActivity extends Activity {
 	private void readyOpenImage() {
 		try {
 			nTimes = 0;
-			strOriFilename = strFilePath + System.currentTimeMillis() + ".jpg";
+
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			strOriFilename = strFilePath + sdf.format(System.currentTimeMillis()) + ".jpg";
 
 			for (int i = 0; i < 3; i++) {
 				Bitmap bitTemp = BitmapFactory.decodeByteArray(byOriImage[i], 0, byOriImage[i].length);
 
 				int nWidth = bitTemp.getWidth();
 				int nHeight = bitTemp.getHeight();
-				int nTargetWidth;
+				int nTargetWidth = 0;
 
 				Bitmap bitTemp2 = null;
 
@@ -909,7 +912,9 @@ public class MainActivity extends Activity {
 			try {
 				bitResultImage = Bitmap.createBitmap(MainActivity.bitOpened[0]);
 
-				applyHarris(bitResultImage, MainActivity.bitOpened[1], MainActivity.bitOpened[2]);
+				// applyHarris(bitResultImage, MainActivity.bitOpened[1],
+				// MainActivity.bitOpened[2]);
+				applyScreen(bitResultImage);
 			} catch (OutOfMemoryError e) {
 				showToast("Memory space is full... Try again.");
 
@@ -929,6 +934,7 @@ public class MainActivity extends Activity {
 		for (int i = 0; i < cameraCount; i++) {
 			Camera.getCameraInfo(i, ciCamera);
 
+			// Toggle camera.
 			if (bFrontCam == false) {
 				if (ciCamera.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 					camNum = i;
@@ -949,11 +955,14 @@ public class MainActivity extends Activity {
 		}
 
 		try {
-			mPreview.mCamera.release();
+			if (mPreview.mCamera != null) {
+				mPreview.mCamera.release();
+			}
 			mPreview.mCamera = null;
 
 			mPreview.mCamera = Camera.open(camNum);
 			mPreview.mCamera.setDisplayOrientation(90);
+
 			try {
 				mPreview.mCamera.setPreviewDisplay(mPreview.mHolder);
 			} catch (IOException exception) {
@@ -964,6 +973,7 @@ public class MainActivity extends Activity {
 			mPreview.mCamera.startPreview();
 		} catch (RuntimeException e) {
 			showToast(e.toString());
+			Log.e("Failed open a front cam...", e.toString());
 		}
 	}
 
@@ -1031,6 +1041,12 @@ public class MainActivity extends Activity {
 				// parameters.setPreviewSize(w, h);
 				mCamera.setParameters(parameters);
 				mCamera.startPreview();
+
+				// If before camera setting is front camera.
+				if (bFrontCam == true) {
+					bFrontCam = false;
+					openFrontCamera();
+				}
 			}
 		}
 
