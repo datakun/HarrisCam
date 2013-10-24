@@ -22,8 +22,7 @@
             android:id="@+id/ivAbout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/about"
-            android:contentDescription="@string/app_name" />
+            android:background="@drawable/about" />
     </LinearLayout>
 
 </ScrollView>

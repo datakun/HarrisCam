@@ -13,6 +13,8 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -32,7 +34,6 @@ import android.hardware.Camera.Size;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -236,13 +237,14 @@ public class MainActivity extends Activity {
 								ibShutter.setBackgroundResource(R.drawable.shutter_3);
 
 								readyOpenImage();
+
 							}
 						}
 					} else {
 						readyOpenImage();
 					}
 				} catch (Exception e) {
-					showToast("Camera settings failed.");
+					showToast("Take a picture failed.");
 				}
 			}
 		};
@@ -250,7 +252,7 @@ public class MainActivity extends Activity {
 		mShutterCallback = new Camera.ShutterCallback() {
 
 			public void onShutter() {
-
+				
 			}
 		};
 
@@ -270,7 +272,8 @@ public class MainActivity extends Activity {
 				}
 
 				LastTime = System.currentTimeMillis();
-				camera.takePicture(null, null, mPictureCallbackJpeg);
+
+				camera.takePicture(mShutterCallback, mPictureCallbackRaw, mPictureCallbackJpeg);
 			}
 		};
 
