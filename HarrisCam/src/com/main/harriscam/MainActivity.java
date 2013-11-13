@@ -1118,16 +1118,13 @@ public class MainActivity extends Activity {
 
 				try {
 					mCamera.setParameters(parameters);
+					mCamera.startPreview();
 				} catch (Exception e) {
+					showToast("Failed camera setting on initialize.");
 					e.printStackTrace();
 				}
-				mCamera.startPreview();
-
-				// If before camera setting is front camera.
-				if (bFrontCam == true) {
-					bFrontCam = false;
-					openFrontCamera();
-				}
+				
+				bFrontCam = false;
 			}
 		}
 
