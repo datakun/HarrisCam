@@ -33,18 +33,18 @@
             android:name="com.main.harriscam.IntroActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoTitleBar" >
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+        </activity>
+        <activity
+            android:name="com.main.harriscam.CameraActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name="com.main.harriscam.CameraActivity"
-            android:label="@string/title_activity_camera"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoTitleBar" >
         </activity>
         <activity
             android:name="com.main.harriscam.EditorActivity"

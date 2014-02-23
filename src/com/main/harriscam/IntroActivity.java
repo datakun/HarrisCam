@@ -1,22 +1,28 @@
 package com.main.harriscam;
 
-import android.os.Bundle;
 import android.app.Activity;
-import android.view.Menu;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
 
 public class IntroActivity extends Activity {
+	private Handler _Handler;
+	private Runnable _Runnable;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
 		setContentView( R.layout.activity_intro );
-	}
 
-	@Override
-	public boolean onCreateOptionsMenu( Menu menu ) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate( R.menu.intro, menu );
-		return true;
-	}
+		_Runnable = new Runnable() {
+			@Override
+			public void run() {
+				startActivity( new Intent( IntroActivity.this, CameraActivity.class ) );
+				finish();
+			}
+		};
 
+		_Handler = new Handler();
+		_Handler.postDelayed( _Runnable, 1000 );
+	}
 }
