@@ -209,14 +209,7 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 		case R.id.cpPreview:
 			switch ( event.getAction() ) {
 			case MotionEvent.ACTION_DOWN:
-				cpPreview._Camera.autoFocus( new AutoFocusCallback() {
-
-					@Override
-					public void onAutoFocus( boolean success, Camera cam ) {
-						// TODO Auto-generated method stub
-
-					}
-				} );
+				cpPreview._Camera.autoFocus( null );
 
 				break;
 			}
