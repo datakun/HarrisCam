@@ -15,10 +15,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PreviewCallback;
+import android.hardware.Camera.Size;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.util.AttributeSet;
@@ -30,6 +30,13 @@ import com.kimdata.kimdatautil.Kimdata;
 import com.main.harriscam.HarrisConfig;
 
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
+
+	static {
+		System.loadLibrary( "HarrisCam" );
+	}
+
+	public native static void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
+
 	Context _Context;
 	SurfaceHolder _Holder;
 
@@ -37,6 +44,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	Camera.Parameters _Params;
 	List< Camera.Size > _listPreviewSize;
 	List< Camera.Size > _listPictureSize;
+	Camera.Size _sizePreview;
 
 	public boolean _isCapture = false;
 
@@ -45,18 +53,20 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 	int _flagFlash; // 0: Off, 1: Auto, 2: Torch
 
-	byte[][] _byRawData; // 0: first, 1: second, 2: third Raw data
+	public byte[][] _byRawData; // 0: first, 1: second, 2: third Raw data
 	int _idxData; // Index of data
 
 	long _timeLast;
 	long _timeInterval;
 
-	String _filepath;
+	public String _filepath;
 
 	ProgressDialog _progDlg;
 
 	SoundPool sound_pool;
 	int sound_beep;
+
+	public Bitmap[] bmpImage;
 
 	public CameraPreview( Context context, AttributeSet attrs ) {
 		super( context, attrs );
@@ -122,7 +132,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 	private void startCam() {
 		if ( _Params != null && _Camera != null ) {
-			_Params.setPreviewSize( _listPreviewSize.get( 0 ).width, _listPreviewSize.get( 0 ).height );
+			_sizePreview = _listPreviewSize.get( 0 );
+			_Params.setPreviewSize( _sizePreview.width, _sizePreview.height );
 			_Camera.setParameters( _Params );
 			_Camera.startPreview();
 
@@ -162,6 +173,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 		Kimdata.sortCameraSize( _listPreviewSize, true );
 		Kimdata.sortCameraSize( _listPictureSize, true );
+
+		initResolution();
 	}
 
 	private void releaseCam() {
@@ -196,7 +209,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						_progDlg.show();
 					}
 
+					bmpImage = new Bitmap[3];
+
 					// TODO Bitmap으로 저장하는 부분; Preview data는 YUV 포맷이기 때문에 다음과 같은 방법으로 Bitmap을 만들어한다.
+					// 이미지를 파일로 저장하는 부분을 스레드로 추출하자
 					int i = 1;
 					for ( byte[] byImage : _byRawData ) {
 						int w = _Params.getPreviewSize().width;
@@ -206,12 +222,21 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 						ByteArrayOutputStream out = new ByteArrayOutputStream();
 						Rect area = new Rect( 0, 0, w, h );
-						image.compressToJpeg( area, 50, out );
-						Bitmap bitmap = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+						image.compressToJpeg( area, 100, out );
+						bmpImage[i - 1] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
 
-						String filename = _filepath + ( i++ ) + ".jpg";
-						Kimdata.SaveBitmapToFileCache( bitmap, filename );
+						String filename = _filepath + ( i ) + ".jpg";
+						Kimdata.SaveBitmapToFileCache( bmpImage[i - 1], filename );
+						i++;
 					}
+
+					synchronized ( bmpImage[0] ) {
+						naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
+					}
+
+					Kimdata.SaveBitmapToFileCache( bmpImage[0], _filepath + "fx.jpg" );
+
+					HarrisConfig.PATH_FILE = _filepath;
 
 					if ( _progDlg != null ) {
 						_progDlg.dismiss();
@@ -222,9 +247,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		}
 	};
 
-	public void captureSurfaceView( float interval ) {
+	public void captureImage() {
 		_isCapture = true;
-		_timeInterval = (long) ( interval * 1000 );
+		_timeInterval = HarrisConfig.INTERVAL;
 		_timeLast = System.currentTimeMillis();
 
 		Date now = new Date();
@@ -275,5 +300,54 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		} else {
 			return -1;
 		}
+	}
+
+	// TODO 해야 함
+	// 최고 해상도, 중간 해상도, 낮은 해상도를 설정
+	private void initResolution() {
+		int length = _listPreviewSize.size();
+
+		Kimdata.jlog( _listPreviewSize.get( 0 ).width + " width1, " + _listPreviewSize.get( 0 ).height + " height1" );
+		Kimdata.jlog( _listPreviewSize.get( length / 2 ).width + " width2, " + _listPreviewSize.get( length / 2 ).height + " height2" );
+		Kimdata.jlog( _listPreviewSize.get( length - 1 ).width + " width3, " + _listPreviewSize.get( length - 1 ).height + " height3" );
+	}
+
+	private Size getOptimalResolution( List< Size > sizes, int w, int h ) {
+		final double ASPECT_TOLERANCE = 0.1;
+		double targetRatio = (double) w / h;
+		if ( sizes == null )
+			return null;
+
+		Size optimalSize = null;
+		double minDiff = Double.MAX_VALUE;
+		int targetHeight = h;
+
+		for ( Size size : sizes ) {
+			double ratio = (double) size.width / size.height;
+
+			if ( Math.abs( ratio - targetRatio ) > ASPECT_TOLERANCE )
+				continue;
+			if ( Math.abs( size.height - targetHeight ) < minDiff ) {
+				optimalSize = size;
+				minDiff = Math.abs( size.height - targetHeight );
+			}
+		}
+
+		if ( optimalSize == null ) {
+			minDiff = Double.MAX_VALUE;
+
+			for ( Size size : sizes ) {
+				if ( Math.abs( size.height - targetHeight ) < minDiff ) {
+					optimalSize = size;
+					minDiff = Math.abs( size.height - targetHeight );
+				}
+			}
+		}
+
+		return optimalSize;
+	}
+
+	public void switchResolution() {
+
 	}
 }

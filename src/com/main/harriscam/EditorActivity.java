@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -39,7 +41,11 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 		ibTransform.setOnClickListener( this );
 		ibRestore.setOnClickListener( this );
 		ibApply.setOnClickListener( this );
-		
+
+		Bitmap bitmap = BitmapFactory.decodeFile( HarrisConfig.PATH_FILE + "fx.jpg" );
+
+		ivPicture.setImageBitmap( bitmap );
+
 		Kimdata.toast( this, "사진이 저장되었습니다." );
 	}
 
@@ -50,10 +56,10 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 				Kimdata.resizeViewInFrame( ivPicture, HarrisConfig.PREVIEW_W - Kimdata.dp2px( 20, getResources() ), HarrisConfig.PREVIEW_H
 						- Kimdata.dp2px( 20, getResources() ) );
 
-				Kimdata.positionViewInFrame( ivPicture, ( HarrisConfig.LAYOUT_W - ivPicture.getWidth() ) / 2, ( HarrisConfig.LAYOUT_H
-						- ivPicture.getHeight() - Kimdata.dp2px( 121, getResources() ) ) / 4 );
+				Kimdata.positionViewInFrame( ivPicture, ( HarrisConfig.LAYOUT_W - ivPicture.getWidth() ) / 4, ( HarrisConfig.LAYOUT_H
+						- ivPicture.getHeight() - Kimdata.dp2px( 121, getResources() ) ) / 2 );
 
-				Kimdata.jlog( ( HarrisConfig.LAYOUT_W - ivPicture.getWidth() ) / 2 + ": "
+				Kimdata.jlog( ( HarrisConfig.LAYOUT_W - ivPicture.getWidth() ) / 2 + " : "
 						+ ( HarrisConfig.LAYOUT_H - ivPicture.getHeight() - Kimdata.dp2px( 60, getResources() ) ) / 2 );
 
 				_isInited = true;

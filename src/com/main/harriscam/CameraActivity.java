@@ -1,9 +1,9 @@
 package com.main.harriscam;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.content.Intent;
-import android.hardware.Camera;
-import android.hardware.Camera.AutoFocusCallback;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
@@ -28,6 +28,8 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 	ImageView ivStatFlash, ivStatTimer;
 
 	ThreadShutter _thread;
+
+	int flag = 0;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
@@ -78,17 +80,17 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 			HarrisConfig.PREVIEW_W = HarrisConfig.DEVICE_W;
 			HarrisConfig.PREVIEW_H = HarrisConfig.DEVICE_W;
 
-			HarrisConfig.OFFSET = ( HarrisConfig.DEVICE_H - HarrisConfig.PREVIEW_W ) / 2;
+			HarrisConfig.OFFSET_PICTURE = ( HarrisConfig.DEVICE_H - HarrisConfig.PREVIEW_W ) / 2;
 
-			Kimdata.resizeViewInFrame( llPanelTop, HarrisConfig.DEVICE_W, HarrisConfig.OFFSET );
-			Kimdata.resizeViewInFrame( llPanelBottom, HarrisConfig.DEVICE_W, HarrisConfig.OFFSET );
+			Kimdata.resizeViewInFrame( llPanelTop, HarrisConfig.DEVICE_W, HarrisConfig.OFFSET_PICTURE );
+			Kimdata.resizeViewInFrame( llPanelBottom, HarrisConfig.DEVICE_W, HarrisConfig.OFFSET_PICTURE );
 
-			Kimdata.positionViewInFrame( llPanelBottom, 0, HarrisConfig.DEVICE_H - HarrisConfig.OFFSET );
+			Kimdata.positionViewInFrame( llPanelBottom, 0, HarrisConfig.DEVICE_H - HarrisConfig.OFFSET_PICTURE );
 
 			Kimdata.positionViewInFrame( ivStatFlash, Kimdata.dp2px( 5, getResources() ),
-					HarrisConfig.OFFSET + Kimdata.dp2px( 5, getResources() ) );
-			Kimdata.positionViewInFrame( ivStatTimer, ivStatFlash.getRight() + Kimdata.dp2px( 5, getResources() ), HarrisConfig.OFFSET
-					+ Kimdata.dp2px( 5, getResources() ) );
+					HarrisConfig.OFFSET_PICTURE + Kimdata.dp2px( 5, getResources() ) );
+			Kimdata.positionViewInFrame( ivStatTimer, ivStatFlash.getRight() + Kimdata.dp2px( 5, getResources() ),
+					HarrisConfig.OFFSET_PICTURE + Kimdata.dp2px( 5, getResources() ) );
 
 			// TODO 폴더를 찾아주는 알고리즘으로 경로 설정해야 함 (2014-02-23)
 			HarrisConfig.PATH_SAVE = Kimdata.makeDir( "/DCIM/harriscam" );
@@ -141,6 +143,7 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 	public void onClick( View v ) {
 		switch ( v.getId() ) {
 		case R.id.ibFlash:
+			// 아이콘 변경
 			switch ( cpPreview.switchFlash() ) {
 			case 0:
 
@@ -159,9 +162,40 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 
 			break;
 		case R.id.ibTimer:
+			// 아이콘 변경
+			switch ( HarrisConfig.INTERVAL / HarrisConfig.OFFSET_INTERVAL ) {
+			case 0:
+
+				break;
+			case 1:
+
+				break;
+			case 2:
+
+				break;
+			case 3:
+
+				break;
+			}
+
+			HarrisConfig.INTERVAL = ( ( ( HarrisConfig.INTERVAL / HarrisConfig.OFFSET_INTERVAL ) + 1 ) % 4 ) * HarrisConfig.OFFSET_INTERVAL;
 
 			break;
 		case R.id.ibResolution:
+			// 아이콘 변경
+			switch ( HarrisConfig.RESOLUTION ) {
+			case 0:
+
+				break;
+			case 1:
+
+				break;
+			case 2:
+
+				break;
+			}
+
+			HarrisConfig.RESOLUTION = ( HarrisConfig.RESOLUTION + 1 ) % 3;
 
 			break;
 		case R.id.ibGuideline:
@@ -172,7 +206,8 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 
 			break;
 		case R.id.ibShutter:
-			cpPreview.captureSurfaceView( HarrisConfig.INTERVAL );
+			v.setEnabled( false );
+			cpPreview.captureImage();
 
 			if ( _thread != null ) {
 				_thread.interrupt();
@@ -195,9 +230,44 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 		public void run() {
 			while ( !Thread.currentThread().isInterrupted() ) {
 				if ( HarrisConfig.IsSAVED ) {
-					HarrisConfig.IsSAVED = false;
-					startActivity( new Intent( CameraActivity.this, EditorActivity.class ) );
-					Thread.currentThread().interrupt();
+					File file1 = new File( cpPreview._filepath + "1.jpg" );
+					File file2 = new File( cpPreview._filepath + "2.jpg" );
+					File file3 = new File( cpPreview._filepath + "3.jpg" );
+					File file4 = new File( cpPreview._filepath + "fx.jpg" );
+
+					if ( file1.exists() ) {
+						flag++;
+						cpPreview.bmpImage[0].recycle();
+						cpPreview.bmpImage[0] = null;
+					}
+					if ( file2.exists() ) {
+						flag++;
+						cpPreview.bmpImage[1].recycle();
+						cpPreview.bmpImage[1] = null;
+					}
+					if ( file3.exists() ) {
+						flag++;
+						cpPreview.bmpImage[2].recycle();
+						cpPreview.bmpImage[2] = null;
+					}
+					if ( file4.exists() ) {
+						flag++;
+					}
+
+					if ( flag > 3 ) {
+						HarrisConfig.IsSAVED = false;
+						( (Activity) CameraActivity.this ).runOnUiThread( new Runnable() {
+
+							@Override
+							public void run() {
+								ibShutter.setEnabled( true );
+							}
+						} );
+						startActivity( new Intent( CameraActivity.this, EditorActivity.class ) );
+						Thread.currentThread().interrupt();
+					}
+
+					flag = 0;
 				}
 			}
 		}

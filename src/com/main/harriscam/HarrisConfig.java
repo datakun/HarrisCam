@@ -18,9 +18,10 @@ public class HarrisConfig {
 	public static int PICTURE_W = 0;
 	public static int PICTURE_H = 0;
 
-	public static int OFFSET = 0;
+	public static int OFFSET_PICTURE = 0;
 
-	public static float INTERVAL = 0.5f;
+	public static int INTERVAL = 500; // ms
+	public static int OFFSET_INTERVAL = 500; // ms
 
 	public static boolean IsEND = false;
 
@@ -33,6 +34,12 @@ public class HarrisConfig {
 	}
 
 	public static String PATH_SAVE;
+	public static String PATH_FILE;
 
 	public static boolean IsSAVED = false;
+
+	public static int RESOLUTION = 0; // 0: high, 1: mid, 2: low
+	public static int RES_HIGH = 0;
+	public static int RES_MID = 0;
+	public static int RES_LOW = 480;
 }
