@@ -1,13 +1,26 @@
+/*
+ Copyright (C) 2014, Jun-woo Kim (kimdatagoon@gmail.com)
+
+ This code is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <jni.h>
+
+#include <android/log.h>
+#include <android/bitmap.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <time.h>
-
-#include <android/log.h>
-#include <string.h>
-#include <android/bitmap.h>
 
 #define A() (0xFF000000)
 #define AA(a) ( (a)&(0xFF000000) )
@@ -27,6 +40,8 @@
 
 #define elog(...) __android_log_print(6, "junu", __VA_ARGS__);
 #define jlog(...) __android_log_print(4, "junu", __VA_ARGS__);
+
+uint8_t weightedGrayValue ( float fR, float fG, float fB, uint32_t rgbValue );
 
 JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyHarris ( JNIEnv * env, jobject obj, jobject bitG, jobject bitR, jobject bitB ) {
 	AndroidBitmapInfo lBitmapInfo;
@@ -59,9 +74,77 @@ JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyHarris ( JNI
 	AndroidBitmap_unlockPixels( env, bitG );
 	AndroidBitmap_unlockPixels( env, bitB );
 }
+
+JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyScreen ( JNIEnv * env, jobject obj, jobject bitResult, jobject bitOrigin, jobject bitTemp ) {
+	AndroidBitmapInfo lBitmapInfo;
+	void * lBitmapResult;
+	void * lBitmapOrigin;
+	void * lBitmapTemp;
+
+	AndroidBitmap_getInfo( env, bitResult, &lBitmapInfo );
+	AndroidBitmap_lockPixels( env, bitResult, &lBitmapResult );
+	AndroidBitmap_lockPixels( env, bitOrigin, &lBitmapOrigin );
+	AndroidBitmap_lockPixels( env, bitTemp, &lBitmapTemp );
+
+	uint32_t* nBitResult;
+	uint32_t* nBitOrigin;
+	uint32_t* nBitTemp;
+
+	nBitResult = (uint32_t *) lBitmapResult;
+	nBitOrigin = (uint32_t *) lBitmapOrigin;
+	nBitTemp = (uint32_t *) lBitmapTemp;
+
+	uint32_t GrayValue = 0;
+
+	int offset = 5;
+	int y, x;
+	for ( y = 0; y < lBitmapInfo.height; y++ ) {
+		for ( x = 0; x < lBitmapInfo.width; x++ ) {
+			// Background
+			GrayValue = weightedGrayValue( 0.3, 0.3, 0.4, nBitOrigin[y * lBitmapInfo.width + x] );
+			nBitTemp[y * lBitmapInfo.width + x] = GRAYCOLOR( GrayValue );
+		}
+	}
+
+	uint32_t OpacityR = 0;
+	uint32_t OpacityG = 0;
+	uint32_t OpacityB = 0;
+
+	float fOpacity = 0.0;
+
+	for ( y = 0; y < lBitmapInfo.height; y++ ) {
+		for ( x = 0; x < lBitmapInfo.width; x++ ) {
+			if ( offset <= x && x < lBitmapInfo.width - offset ) {
+				uint32_t rgbGB = GB( nBitTemp[y * lBitmapInfo.width + x + offset] );
+				uint32_t rgbRB = RB( nBitTemp[y * lBitmapInfo.width + x - offset] );
+				nBitResult[y * lBitmapInfo.width + x] = COLOR( rgbRB, rgbGB, rgbGB );
+			} else {
+				nBitResult[y * lBitmapInfo.width + x] = 0xFF000000;
+			}
+
+			// Apply Shutter Opacity
+			if ( 0 <= ( y % 8 ) && ( y % 8 ) < 4 ) {
+				OpacityR = R( (uint32_t)((uint32_t)(10) + R(nBitResult[y*lBitmapInfo.width+x]) * 0.95) );
+				OpacityG = G( (uint32_t)(((uint32_t)(10)<<8) + G(nBitResult[y*lBitmapInfo.width+x]) * 0.95) );
+				OpacityB = B( (uint32_t)(((uint32_t)(10)<<16) + B(nBitResult[y*lBitmapInfo.width+x]) * 0.95) );
+				nBitResult[y * lBitmapInfo.width + x] = COLOR( OpacityR, OpacityG, OpacityB );
+			}
+
+		}
+	}
+
+	AndroidBitmap_unlockPixels( env, bitResult );
+	AndroidBitmap_unlockPixels( env, bitOrigin );
+	AndroidBitmap_unlockPixels( env, bitTemp );
+}
+
+uint8_t weightedGrayValue ( float fR, float fG, float fB, uint32_t rgbValue ) {
+	return BLUEtoBYTE(rgbValue) * fB + GREENtoBYTE(rgbValue) * fG + REDtoBYTE(rgbValue) * fR;
+}
 /*
 jint JNI_OnLoad ( JavaVM* pVm, void* reserved ) {
 	JNIEnv* env;
+
 	if ( pVm->GetEnv( (void **) &env, JNI_VERSION_1_6 ) != JNI_OK ) {
 		return -1;
 	}
@@ -72,9 +155,13 @@ jint JNI_OnLoad ( JavaVM* pVm, void* reserved ) {
 	nm[0].signature = "()V";
 	nm[0].fnPtr = (void*) naApplyHarris;
 
+	nm[1].name = "naApplyScreen";
+	nm[1].signature = "()V";
+	nm[1].fnPtr = (void*) naApplyScreen;
+
 	jclass cls = env->FindClass( "com/kimdata/camera/CameraPreview" );
 
-	env->RegisterNatives( cls, nm, 1 );
+	env->RegisterNatives( cls, nm, 2 );
 
 	return JNI_VERSION_1_6;
 }

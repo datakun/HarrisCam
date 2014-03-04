@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -30,12 +31,13 @@ import com.kimdata.kimdatautil.Kimdata;
 import com.main.harriscam.HarrisConfig;
 
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-
 	static {
 		System.loadLibrary( "HarrisCam" );
 	}
 
-	public native static void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
+	public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
+
+	public static native void naApplyScreen( Bitmap bitResult, Bitmap bitOrigin, Bitmap bitTemp );
 
 	Context _Context;
 	SurfaceHolder _Holder;
@@ -226,6 +228,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						bmpImage[i - 1] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
 
 						String filename = _filepath + ( i ) + ".jpg";
+						Bitmap bitmap = rotateBitmap( bmpImage[i - 1], 90 );
+						bmpImage[i - 1] = cropBitmap( bitmap, HarrisConfig.OFFSET_PICTURE, HarrisConfig.DEVICE_W );
 						Kimdata.SaveBitmapToFileCache( bmpImage[i - 1], filename );
 						i++;
 					}
@@ -349,5 +353,25 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 	public void switchResolution() {
 
+	}
+
+	private Bitmap rotateBitmap( Bitmap bitmap, int angle ) {
+		int width = bitmap.getWidth();
+		int height = bitmap.getHeight();
+
+		Matrix matrix = new Matrix();
+		matrix.postRotate( angle );
+
+		Bitmap resizedBitmap = Bitmap.createBitmap( bitmap, 0, 0, width, height, matrix, true );
+		bitmap.recycle();
+
+		return resizedBitmap;
+	}
+
+	private Bitmap cropBitmap( Bitmap bitmap, int offset, int width ) {
+		Bitmap croppedBitmap = Bitmap.createBitmap( bitmap, 0, offset, width, width );
+		bitmap.recycle();
+
+		return croppedBitmap;
 	}
 }
