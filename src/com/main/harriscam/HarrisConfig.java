@@ -22,6 +22,7 @@ public class HarrisConfig {
 
 	public static int INTERVAL = 500; // ms
 	public static int OFFSET_INTERVAL = 500; // ms
+	public static int PICTURE_COUNT = 3;
 
 	public static boolean IsEND = false;
 

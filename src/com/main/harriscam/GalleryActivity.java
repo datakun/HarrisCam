@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -13,12 +16,19 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import com.kimdata.camera.CameraPreview;
 import com.kimdata.kimdatautil.Kimdata;
 
 public class GalleryActivity extends Activity implements View.OnClickListener {
+	private final int CODE_FIRST = 101;
+	private final int CODE_SECOND = 102;
+	private final int CODE_THIRD = 103;
+
 	ImageButton ibFirst, ibSecond, ibThird;
 	ImageView ivPicture;
 	Button ibCancel, ibSubmit;
+	String imgPath1, imgPath2, imgPath3;
+	Bitmap bmpImage[];
 
 	boolean _isInited = false;
 
@@ -39,6 +49,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 		ibThird.setOnClickListener( this );
 		ibCancel.setOnClickListener( this );
 		ibSubmit.setOnClickListener( this );
+
+		bmpImage = new Bitmap[3];
 	}
 
 	@Override
@@ -53,6 +65,55 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 		}
 
 		super.onWindowAttributesChanged( params );
+	}
+
+	@Override
+	protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
+		switch ( requestCode ) {
+		case CODE_FIRST:
+			imgPath1 = Kimdata.getRealPathFromURI( this, data.getData() );
+			if ( bmpImage[0] != null ) {
+				bmpImage[0].recycle();
+				bmpImage[0] = null;
+			}
+			bmpImage[0] = BitmapFactory.decodeFile( imgPath1 );
+			Kimdata.unbindViewDrawable( ibFirst );
+			ibFirst.setImageBitmap( bmpImage[0] );
+			// ibFirst.setImageURI( data.getData() );
+			// ibFirst.setBackgroundDrawable( Drawable.createFromPath( imgPath1 ) );
+
+			break;
+		case CODE_SECOND:
+			imgPath2 = Kimdata.getRealPathFromURI( this, data.getData() );
+			if ( bmpImage[1] != null ) {
+				bmpImage[1].recycle();
+				bmpImage[1] = null;
+			}
+			bmpImage[1] = BitmapFactory.decodeFile( imgPath2 );
+			Kimdata.unbindViewDrawable( ibSecond );
+			ibSecond.setImageBitmap( bmpImage[1] );
+			// ibSecond.setImageURI( data.getData() );
+			// ibSecond.setBackgroundDrawable( Drawable.createFromPath( imgPath2 ) );
+
+			break;
+		case CODE_THIRD:
+			imgPath3 = Kimdata.getRealPathFromURI( this, data.getData() );
+			if ( bmpImage[2] != null ) {
+				bmpImage[2].recycle();
+				bmpImage[2] = null;
+			}
+			bmpImage[2] = BitmapFactory.decodeFile( imgPath3 );
+			Kimdata.unbindViewDrawable( ibThird );
+			ibThird.setImageBitmap( bmpImage[2] );
+			// ibThird.setImageURI( data.getData() );
+			// ibThird.setBackgroundDrawable( Drawable.createFromPath( imgPath3 ) );
+
+			break;
+		}
+
+		synchronized ( bmpImage[0] ) {
+			CameraPreview.naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
+		}
 	}
 
 	@Override
@@ -97,14 +158,19 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 
 	@Override
 	public void onClick( View v ) {
+		Intent intent = new Intent( Intent.ACTION_PICK );
+		intent.setType( android.provider.MediaStore.Images.Media.CONTENT_TYPE );
 		switch ( v.getId() ) {
 		case R.id.ibFirst:
+			startActivityForResult( intent, CODE_FIRST );
 
 			break;
 		case R.id.ibSecond:
+			startActivityForResult( intent, CODE_SECOND );
 
 			break;
 		case R.id.ibThird:
+			startActivityForResult( intent, CODE_THIRD );
 
 			break;
 		case R.id.ibCancel:
@@ -116,5 +182,4 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 			break;
 		}
 	}
-
 }

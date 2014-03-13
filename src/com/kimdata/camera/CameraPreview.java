@@ -79,7 +79,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 		_Holder.addCallback( this );
 		_Holder.setType( SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS );
 
-		_byRawData = new byte[3][];
+		_byRawData = new byte[HarrisConfig.PICTURE_COUNT][];
 
 		_progDlg = new ProgressDialog( _Context );
 		_progDlg.setTitle( "Harris Cam" );
@@ -203,7 +203,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 					_timeLast = System.currentTimeMillis();
 				}
 
-				if ( _idxData > 2 ) {
+				if ( _idxData >= HarrisConfig.PICTURE_COUNT ) {
 					_idxData = 0;
 					_isCapture = false;
 
@@ -211,7 +211,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						_progDlg.show();
 					}
 
-					bmpImage = new Bitmap[3];
+					bmpImage = new Bitmap[HarrisConfig.PICTURE_COUNT];
 
 					// TODO Bitmap으로 저장하는 부분; Preview data는 YUV 포맷이기 때문에 다음과 같은 방법으로 Bitmap을 만들어한다.
 					// 이미지를 파일로 저장하는 부분을 스레드로 추출하자
@@ -230,7 +230,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						String filename = _filepath + ( i ) + ".jpg";
 						Bitmap bitmap = rotateBitmap( bmpImage[i - 1], 90 );
 						bmpImage[i - 1] = cropBitmap( bitmap, HarrisConfig.OFFSET_PICTURE, HarrisConfig.DEVICE_W );
-						Kimdata.SaveBitmapToFileCache( bmpImage[i - 1], filename );
+						Kimdata.SaveBitmapToFileCache( bmpImage[i - 1], filename, 100 );
 						i++;
 					}
 
@@ -238,7 +238,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
 					}
 
-					Kimdata.SaveBitmapToFileCache( bmpImage[0], _filepath + "fx.jpg" );
+					Kimdata.SaveBitmapToFileCache( bmpImage[0], _filepath + "fx.jpg", 100 );
 
 					HarrisConfig.PATH_FILE = _filepath;
 
