@@ -1,2 +1,0 @@
-set solib-search-path C:/UI/HarrisCam//obj/local/armeabi
-directory C:/adt-bundle-windows-x86_64-20131030/android-ndk-r9c/platforms/android-8/arch-arm/usr/include C:/UI/HarrisCam//jni C:/adt-bundle-windows-x86_64-20131030/android-ndk-r9c/sources/cxx-stl/system
