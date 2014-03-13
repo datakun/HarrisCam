@@ -8,6 +8,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -22,22 +23,19 @@ import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import com.kimdata.harriscam.na.NativeHarrisCam;
 import com.kimdata.kimdatautil.Kimdata;
 import com.main.harriscam.HarrisConfig;
 
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-	static {
-		System.loadLibrary( "HarrisCam" );
-	}
-
-	public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
-
-	public static native void naApplyScreen( Bitmap bitResult, Bitmap bitOrigin, Bitmap bitTemp );
 
 	Context _Context;
 	SurfaceHolder _Holder;
@@ -231,14 +229,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 						Bitmap bitmap = rotateBitmap( bmpImage[i - 1], 90 );
 						bmpImage[i - 1] = cropBitmap( bitmap, HarrisConfig.OFFSET_PICTURE, HarrisConfig.DEVICE_W );
 						Kimdata.SaveBitmapToFileCache( bmpImage[i - 1], filename, 100 );
+						Kimdata.singleBroadcast( _Context, filename );
 						i++;
 					}
 
 					synchronized ( bmpImage[0] ) {
-						naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
+						NativeHarrisCam.naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
 					}
 
 					Kimdata.SaveBitmapToFileCache( bmpImage[0], _filepath + "fx.jpg", 100 );
+					Kimdata.singleBroadcast( _Context, _filepath + "fx.jpg" );
 
 					HarrisConfig.PATH_FILE = _filepath;
 

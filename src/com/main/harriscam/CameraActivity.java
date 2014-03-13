@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.kimdata.camera.CameraPreview;
+import com.kimdata.harriscam.na.NativeHarrisCam;
 import com.kimdata.kimdatautil.Kimdata;
 
 public class CameraActivity extends Activity implements View.OnClickListener, View.OnTouchListener {

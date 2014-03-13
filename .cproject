@@ -14,6 +14,8 @@
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.errorparsers.xlc.XlcErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.autotools.core.ErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
@@ -22,18 +24,14 @@
 					<folderInfo id="com.android.toolchain.gcc.358460321.1139161910" name="/" resourcePath="">
 						<toolChain id="com.android.toolchain.gcc.1376545370" name="com.android.toolchain.gcc" superClass="com.android.toolchain.gcc">
 							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="com.android.targetPlatform.1127238048" isAbstract="false" superClass="com.android.targetPlatform"/>
-							<builder buildPath="${workspace_loc:/HarrisCam}/Default" id="com.android.builder.1291629637" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Android Builder" superClass="com.android.builder">
+							<builder arguments="NDK_DEBUG=1" buildPath="${workspace_loc:/HarrisCam}/Default" command="ndk-build" id="com.android.builder.1291629637" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Android Builder" superClass="com.android.builder">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="obj"/>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="libs"/>
 								</outputEntries>
 							</builder>
 							<tool id="com.android.gcc.compiler.1447017126" name="Android GCC Compiler" superClass="com.android.gcc.compiler">
-								<option id="com.android.gcc.option.includePath.1840798620" superClass="com.android.gcc.option.includePath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;C:\adt\android-ndk-r9c\platforms\android-14\arch-arm\usr\include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\adt\android-ndk-r9c\toolchains\arm-linux-androideabi-4.6\prebuilt\windows-x86_64\lib\gcc\arm-linux-androideabi\4.6\include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\adt\android-ndk-r9c\toolchains\arm-linux-androideabi-4.6\prebuilt\windows-x86_64\lib\gcc\arm-linux-androideabi\4.6\include-fixed&quot;"/>
-								</option>
+								<option id="com.android.gcc.option.includePath.1840798620" superClass="com.android.gcc.option.includePath" valueType="includePath"/>
 								<inputType id="com.android.gcc.inputType.523077844" superClass="com.android.gcc.inputType"/>
 							</tool>
 						</toolChain>

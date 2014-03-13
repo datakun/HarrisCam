@@ -1,5 +1,8 @@
 package com.main.harriscam;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -16,7 +19,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
-import com.kimdata.camera.CameraPreview;
+import com.kimdata.harriscam.na.NativeHarrisCam;
 import com.kimdata.kimdatautil.Kimdata;
 
 public class GalleryActivity extends Activity implements View.OnClickListener {
@@ -54,6 +57,16 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 	}
 
 	@Override
+	protected void onDestroy() {
+		Kimdata.unbindViewDrawable( ibFirst );
+		Kimdata.unbindViewDrawable( ibSecond );
+		Kimdata.unbindViewDrawable( ibThird );
+		Kimdata.unbindViewDrawable( ivPicture );
+
+		super.onDestroy();
+	}
+
+	@Override
 	public void onWindowAttributesChanged( LayoutParams params ) {
 		if ( !_isInited ) {
 			if ( ivPicture != null ) {
@@ -69,6 +82,10 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 
 	@Override
 	protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
+		if ( data == null ) {
+			return;
+		}
+
 		switch ( requestCode ) {
 		case CODE_FIRST:
 			imgPath1 = Kimdata.getRealPathFromURI( this, data.getData() );
@@ -111,8 +128,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 			break;
 		}
 
-		synchronized ( bmpImage[0] ) {
-			CameraPreview.naApplyHarris( bmpImage[0], bmpImage[1], bmpImage[2] );
+		if ( bmpImage[0] != null && bmpImage[1] != null && bmpImage[2] != null ) {
+			Kimdata.jlog( "no one is null." );
+			Bitmap bmpResult = Bitmap.createBitmap( bmpImage[0] );
+			synchronized ( bmpResult ) {
+				NativeHarrisCam.naApplyHarris( bmpResult, bmpImage[1], bmpImage[2] );
+				ivPicture.setImageBitmap( bmpResult );
+			}
 		}
 	}
 
@@ -178,6 +200,17 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
 
 			break;
 		case R.id.ibSubmit:
+			Date now = new Date();
+			SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
+			String filepath = HarrisConfig.PATH_SAVE + "/harriscam_" + format.format( now ) + "_";
+			Kimdata.SaveBitmapToFileCache( bmpImage[0], filepath + "fx.jpg", 100 );
+			Kimdata.singleBroadcast( this, filepath + "fx.jpg" );
+
+			HarrisConfig.PATH_FILE = filepath;
+
+			startActivity( new Intent( GalleryActivity.this, EditorActivity.class ) );
+
+			finish();
 
 			break;
 		}

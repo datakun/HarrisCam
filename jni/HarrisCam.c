@@ -27,32 +27,20 @@
 #define B(b) ( (b)&(0xFF0000) )
 #define G(g) ( (g)&(0xFF00) )
 #define R(r) ( (r)&(0xFF) )
-#define BLUEtoBYTE(b) ( (((b)&(0xFF0000))>>(16))&(0xFF) ) // b : uint32_t
-#define GREENtoBYTE(g) ( (((g)&(0xFF00))>>(8))&(0xFF) ) // g : uint32_t
-#define REDtoBYTE(r) ( (r)&(0xFF) ) // r : uint32_t
-#define BYTEtoBLUE(b) ( ((b)<<(16))&(0xFF0000) ) // b : uint8_t
-#define BYTEtoGREEN(g) ( ((g)<<(8))&(0xFF00) ) // g : uint8_t
-#define BYTEtoRED(r) ( (r)&(0xFF) ) // r : uint8_t
-#define COLOR(r, g, b) ( A() | (B(b)) | (G(g)) | (R(r)) ) // r, g, b : uint32_t
-#define GRAYCOLOR(c) ( A() | (B((c)<<(16))) | (G((c)<<(8))) | (R((c))) ) // c : uint8_t
-#define RB(n) ( (0xFFFF00FF)&(n) ) // n : uint32_t
-#define GB(n) ( (0xFFFFFF00)&(n) ) // n : uint32_t
-
-#define elog(...) __android_log_print(6, "junu", __VA_ARGS__);
-#define jlog(...) __android_log_print(4, "junu", __VA_ARGS__);
+#define BLUEtoBYTE(b) ( (((b)&(0xFF0000))>>(16))&(0xFF) ) // b : uint32_t#define GREENtoBYTE(g) ( (((g)&(0xFF00))>>(8))&(0xFF) ) // g : uint32_t#define REDtoBYTE(r) ( (r)&(0xFF) ) // r : uint32_t#define BYTEtoBLUE(b) ( ((b)<<(16))&(0xFF0000) ) // b : uint8_t#define BYTEtoGREEN(g) ( ((g)<<(8))&(0xFF00) ) // g : uint8_t#define BYTEtoRED(r) ( (r)&(0xFF) ) // r : uint8_t#define COLOR(r, g, b) ( A() | (B(b)) | (G(g)) | (R(r)) ) // r, g, b : uint32_t#define GRAYCOLOR(c) ( A() | (B((c)<<(16))) | (G((c)<<(8))) | (R((c))) ) // c : uint8_t#define RB(n) ( (0xFFFF00FF)&(n) ) // n : uint32_t#define GB(n) ( (0xFFFFFF00)&(n) ) // n : uint32_t#define elog(...) __android_log_print(6, "junu", __VA_ARGS__);#define jlog(...) __android_log_print(4, "junu", __VA_ARGS__);
 
 uint8_t weightedGrayValue ( float fR, float fG, float fB, uint32_t rgbValue );
 
-JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyHarris ( JNIEnv * env, jobject obj, jobject bitG, jobject bitR, jobject bitB ) {
+JNIEXPORT void JNICALL Java_com_kimdata_harriscam_na_NativeHarrisCam_naApplyHarris ( JNIEnv *pEnv, jobject pObj, jobject bitG, jobject bitR, jobject bitB ) {
 	AndroidBitmapInfo lBitmapInfo;
 	void * lBitmapR;
 	void * lBitmapG;
 	void * lBitmapB;
 
-	AndroidBitmap_getInfo( env, bitG, &lBitmapInfo );
-	AndroidBitmap_lockPixels( env, bitR, &lBitmapR );
-	AndroidBitmap_lockPixels( env, bitG, &lBitmapG );
-	AndroidBitmap_lockPixels( env, bitB, &lBitmapB );
+	AndroidBitmap_getInfo( pEnv, bitG, &lBitmapInfo );
+	AndroidBitmap_lockPixels( pEnv, bitR, &lBitmapR );
+	AndroidBitmap_lockPixels( pEnv, bitG, &lBitmapG );
+	AndroidBitmap_lockPixels( pEnv, bitB, &lBitmapB );
 
 	uint32_t *nBitR;
 	uint32_t *nBitG;
@@ -70,21 +58,21 @@ JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyHarris ( JNI
 		}
 	}
 
-	AndroidBitmap_unlockPixels( env, bitR );
-	AndroidBitmap_unlockPixels( env, bitG );
-	AndroidBitmap_unlockPixels( env, bitB );
+	AndroidBitmap_unlockPixels( pEnv, bitR );
+	AndroidBitmap_unlockPixels( pEnv, bitG );
+	AndroidBitmap_unlockPixels( pEnv, bitB );
 }
 
-JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyScreen ( JNIEnv * env, jobject obj, jobject bitResult, jobject bitOrigin, jobject bitTemp ) {
+JNIEXPORT void JNICALL Java_com_kimdata_harriscam_na_NativeHarrisCam_naApplyScreen ( JNIEnv *pEnv, jobject pObj, jobject bitResult, jobject bitOrigin, jobject bitTemp ) {
 	AndroidBitmapInfo lBitmapInfo;
 	void * lBitmapResult;
 	void * lBitmapOrigin;
 	void * lBitmapTemp;
 
-	AndroidBitmap_getInfo( env, bitResult, &lBitmapInfo );
-	AndroidBitmap_lockPixels( env, bitResult, &lBitmapResult );
-	AndroidBitmap_lockPixels( env, bitOrigin, &lBitmapOrigin );
-	AndroidBitmap_lockPixels( env, bitTemp, &lBitmapTemp );
+	AndroidBitmap_getInfo( pEnv, bitResult, &lBitmapInfo );
+	AndroidBitmap_lockPixels( pEnv, bitResult, &lBitmapResult );
+	AndroidBitmap_lockPixels( pEnv, bitOrigin, &lBitmapOrigin );
+	AndroidBitmap_lockPixels( pEnv, bitTemp, &lBitmapTemp );
 
 	uint32_t* nBitResult;
 	uint32_t* nBitOrigin;
@@ -133,35 +121,43 @@ JNIEXPORT void JNICALL Java_com_kimdata_camera_CameraPreview_naApplyScreen ( JNI
 		}
 	}
 
-	AndroidBitmap_unlockPixels( env, bitResult );
-	AndroidBitmap_unlockPixels( env, bitOrigin );
-	AndroidBitmap_unlockPixels( env, bitTemp );
+	AndroidBitmap_unlockPixels( pEnv, bitResult );
+	AndroidBitmap_unlockPixels( pEnv, bitOrigin );
+	AndroidBitmap_unlockPixels( pEnv, bitTemp );
 }
 
 uint8_t weightedGrayValue ( float fR, float fG, float fB, uint32_t rgbValue ) {
-	return BLUEtoBYTE(rgbValue) * fB + GREENtoBYTE(rgbValue) * fG + REDtoBYTE(rgbValue) * fR;
+	return BLUEtoBYTE(rgbValue) * fB + GREENtoBYTE( rgbValue ) * fG + REDtoBYTE( rgbValue ) * fR;
 }
 /*
 jint JNI_OnLoad ( JavaVM* pVm, void* reserved ) {
 	JNIEnv* env;
 
-	if ( pVm->GetEnv( (void **) &env, JNI_VERSION_1_6 ) != JNI_OK ) {
+	if ( ( *pVm )->GetEnv( pVm, (void **) &env, JNI_VERSION_1_6 ) != JNI_OK ) {
 		return -1;
 	}
 
-	JNINativeMethod nm[2];
+	JNINativeMethod nm[4];
+
+	jlog( "before native1" );
 
 	nm[0].name = "naApplyHarris";
 	nm[0].signature = "()V";
 	nm[0].fnPtr = (void*) naApplyHarris;
 
+	jlog( "before native2" );
+
 	nm[1].name = "naApplyScreen";
 	nm[1].signature = "()V";
 	nm[1].fnPtr = (void*) naApplyScreen;
 
-	jclass cls = env->FindClass( "com/kimdata/camera/CameraPreview" );
+	jlog( "before native3" );
 
-	env->RegisterNatives( cls, nm, 2 );
+	jclass cls = ( *env )->FindClass( env, "com/kimdata/harriscam/na/NativeHarrisCam" );
+	//Register methods with env->RegisterNatives.
+	( *env )->RegisterNatives( env, cls, nm, 2 );
+
+	jlog( "before native4" );
 
 	return JNI_VERSION_1_6;
 }

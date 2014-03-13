@@ -1,4 +1,4 @@
-C:/UI/HarrisCam//obj/local/armeabi/objs/HarrisCam/HarrisCam.o: \
+C:/UI/HarrisCam//obj/local/armeabi/objs-debug/HarrisCam/HarrisCam.o: \
  C:/UI/HarrisCam//jni/HarrisCam.c \
  C:/adt-bundle-windows-x86_64-20131030/android-ndk-r9c/platforms/android-8/arch-arm/usr/include/jni.h \
  C:/adt-bundle-windows-x86_64-20131030/android-ndk-r9c/platforms/android-8/arch-arm/usr/include/sys/cdefs.h \
