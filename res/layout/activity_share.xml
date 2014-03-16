@@ -10,7 +10,7 @@
         android:layout_width="320dp"
         android:layout_height="320dp"
         android:layout_gravity="top|center_horizontal"
-        android:background="#ffffffff"
+        android:background="@android:color/transparent"
         android:src="@android:drawable/ic_menu_gallery" />
 
     <LinearLayout

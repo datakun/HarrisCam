@@ -30,6 +30,8 @@ public class ShareActivity extends Activity implements View.OnClickListener {
 		ibFacebook.setOnClickListener( this );
 		ibTumblr.setOnClickListener( this );
 		ibDone.setOnClickListener( this );
+
+		ivPicture.setImageBitmap( HarrisConfig.BMP_HARRIS );
 	}
 
 	@Override

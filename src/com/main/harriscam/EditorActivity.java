@@ -1,12 +1,13 @@
 package com.main.harriscam;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -23,6 +24,11 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 	Button ibFilter, ibTransform, ibRestore, ibApply;
 
 	boolean _isInited = false;
+
+	ThreadFileSaver _thread;
+	long timeSave = 0;
+
+	ProgressDialog progDialog;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
@@ -42,11 +48,12 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 		ibRestore.setOnClickListener( this );
 		ibApply.setOnClickListener( this );
 
-		Bitmap bitmap = BitmapFactory.decodeFile( HarrisConfig.PATH_FILE + "fx.jpg" );
+		ivPicture.setImageBitmap( HarrisConfig.BMP_HARRIS );
 
-		ivPicture.setImageBitmap( bitmap );
-
-		Kimdata.toast( this, "사진이 저장되었습니다." );
+		progDialog = new ProgressDialog( this );
+		progDialog.setMessage( "파일을 저장하는 중입니다..." );
+		progDialog.setIndeterminate( true );
+		progDialog.setCancelable( false );
 	}
 
 	@Override
@@ -91,10 +98,20 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 
 			@Override
 			public void onClick( DialogInterface dialog, int which ) {
-				dialog.dismiss();
+				Kimdata.SaveBitmapToFileCache( HarrisConfig.BMP_HARRIS, HarrisConfig.PATH_FILE + "fx.jpg", 100 );
+				Kimdata.singleBroadcast( EditorActivity.this, HarrisConfig.PATH_FILE + "fx.jpg" );
+				timeSave = System.currentTimeMillis();
 
-				startActivity( new Intent( EditorActivity.this, ShareActivity.class ) );
-				finish();
+				progDialog.show();
+
+				if ( _thread != null ) {
+					_thread.interrupt();
+					_thread = null;
+				}
+				_thread = new ThreadFileSaver();
+				_thread.start();
+
+				dialog.dismiss();
 			}
 		} );
 
@@ -140,6 +157,49 @@ public class EditorActivity extends Activity implements View.OnClickListener, Vi
 		}
 
 		return false;
+	}
+
+	public class ThreadFileSaver extends Thread implements Runnable {
+
+		@Override
+		public void run() {
+			while ( !( new File( HarrisConfig.PATH_FILE + "fx.jpg" ).exists() ) ) {
+				if ( System.currentTimeMillis() - timeSave > 10000 ) {
+					( (Activity) EditorActivity.this ).runOnUiThread( new Runnable() {
+
+						@Override
+						public void run() {
+							if ( progDialog != null ) {
+								progDialog.dismiss();
+							}
+
+							Kimdata.toast( EditorActivity.this, "사진을 저장하지 못했습니다." );
+						}
+					} );
+
+					Thread.currentThread().interrupt();
+
+					return;
+				}
+			}
+
+			( (Activity) EditorActivity.this ).runOnUiThread( new Runnable() {
+
+				@Override
+				public void run() {
+					Kimdata.toast( EditorActivity.this, "사진이 저장되었습니다." );
+
+					if ( progDialog != null ) {
+						progDialog.dismiss();
+					}
+				}
+			} );
+
+			startActivity( new Intent( EditorActivity.this, ShareActivity.class ) );
+			finish();
+
+			Thread.currentThread().interrupt();
+		}
 	}
 
 }

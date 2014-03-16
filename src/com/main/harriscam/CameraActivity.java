@@ -1,7 +1,5 @@
 package com.main.harriscam;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.kimdata.camera.CameraPreview;
-import com.kimdata.harriscam.na.NativeHarrisCam;
 import com.kimdata.kimdatautil.Kimdata;
 
 public class CameraActivity extends Activity implements View.OnClickListener, View.OnTouchListener {
@@ -29,8 +26,7 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 	ImageView ivStatFlash, ivStatTimer;
 
 	ThreadShutter _thread;
-
-	int flag = 0;
+	long timeSave = 0;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState ) {
@@ -209,6 +205,7 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 		case R.id.ibShutter:
 			v.setEnabled( false );
 			cpPreview.captureImage();
+			timeSave = System.currentTimeMillis();
 
 			if ( _thread != null ) {
 				_thread.interrupt();
@@ -229,48 +226,42 @@ public class CameraActivity extends Activity implements View.OnClickListener, Vi
 
 		@Override
 		public void run() {
-			while ( !Thread.currentThread().isInterrupted() ) {
-				if ( HarrisConfig.IsSAVED ) {
-					File file1 = new File( cpPreview._filepath + "1.jpg" );
-					File file2 = new File( cpPreview._filepath + "2.jpg" );
-					File file3 = new File( cpPreview._filepath + "3.jpg" );
-					File file4 = new File( cpPreview._filepath + "fx.jpg" );
+			while ( !HarrisConfig.IsEFFECTIVE ) {
+				if ( System.currentTimeMillis() - timeSave > 10000 ) {
+					( (Activity) CameraActivity.this ).runOnUiThread( new Runnable() {
 
-					if ( file1.exists() ) {
-						flag++;
-						cpPreview.bmpImage[0].recycle();
-						cpPreview.bmpImage[0] = null;
-					}
-					if ( file2.exists() ) {
-						flag++;
-						cpPreview.bmpImage[1].recycle();
-						cpPreview.bmpImage[1] = null;
-					}
-					if ( file3.exists() ) {
-						flag++;
-						cpPreview.bmpImage[2].recycle();
-						cpPreview.bmpImage[2] = null;
-					}
-					if ( file4.exists() ) {
-						flag++;
-					}
-
-					if ( flag > 3 ) {
-						HarrisConfig.IsSAVED = false;
-						( (Activity) CameraActivity.this ).runOnUiThread( new Runnable() {
-
-							@Override
-							public void run() {
-								ibShutter.setEnabled( true );
+						@Override
+						public void run() {
+							ibShutter.setEnabled( true );
+							if ( cpPreview._progDlg != null ) {
+								cpPreview._progDlg.dismiss();
 							}
-						} );
-						startActivity( new Intent( CameraActivity.this, EditorActivity.class ) );
-						Thread.currentThread().interrupt();
-					}
 
-					flag = 0;
+							Kimdata.toast( CameraActivity.this, "효과를 적용하지 못했습니다. 앱을 다시 실행해주세요." );
+						}
+					} );
+
+					Thread.currentThread().interrupt();
+
+					return;
 				}
 			}
+
+			( (Activity) CameraActivity.this ).runOnUiThread( new Runnable() {
+
+				@Override
+				public void run() {
+					ibShutter.setEnabled( true );
+					if ( cpPreview._progDlg != null ) {
+						cpPreview._progDlg.dismiss();
+					}
+				}
+			} );
+
+			HarrisConfig.IsEFFECTIVE = false;
+			startActivity( new Intent( CameraActivity.this, EditorActivity.class ) );
+
+			Thread.currentThread().interrupt();
 		}
 	}
 

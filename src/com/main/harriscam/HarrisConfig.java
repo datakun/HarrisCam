@@ -1,5 +1,6 @@
 package com.main.harriscam;
 
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
 
@@ -34,13 +35,19 @@ public class HarrisConfig {
 		}
 	}
 
-	public static String PATH_SAVE;
-	public static String PATH_FILE;
+	public static String PATH_SAVE = "";
+	public static String PATH_FILE = "";
 
-	public static boolean IsSAVED = false;
+	public static boolean IsEFFECTIVE = false;
+	// public static boolean IsSAVED = false;
 
 	public static int RESOLUTION = 0; // 0: high, 1: mid, 2: low
 	public static int RES_HIGH = 0;
 	public static int RES_MID = 0;
 	public static int RES_LOW = 480;
+
+	public static boolean SCALE_FILL = true;
+	public static boolean SAVE_ORIGIN = true;
+
+	public static Bitmap BMP_HARRIS = null;
 }
