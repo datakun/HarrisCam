@@ -21,7 +21,7 @@
         android:gravity="center"
         android:orientation="horizontal" >
 
-        <Button
+        <ImageButton
             android:id="@+id/ibTwitter"
             android:layout_width="32dp"
             android:layout_height="32dp"
@@ -30,10 +30,9 @@
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:scaleType="fitCenter"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:text="트위터" />
+            android:src="@drawable/twitter" />
 
-        <Button
+        <ImageButton
             android:id="@+id/ibFacebook"
             android:layout_width="32dp"
             android:layout_height="32dp"
@@ -42,11 +41,10 @@
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:scaleType="fitCenter"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:text="페이스북" />
+            android:src="@drawable/facebook" />
 
-        <Button
-            android:id="@+id/ibTumblr"
+        <ImageButton
+            android:id="@+id/ibGooglePlus"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_margin="0dp"
@@ -54,8 +52,7 @@
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:scaleType="fitCenter"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:text="텀블러" />
+            android:src="@drawable/gplus" />
 
         <Button
             android:id="@+id/ibDone"

@@ -33,8 +33,13 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class drawable {
         public static final int bg_pattern=0x7f020000;
-        public static final int ic_launcher=0x7f020001;
-        public static final int pattern=0x7f020002;
+        public static final int facebook=0x7f020001;
+        public static final int gplus=0x7f020002;
+        public static final int ic_launcher=0x7f020003;
+        public static final int instagram=0x7f020004;
+        public static final int pattern=0x7f020005;
+        public static final int tumblr=0x7f020006;
+        public static final int twitter=0x7f020007;
     }
     public static final class id {
         public static final int action_settings=0x7f0a001d;
@@ -50,6 +55,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int ibFirst=0x7f0a0014;
         public static final int ibFlash=0x7f0a0005;
         public static final int ibGallery=0x7f0a000b;
+        public static final int ibGooglePlus=0x7f0a001b;
         public static final int ibGuideline=0x7f0a0008;
         public static final int ibResolution=0x7f0a0007;
         public static final int ibRestore=0x7f0a0012;
@@ -60,7 +66,6 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int ibThird=0x7f0a0016;
         public static final int ibTimer=0x7f0a0006;
         public static final int ibTransform=0x7f0a0011;
-        public static final int ibTumblr=0x7f0a001b;
         public static final int ibTwitter=0x7f0a0019;
         public static final int ivPicture=0x7f0a000e;
         public static final int ivStatFlash=0x7f0a0009;

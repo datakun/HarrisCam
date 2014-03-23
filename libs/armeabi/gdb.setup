@@ -1,0 +1,2 @@
+set solib-search-path D:/worktable/android/HarrisCam//obj/local/armeabi
+directory C:/adt/android-ndk-r9c/platforms/android-8/arch-arm/usr/include D:/worktable/android/HarrisCam//jni C:/adt/android-ndk-r9c/sources/cxx-stl/system
