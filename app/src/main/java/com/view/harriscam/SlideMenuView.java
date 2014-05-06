@@ -1,4 +1,4 @@
-package kimdata.harriscam.view;
+package com.view.harriscam;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -12,7 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
-import com.main.harriscam.HarrisUtil;
+import com.main.harriscam.util.HarrisUtil;
 import com.main.harriscam.R;
 
 public class SlideMenuView extends FrameLayout {
@@ -37,9 +37,6 @@ public class SlideMenuView extends FrameLayout {
     private Context context;
     private FrameLayout mainContainer;
     private LinearLayout llMainContainer;
-    private LinearLayout llCameraMode;
-    private LinearLayout llGalleryMode;
-    private LinearLayout llSettings;
     private ImageButton ibCameraMode;
     private ImageButton ibGalleryMode;
     private ImageButton ibSettings;

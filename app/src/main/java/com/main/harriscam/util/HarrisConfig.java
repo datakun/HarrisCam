@@ -1,4 +1,4 @@
-package com.main.harriscam;
+package com.main.harriscam.util;
 
 import android.graphics.Bitmap;
 import android.os.Handler;

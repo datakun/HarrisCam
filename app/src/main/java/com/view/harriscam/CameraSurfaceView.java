@@ -1,4 +1,4 @@
-package kimdata.harriscam.camera;
+package com.view.harriscam;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -16,9 +16,9 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.main.harriscam.HarrisUtil;
-import com.main.harriscam.HarrisConfig;
 import com.main.harriscam.R;
+import com.main.harriscam.util.HarrisConfig;
+import com.main.harriscam.util.HarrisUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -181,15 +181,18 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceDestroyed( SurfaceHolder holder ) {
-        releaseCam();
+        releaseCamera();
     }
 
-    public void releaseCam() {
+    public void releaseCamera() {
         if ( camera != null ) {
-            camera.setPreviewCallback( null );
-            camera.stopPreview();
-            camera.release();
-            camera = null;
+            try {
+                camera.setPreviewCallback( null );
+                camera.release();
+                camera = null;
+            } catch ( Exception e ) {
+                HarrisUtil.jlog( e );
+            }
         }
     }
 

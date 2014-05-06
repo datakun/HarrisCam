@@ -6,8 +6,10 @@ import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 
-import kimdata.harriscam.camera.CameraSurfaceView;
-import kimdata.harriscam.view.SlideMenuView;
+import com.main.harriscam.util.HarrisConfig;
+import com.main.harriscam.util.HarrisUtil;
+import com.view.harriscam.CameraSurfaceView;
+import com.view.harriscam.SlideMenuView;
 
 public class CameraActivity extends Activity {
     SlideMenuView slideMenu;
@@ -32,7 +34,7 @@ public class CameraActivity extends Activity {
 
     @Override
     protected void onPause() {
-        cameraSurfaceView.releaseCam();
+        cameraSurfaceView.releaseCamera();
 
         super.onPause();
     }

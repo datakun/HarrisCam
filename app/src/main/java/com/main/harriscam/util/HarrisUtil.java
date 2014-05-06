@@ -1,4 +1,4 @@
-package com.main.harriscam;
+package com.main.harriscam.util;
 
 import android.content.ContentValues;
 import android.content.Context;
