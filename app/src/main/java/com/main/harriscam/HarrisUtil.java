@@ -22,7 +22,9 @@ import java.util.List;
 /**
  * Created by Kimdata on 2014-05-04.
  */
-public class HarrisUtil {
+public final class HarrisUtil {
+    private HarrisUtil() {}
+
     private static final String TAG = "junu";
 
     static Comparator< Camera.Size > _ascSize = new Comparator< Camera.Size >() {

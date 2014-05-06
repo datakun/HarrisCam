@@ -30,8 +30,15 @@ public class CameraActivity extends Activity {
         initializeOfView();
     }
 
+    @Override
+    protected void onPause() {
+        cameraSurfaceView.releaseCam();
+
+        super.onPause();
+    }
+
     private void initializeOfView() {
-        HarrisConfig.PATH_SAVE = HarrisUtil.makeDir( "/DCIM/harriscam" );
+        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
 
         slideMenu = ( SlideMenuView ) findViewById( R.id.slideMenu );
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );

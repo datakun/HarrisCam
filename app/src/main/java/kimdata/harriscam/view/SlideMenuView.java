@@ -3,18 +3,14 @@ package kimdata.harriscam.view;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.util.AttributeSet;
-import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.main.harriscam.HarrisUtil;
 import com.main.harriscam.R;
@@ -24,20 +20,17 @@ public class SlideMenuView extends FrameLayout {
     private static final int MODE_MENU_SIZE = 96;
     private static final int OPTION_MENU_SIZE = 64;
     private static final String TAG = "junu";
-    private static final int ID_MODE_SETTINGS = 1001;
-    private static final int ID_MODE_GALLERY = 1002;
-    private static final int ID_MODE_CAMERA = 1003;
-    private static final int ID_OPTION_FLASHLIGHT = 2001;
-    private static final int ID_OPTION_GUIDELINE = 2002;
-    private static final int ID_OPTION_CAMERA_SWITCH = 2003;
-    private static final int ID_OPTION_INTERVAL_WATCH = 2004;
     private static int SWIPE_MAX_DISTANCE;
     private static int SWIPE_MIN_DISTANCE;
-    // Varables
-    private int startTrackPoint;
-    private int stopTrackPoint;
+    private static int SWIPE_POSSIBLE_DISTANCE;
+
+    private int startTrackPointX;
+    private int stopTrackPointX;
+    private int startTrackPointY;
     private boolean isVisibleModeMenu;
     private boolean isVisibleOptionsMenu;
+    private boolean isPossibleTracking;
+    private boolean isDisabledTracking;
     private int modeMenuSize;
     private int optionMenuSize;
     // Containers & Views
@@ -68,16 +61,16 @@ public class SlideMenuView extends FrameLayout {
         @Override
         public void onClick( View v ) {
             switch ( v.getId() ) {
-                case ID_OPTION_FLASHLIGHT:
+                case R.id.ibFlashlight:
 
                     break;
-                case ID_OPTION_GUIDELINE:
+                case R.id.ibGuideline:
 
                     break;
-                case ID_OPTION_CAMERA_SWITCH:
+                case R.id.ibCameraSwitcher:
 
                     break;
-                case ID_OPTION_INTERVAL_WATCH:
+                case R.id.ibIntervalWatch:
 
                     break;
             }
@@ -105,13 +98,12 @@ public class SlideMenuView extends FrameLayout {
         optionMenuSize = HarrisUtil.dp2px( OPTION_MENU_SIZE, getResources() );
         isVisibleModeMenu = false;
         isVisibleOptionsMenu = false;
+        isPossibleTracking = false;
 
-        initModeMenu();
-        initOptionsMenu();
-        initShutterButton();
+        LayoutInflater inflater = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        inflater.inflate( R.layout.layout_slide_menu_view, this, true );
 
-        setOnClickModeMenu( listenerModeMenu );
-        setOnClickOptionMenu( listenerOptionMenu );
+        initializeOfMenu();
 
         final TypedArray a = getContext().obtainStyledAttributes( attrs, R.styleable.SlideMenuView, defStyle, 0 );
 
@@ -121,155 +113,26 @@ public class SlideMenuView extends FrameLayout {
         a.recycle();
     }
 
-    private void initModeMenu() {
-        mainContainer = new FrameLayout( context );
-        mainContainer.setBackgroundColor( Color.argb( 200, 0, 0, 0 ) );
-        mainContainer.setAlpha( 0.0f );
-        this.addView( mainContainer );
-
-        llMainContainer = new LinearLayout( context );
-
-        ibCameraMode = new ImageButton( context );
-        ibGalleryMode = new ImageButton( context );
-        ibSettings = new ImageButton( context );
-
-        ibCameraMode.setId( ID_MODE_CAMERA );
-        ibGalleryMode.setId( ID_MODE_GALLERY );
-        ibSettings.setId( ID_MODE_SETTINGS );
-
-        ibCameraMode.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibGalleryMode.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibSettings.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-
-        ibCameraMode.setImageDrawable( getResources().getDrawable( R.drawable.xml_btn_camera ) );
-        ibGalleryMode.setImageDrawable( getResources().getDrawable( R.drawable.xml_btn_pictures ) );
-        ibSettings.setImageDrawable( getResources().getDrawable( R.drawable.xml_btn_gear ) );
-
-        ibCameraMode.setLayoutParams( new LayoutParams( modeMenuSize, modeMenuSize ) );
-        ibGalleryMode.setLayoutParams( new LayoutParams( modeMenuSize, modeMenuSize ) );
-        ibSettings.setLayoutParams( new LayoutParams( modeMenuSize, modeMenuSize ) );
-
-        ibCameraMode.setScaleType( ImageView.ScaleType.FIT_CENTER );
-        ibGalleryMode.setScaleType( ImageView.ScaleType.FIT_CENTER );
-        ibSettings.setScaleType( ImageView.ScaleType.FIT_CENTER );
-
-        TextView tvCameraMode = new TextView( context );
-        TextView tvGalleryMode = new TextView( context );
-        TextView tvSettings = new TextView( context );
-
-        tvCameraMode.setText( getResources().getString( R.string.mode_camera ) );
-        tvGalleryMode.setText( getResources().getString( R.string.mode_gallery ) );
-        tvSettings.setText( getResources().getString( R.string.mode_settings ) );
-
-        tvCameraMode.setTextSize( MODE_MENU_SIZE / 4 );
-        tvGalleryMode.setTextSize( MODE_MENU_SIZE / 4 );
-        tvSettings.setTextSize( MODE_MENU_SIZE / 4 );
-
-        tvCameraMode.setLayoutParams( new ViewGroup.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT ) );
-        tvGalleryMode.setLayoutParams( new ViewGroup.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT ) );
-        tvSettings.setLayoutParams( new ViewGroup.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT ) );
-
-        tvCameraMode.setTextColor( getResources().getColor( R.color.LightGray ) );
-        tvGalleryMode.setTextColor( getResources().getColor( R.color.LightGray ) );
-        tvSettings.setTextColor( getResources().getColor( R.color.LightGray ) );
-
-        tvCameraMode.setGravity( Gravity.CENTER_VERTICAL );
-        tvGalleryMode.setGravity( Gravity.CENTER_VERTICAL );
-        tvSettings.setGravity( Gravity.CENTER_VERTICAL );
-
-        llCameraMode = new LinearLayout( context );
-        llGalleryMode = new LinearLayout( context );
-        llSettings = new LinearLayout( context );
-
-        llCameraMode.setLayoutParams( new LayoutParams( LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT ) );
-        llGalleryMode.setLayoutParams( new LayoutParams( LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT ) );
-        llSettings.setLayoutParams( new LayoutParams( LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT ) );
-
-        llCameraMode.setOrientation( LinearLayout.HORIZONTAL );
-        llGalleryMode.setOrientation( LinearLayout.HORIZONTAL );
-        llSettings.setOrientation( LinearLayout.HORIZONTAL );
-
-        llCameraMode.addView( ibCameraMode );
-        llCameraMode.addView( tvCameraMode );
-        llGalleryMode.addView( ibGalleryMode );
-        llGalleryMode.addView( tvGalleryMode );
-        llSettings.addView( ibSettings );
-        llSettings.addView( tvSettings );
-
-        llMainContainer.addView( llSettings );
-        llMainContainer.addView( llGalleryMode );
-        llMainContainer.addView( llCameraMode );
-
-        mainContainer.addView( llMainContainer );
-
-        llMainContainer.setLayoutParams( new LayoutParams( LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT ) );
-        llMainContainer.setOrientation( LinearLayout.VERTICAL );
-        llMainContainer.setGravity( Gravity.BOTTOM | Gravity.LEFT );
+    private void initializeOfMenu() {
+        mainContainer = ( FrameLayout ) ( ( FrameLayout ) getChildAt( 0 ) ).getChildAt( 0 );
+        llMainContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llMainContainer );
+        ibCameraMode = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraMode );
+        ibGalleryMode = ( ImageButton ) mainContainer.findViewById( R.id.ibGalleryMode );
+        ibSettings = ( ImageButton ) mainContainer.findViewById( R.id.ibSettings );
+        ibCameraMode.setEnabled( false );
         llMainContainer.setX( -modeMenuSize );
-        llMainContainer.setPadding( 0, 0, 0, modeMenuSize );
-    }
 
-    private void initOptionsMenu() {
-        llSubContainer = new LinearLayout( context );
-
-        ibFlashlight = new ImageButton( context );
-        ibGuideline = new ImageButton( context );
-        ibCameraSwitcher = new ImageButton( context );
-        ibIntervalWatch = new ImageButton( context );
-
-        ibFlashlight.setId( ID_OPTION_FLASHLIGHT );
-        ibGuideline.setId( ID_OPTION_GUIDELINE );
-        ibCameraSwitcher.setId( ID_OPTION_CAMERA_SWITCH );
-        ibIntervalWatch.setId( ID_OPTION_INTERVAL_WATCH );
-
-        ibFlashlight.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibGuideline.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibCameraSwitcher.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibIntervalWatch.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-
-        ibFlashlight.setImageResource( R.drawable.ic_flashlight_off );
-        ibGuideline.setImageResource( R.drawable.ic_guideline_off );
-        ibCameraSwitcher.setImageResource( R.drawable.ic_switching );
-        ibIntervalWatch.setImageResource( R.drawable.ic_watch_05 );
-
-        ibFlashlight.setLayoutParams( new LayoutParams( optionMenuSize, optionMenuSize ) );
-        ibGuideline.setLayoutParams( new LayoutParams( optionMenuSize, optionMenuSize ) );
-        ibCameraSwitcher.setLayoutParams( new LayoutParams( optionMenuSize, optionMenuSize ) );
-        ibIntervalWatch.setLayoutParams( new LayoutParams( optionMenuSize, optionMenuSize ) );
-
-        ibFlashlight.setScaleType( ImageView.ScaleType.FIT_CENTER );
-        ibGuideline.setScaleType( ImageView.ScaleType.FIT_CENTER );
-        ibCameraSwitcher.setScaleType( ImageView.ScaleType.FIT_CENTER );
-        ibIntervalWatch.setScaleType( ImageView.ScaleType.FIT_CENTER );
-
-        llSubContainer.addView( ibFlashlight );
-        llSubContainer.addView( ibGuideline );
-        llSubContainer.addView( ibCameraSwitcher );
-        llSubContainer.addView( ibIntervalWatch );
-
-        mainContainer.addView( llSubContainer );
-
-        llSubContainer.setLayoutParams( new LayoutParams( LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT ) );
-        llSubContainer.setOrientation( LinearLayout.VERTICAL );
-        llSubContainer.setGravity( Gravity.BOTTOM | Gravity.RIGHT );
+        llSubContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llSubContainer );
+        ibFlashlight = ( ImageButton ) mainContainer.findViewById( R.id.ibFlashlight );
+        ibGuideline = ( ImageButton ) mainContainer.findViewById( R.id.ibGuideline );
+        ibCameraSwitcher = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraSwitcher );
+        ibIntervalWatch = ( ImageButton ) mainContainer.findViewById( R.id.ibIntervalWatch );
         llSubContainer.setX( optionMenuSize );
-        llSubContainer.setPadding( 0, 0, 0, modeMenuSize );
-    }
 
-    private void initShutterButton() {
-        ibShutter = new ImageButton( context );
-        ibShutter.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
-        ibShutter.setImageDrawable( getResources().getDrawable( R.drawable.xml_btn_shutter ) );
-        ibShutter.setLayoutParams( new LayoutParams( modeMenuSize, modeMenuSize ) );
-        ibShutter.setScaleType( ImageView.ScaleType.FIT_CENTER );
+        ibShutter = ( ImageButton ) ( ( FrameLayout ) getChildAt( 0 ) ).getChildAt( 1 );
 
-        this.addView( ibShutter );
-        LayoutParams lp = ( LayoutParams ) ibShutter.getLayoutParams();
-        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        ibShutter.setLayoutParams( lp );
+        setOnClickModeMenu( listenerModeMenu );
+        setOnClickOptionMenu( listenerOptionMenu );
     }
 
     @Override
@@ -278,82 +141,129 @@ public class SlideMenuView extends FrameLayout {
 
         SWIPE_MAX_DISTANCE = this.getWidth() / 4;
         SWIPE_MIN_DISTANCE = SWIPE_MAX_DISTANCE / 3;
+        SWIPE_POSSIBLE_DISTANCE = SWIPE_MAX_DISTANCE / 4;
     }
 
     @Override
     public boolean onTouchEvent( MotionEvent event ) {
         int x = ( int ) event.getX();
+        int y = ( int ) event.getY();
 
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
-                startTrackPoint = x;
+                startTrackPointX = x;
+                startTrackPointY = y;
+
+                break;
             case MotionEvent.ACTION_MOVE:
-                if ( isMovingLeftToRight( x ) ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        showingModeMenu( x );
-                    } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                        hidingOptionMenu( x );
-                    }
-                } else if ( isMovingRightToLeft( x ) ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        showingOptionMenu( x );
-                    } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                        hidingModeMenu( x );
+                if ( isDisabledTracking ) {
+                    return false;
+                }
+
+                if ( isPossibleTracking == false ) {
+                    if ( isSwipePossible( event ) == false ) {
+                        isDisabledTracking = true;
+                        return false;
+                    } else {
+                        return true;
                     }
                 }
 
-                return true;
+                animatePointMove( x );
+
+                break;
             case MotionEvent.ACTION_UP:
-                stopTrackPoint = ( int ) event.getX();
-                if ( isOnFlingLeftToRight() ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        animateShowModeMenu();
-                    } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                        animateHideOptionMenu();
-                    }
-                } else {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        animateHideModeMenu();
-                    } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                        animateShowOptionMenu();
-                    }
+                isDisabledTracking = false;
+                if ( isPossibleTracking ) {
+                    isPossibleTracking = false;
+                    stopTrackPointX = x;
+                    animatePointUp();
                 }
-                if ( isOnFlingRightToLeft() ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        animateShowOptionMenu();
-                    } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                        animateHideModeMenu();
-                    }
-                } else {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        animateHideOptionMenu();
-                    } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                        animateShowModeMenu();
-                    }
-                }
+
+                break;
+        }
+
+        return true;
+    }
+
+    private void animatePointMove( int x ) {
+        if ( isMovingLeftToRight( x ) ) {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                showingModeMenu( x );
+            } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
+                hidingOptionMenu( x );
+            }
+        } else if ( isMovingRightToLeft( x ) ) {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                showingOptionMenu( x );
+            } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+                hidingModeMenu( x );
+            }
+        }
+    }
+
+    private void animatePointUp() {
+        if ( isOnFlingLeftToRight() ) {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                animateShowModeMenu();
+            } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
+                animateHideOptionMenu();
+            }
+        } else {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                animateHideModeMenu();
+            } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
+                animateShowOptionMenu();
+            }
+        }
+        if ( isOnFlingRightToLeft() ) {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                animateShowOptionMenu();
+            } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+                animateHideModeMenu();
+            }
+        } else {
+            if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                animateHideOptionMenu();
+            } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+                animateShowModeMenu();
+            }
+        }
+    }
+
+    private boolean isSwipePossible( MotionEvent event ) {
+        if ( Math.abs( startTrackPointY - event.getY() ) > SWIPE_POSSIBLE_DISTANCE ) {
+            isPossibleTracking = false;
+            return false;
+        }
+
+        if ( Math.abs( startTrackPointX - event.getX() ) > SWIPE_POSSIBLE_DISTANCE ) {
+            startTrackPointX = ( int ) event.getX();
+            isPossibleTracking = true;
+            return true;
         }
 
         return true;
     }
 
     private boolean isMovingRightToLeft( int x ) {
-        return startTrackPoint > x ? true : false;
+        return startTrackPointX > x ? true : false;
     }
 
     private boolean isMovingLeftToRight( int x ) {
-        return startTrackPoint < x ? true : false;
+        return startTrackPointX < x ? true : false;
     }
 
     private boolean isOnFlingRightToLeft() {
-        return startTrackPoint - stopTrackPoint >= SWIPE_MIN_DISTANCE ? true : false;
+        return startTrackPointX - stopTrackPointX >= SWIPE_MIN_DISTANCE ? true : false;
     }
 
     private boolean isOnFlingLeftToRight() {
-        return stopTrackPoint - startTrackPoint >= SWIPE_MIN_DISTANCE ? true : false;
+        return stopTrackPointX - startTrackPointX >= SWIPE_MIN_DISTANCE ? true : false;
     }
 
     private void showingModeMenu( int x ) {
-        int distance = x - startTrackPoint;
+        int distance = x - startTrackPointX;
         if ( distance <= 1 ) distance = 1;
         float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
@@ -371,7 +281,7 @@ public class SlideMenuView extends FrameLayout {
     }
 
     private void hidingModeMenu( int x ) {
-        int distance = startTrackPoint - x;
+        int distance = startTrackPointX - x;
         if ( distance <= 1 ) distance = 1;
         float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
@@ -400,6 +310,9 @@ public class SlideMenuView extends FrameLayout {
         aniAlpha.start();
         isVisibleModeMenu = true;
 
+        llMainContainer.setVisibility( View.VISIBLE );
+        llSubContainer.setVisibility( View.GONE );
+
         ibShutter.setVisibility( View.GONE );
         ibShutter.setAlpha( 0.0f );
         ibShutter.setEnabled( false );
@@ -419,6 +332,9 @@ public class SlideMenuView extends FrameLayout {
         aniAlpha.start();
         isVisibleModeMenu = false;
 
+        llMainContainer.setVisibility( View.VISIBLE );
+        llSubContainer.setVisibility( View.GONE );
+
         ibShutter.setVisibility( View.VISIBLE );
         ibShutter.setAlpha( 1.0f );
         ibShutter.setEnabled( true );
@@ -427,7 +343,7 @@ public class SlideMenuView extends FrameLayout {
     }
 
     private void showingOptionMenu( int x ) {
-        int distance = startTrackPoint - x;
+        int distance = startTrackPointX - x;
         if ( distance <= 1 ) distance = 1;
         float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
@@ -445,7 +361,7 @@ public class SlideMenuView extends FrameLayout {
     }
 
     private void hidingOptionMenu( int x ) {
-        int distance = x - startTrackPoint;
+        int distance = x - startTrackPointX;
         if ( distance <= 1 ) distance = 1;
         float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
@@ -474,6 +390,9 @@ public class SlideMenuView extends FrameLayout {
         aniAlpha.start();
         isVisibleOptionsMenu = true;
 
+        llMainContainer.setVisibility( View.GONE );
+        llSubContainer.setVisibility( View.VISIBLE );
+
         ibShutter.setVisibility( View.GONE );
         ibShutter.setAlpha( 0.0f );
         ibShutter.setEnabled( false );
@@ -493,6 +412,9 @@ public class SlideMenuView extends FrameLayout {
         aniTranslate.start();
         aniAlpha.start();
         isVisibleOptionsMenu = false;
+
+        llMainContainer.setVisibility( View.GONE );
+        llSubContainer.setVisibility( View.VISIBLE );
 
         ibShutter.setVisibility( View.VISIBLE );
         ibShutter.setAlpha( 1.0f );

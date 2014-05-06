@@ -1,6 +1,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:kimdata="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
+             xmlns:kimdata="http://schemas.android.com/apk/res-auto"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              tools:context="com.main.harriscam.CameraActivity">
@@ -12,9 +12,10 @@
 
     <kimdata.harriscam.view.SlideMenuView
         android:id="@+id/slideMenu"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         kimdata:isVisibleMode="false"
-        kimdata:isVisibleOptions="false"/>
+        kimdata:isVisibleOptions="false"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 
 </FrameLayout>

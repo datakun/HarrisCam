@@ -75,8 +75,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         rawImages = new byte[ HarrisConfig.PICTURE_COUNT ][];
 
-        tone = new ToneGenerator( AudioManager.STREAM_NOTIFICATION, 100 );
-        audioManager = ( AudioManager ) context.getSystemService( Context.AUDIO_SERVICE );
+        tone = new ToneGenerator( AudioManager.STREAM_ALARM, 100 );
 
         if ( progressDialog == null ) {
             progressDialog = new ProgressDialog( context );
@@ -185,7 +184,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         releaseCam();
     }
 
-    private void releaseCam() {
+    public void releaseCam() {
         if ( camera != null ) {
             camera.setPreviewCallback( null );
             camera.stopPreview();
@@ -205,7 +204,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         Date now = new Date();
         SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
-        HarrisConfig.PATH_FILE = HarrisConfig.PATH_SAVE + "/harriscam_" + format.format( now ) + "_";
+        HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
     }
 
     @Override
@@ -245,7 +244,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     image.compressToJpeg( area, 100, out );
                     bmpImage[ i - 1 ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
 
-                    String filename = HarrisConfig.PATH_FILE + ( i ) + ".jpg";
+                    String filename = HarrisConfig.FILE_PATH + ( i ) + ".jpg";
                     Bitmap bitmap = rotateBitmap( bmpImage[ i - 1 ], 90 );
                     HarrisUtil.SaveBitmapToFileCache( bitmap, filename, 100 );
                     i++;
@@ -257,9 +256,9 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 //                    NativeHarrisCam.naApplyHarris( HarrisConfig.BMP_HARRIS, bmpImage[1], bmpImage[2] );
                 }
 
-                while ( !( new File( HarrisConfig.PATH_FILE + "1.jpg" ).exists() )
-                        || !( new File( HarrisConfig.PATH_FILE + "2.jpg" ).exists() )
-                        || !( new File( HarrisConfig.PATH_FILE + "3.jpg" ).exists() ) ) {
+                while ( !( new File( HarrisConfig.FILE_PATH + "1.jpg" ).exists() )
+                        || !( new File( HarrisConfig.FILE_PATH + "2.jpg" ).exists() )
+                        || !( new File( HarrisConfig.FILE_PATH + "3.jpg" ).exists() ) ) {
                 }
 
                 for ( Bitmap bitmap : bmpImage ) {
@@ -267,14 +266,14 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     bitmap = null;
                 }
 
-                if ( HarrisConfig.IsSaveOriginalImage == false ) {
-                    ( new File( HarrisConfig.PATH_FILE + "1.jpg" ) ).delete();
-                    ( new File( HarrisConfig.PATH_FILE + "2.jpg" ) ).delete();
-                    ( new File( HarrisConfig.PATH_FILE + "3.jpg" ) ).delete();
+                if ( HarrisConfig.IS_SAVE_ORIGINAL_IMAGE == false ) {
+                    ( new File( HarrisConfig.FILE_PATH + "1.jpg" ) ).delete();
+                    ( new File( HarrisConfig.FILE_PATH + "2.jpg" ) ).delete();
+                    ( new File( HarrisConfig.FILE_PATH + "3.jpg" ) ).delete();
                 } else {
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "1.jpg" );
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "2.jpg" );
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "3.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "1.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "2.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "3.jpg" );
                 }
 
                 ( ( Activity ) context ).runOnUiThread( new Runnable() {
