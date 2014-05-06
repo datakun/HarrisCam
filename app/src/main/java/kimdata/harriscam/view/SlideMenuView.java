@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.main.harriscam.Harris;
+import com.main.harriscam.HarrisUtil;
 import com.main.harriscam.R;
 
 public class SlideMenuView extends FrameLayout {
@@ -101,8 +101,8 @@ public class SlideMenuView extends FrameLayout {
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
-        modeMenuSize = Harris.dp2px( MODE_MENU_SIZE, getResources() );
-        optionMenuSize = Harris.dp2px( OPTION_MENU_SIZE, getResources() );
+        modeMenuSize = HarrisUtil.dp2px( MODE_MENU_SIZE, getResources() );
+        optionMenuSize = HarrisUtil.dp2px( OPTION_MENU_SIZE, getResources() );
         isVisibleModeMenu = false;
         isVisibleOptionsMenu = false;
 
@@ -367,7 +367,7 @@ public class SlideMenuView extends FrameLayout {
         llSubContainer.setVisibility( View.GONE );
         llMainContainer.setVisibility( View.VISIBLE );
 
-        Harris.jlog( "Mode Showing" );
+        HarrisUtil.jlog( "Mode Showing" );
     }
 
     private void hidingModeMenu( int x ) {
@@ -385,7 +385,7 @@ public class SlideMenuView extends FrameLayout {
         llSubContainer.setVisibility( View.GONE );
         llMainContainer.setVisibility( View.VISIBLE );
 
-        Harris.jlog( "Mode Hiding" );
+        HarrisUtil.jlog( "Mode Hiding" );
     }
 
     private void animateShowModeMenu() {
@@ -404,7 +404,7 @@ public class SlideMenuView extends FrameLayout {
         ibShutter.setAlpha( 0.0f );
         ibShutter.setEnabled( false );
 
-        Harris.jlog( "Mode Shown" );
+        HarrisUtil.jlog( "Mode Shown" );
     }
 
     private void animateHideModeMenu() {
@@ -423,7 +423,7 @@ public class SlideMenuView extends FrameLayout {
         ibShutter.setAlpha( 1.0f );
         ibShutter.setEnabled( true );
 
-        Harris.jlog( "Mode Hided" );
+        HarrisUtil.jlog( "Mode Hided" );
     }
 
     private void showingOptionMenu( int x ) {
@@ -441,7 +441,7 @@ public class SlideMenuView extends FrameLayout {
         llMainContainer.setVisibility( View.GONE );
         llSubContainer.setVisibility( View.VISIBLE );
 
-        Harris.jlog( "Option Showing" );
+        HarrisUtil.jlog( "Option Showing" );
     }
 
     private void hidingOptionMenu( int x ) {
@@ -459,7 +459,7 @@ public class SlideMenuView extends FrameLayout {
         llMainContainer.setVisibility( View.GONE );
         llSubContainer.setVisibility( View.VISIBLE );
 
-        Harris.jlog( "Option Hiding" );
+        HarrisUtil.jlog( "Option Hiding" );
     }
 
     private void animateShowOptionMenu() {
@@ -478,7 +478,7 @@ public class SlideMenuView extends FrameLayout {
         ibShutter.setAlpha( 0.0f );
         ibShutter.setEnabled( false );
 
-        Harris.jlog( "Option Shown" );
+        HarrisUtil.jlog( "Option Shown" );
     }
 
     private void animateHideOptionMenu() {
@@ -498,7 +498,7 @@ public class SlideMenuView extends FrameLayout {
         ibShutter.setAlpha( 1.0f );
         ibShutter.setEnabled( true );
 
-        Harris.jlog( "Option Hided" );
+        HarrisUtil.jlog( "Option Hided" );
     }
 
     public void showModeMenu() {

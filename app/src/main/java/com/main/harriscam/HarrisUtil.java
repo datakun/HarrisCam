@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Created by Kimdata on 2014-05-04.
  */
-public class Harris {
+public class HarrisUtil {
     private static final String TAG = "junu";
 
     static Comparator< Camera.Size > _ascSize = new Comparator< Camera.Size >() {
@@ -34,7 +34,6 @@ public class Harris {
     static Comparator< Camera.Size > _descSize = new Comparator< Camera.Size >() {
         @Override
         public int compare( Camera.Size arg0, Camera.Size arg1 ) {
-            // 내림차순
             return ( arg1.width + arg1.height ) > ( arg0.width + arg0.height ) ? 1 : -1;
         }
     };
@@ -47,7 +46,6 @@ public class Harris {
     static Comparator< Integer > _descInteger = new Comparator< Integer >() {
         @Override
         public int compare( Integer arg0, Integer arg1 ) {
-            // 내림차순
             return arg1 > arg0 ? 1 : -1;
         }
     };

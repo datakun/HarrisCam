@@ -16,7 +16,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.main.harriscam.Harris;
+import com.main.harriscam.HarrisUtil;
 import com.main.harriscam.HarrisConfig;
 import com.main.harriscam.R;
 
@@ -103,15 +103,15 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             camera.setDisplayOrientation( rotatePreview( 90 ) );
             camera.setPreviewDisplay( holder );
         } catch ( IOException e ) {
-            Harris.jlog( e );
+            HarrisUtil.jlog( e );
         }
 
         cameraParameters = camera.getParameters();
         previewSizeList = cameraParameters.getSupportedPreviewSizes();
         pictureSizeList = cameraParameters.getSupportedPictureSizes();
 
-        Harris.sortCameraSize( previewSizeList, true );
-        Harris.sortCameraSize( pictureSizeList, true );
+        HarrisUtil.sortCameraSize( previewSizeList, true );
+        HarrisUtil.sortCameraSize( pictureSizeList, true );
 
         initResolution();
     }
@@ -159,9 +159,9 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private void initResolution() {
         int length = previewSizeList.size();
 
-        Harris.jlog( previewSizeList.get( 0 ).width + " width1, " + previewSizeList.get( 0 ).height + " height1" );
-        Harris.jlog( previewSizeList.get( length / 2 ).width + " width2, " + previewSizeList.get( length / 2 ).height + " height2" );
-        Harris.jlog( previewSizeList.get( length - 1 ).width + " width3, " + previewSizeList.get( length - 1 ).height + " height3" );
+        HarrisUtil.jlog( previewSizeList.get( 0 ).width + " width1, " + previewSizeList.get( 0 ).height + " height1" );
+        HarrisUtil.jlog( previewSizeList.get( length / 2 ).width + " width2, " + previewSizeList.get( length / 2 ).height + " height2" );
+        HarrisUtil.jlog( previewSizeList.get( length - 1 ).width + " width3, " + previewSizeList.get( length - 1 ).height + " height3" );
     }
 
     @Override
@@ -176,7 +176,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             camera.setParameters( cameraParameters );
             camera.startPreview();
 
-            Harris.jlog( previewSizeList.get( 0 ).width + ", " + previewSizeList.get( 0 ).height );
+            HarrisUtil.jlog( previewSizeList.get( 0 ).width + ", " + previewSizeList.get( 0 ).height );
         }
     }
 
@@ -247,7 +247,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
                     String filename = HarrisConfig.PATH_FILE + ( i ) + ".jpg";
                     Bitmap bitmap = rotateBitmap( bmpImage[ i - 1 ], 90 );
-                    Harris.SaveBitmapToFileCache( bitmap, filename, 100 );
+                    HarrisUtil.SaveBitmapToFileCache( bitmap, filename, 100 );
                     i++;
                 }
 
@@ -272,9 +272,9 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     ( new File( HarrisConfig.PATH_FILE + "2.jpg" ) ).delete();
                     ( new File( HarrisConfig.PATH_FILE + "3.jpg" ) ).delete();
                 } else {
-                    Harris.singleBroadcast( context, HarrisConfig.PATH_FILE + "1.jpg" );
-                    Harris.singleBroadcast( context, HarrisConfig.PATH_FILE + "2.jpg" );
-                    Harris.singleBroadcast( context, HarrisConfig.PATH_FILE + "3.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "1.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "2.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.PATH_FILE + "3.jpg" );
                 }
 
                 ( ( Activity ) context ).runOnUiThread( new Runnable() {

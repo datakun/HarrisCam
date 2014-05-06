@@ -13,12 +13,12 @@ public class HarrisConfig {
 
     public static int FLAG_FLASHLIGHT;
 
-	public static boolean IsEND = false;
+	public static boolean IS_FINISH = false;
 
 	public static final class HandlerAskQuit extends Handler {
 		public void handleMessage( Message msg ) {
 			if ( msg.what == 0 ) {
-				IsEND = false;
+				IS_FINISH = false;
 			}
 		}
 	}

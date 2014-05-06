@@ -16,9 +16,9 @@ public class CameraActivity extends Activity {
         @Override
         public void onClick( View v ) {
             cameraSurfaceView.takePhotos();
-            slideMenu.setEnableShutter( false );
+            slideMenu.setEnableShutter( false ); // Until apply effect process finish.
 
-            Harris.toast( getBaseContext(), "Shutter" );
+            HarrisUtil.toast( getBaseContext(), "Shutter" );
         }
     };
 
@@ -27,11 +27,11 @@ public class CameraActivity extends Activity {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_camera );
 
-        initView();
+        initializeOfView();
     }
 
-    private void initView() {
-        HarrisConfig.PATH_SAVE = Harris.makeDir( "/DCIM/harriscam" );
+    private void initializeOfView() {
+        HarrisConfig.PATH_SAVE = HarrisUtil.makeDir( "/DCIM/harriscam" );
 
         slideMenu = ( SlideMenuView ) findViewById( R.id.slideMenu );
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
@@ -49,21 +49,20 @@ public class CameraActivity extends Activity {
                 return false;
             }
 
-            if ( HarrisConfig.IsEND == false ) {
+            if ( HarrisConfig.IS_FINISH == false ) {
+                HarrisUtil.toast( this, getString( R.string.msg_ask_quit ) );
 
-                Harris.toast( this, getString( R.string.msg_ask_quit ) );
-
-                HarrisConfig.IsEND = true;
+                HarrisConfig.IS_FINISH = true;
 
                 Handler handler = new HarrisConfig.HandlerAskQuit();
                 handler.sendEmptyMessageDelayed( 0, 2000 );
 
                 return false;
             } else {
-                android.os.Process.killProcess( android.os.Process.myPid() );
+                finish();
             }
         } else if ( keyCode == KeyEvent.KEYCODE_HOME ) {
-            android.os.Process.killProcess( android.os.Process.myPid() );
+            finish();
         }
 
         return super.onKeyDown( keyCode, event );
