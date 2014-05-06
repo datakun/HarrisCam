@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">HarrisCam</string>
+
+    <!-- Buttons -->
+    <string name="mode_settings">Settings</string>
+    <string name="mode_gallery">Choose Photos</string>
+    <string name="mode_camera">Take Photos</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="Cancle">Cancel</string>
+
+    <!-- Messages -->
+    <string name="msg_ask_quit">Do you want to close this app?\nOne more Back.</string>
+    <string name="msg_lastest_update">This is the latest version.</string>
+    <string name="msg_ask_update">Do you want to update the latest version?</string>
+    <string name="msg_progressing">Applying the Effect...</string>
+
+</resources>

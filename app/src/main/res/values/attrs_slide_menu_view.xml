@@ -1,0 +1,6 @@
+<resources>
+    <declare-styleable name="SlideMenuView">
+        <attr name="isVisibleMode" format="boolean"/>
+        <attr name="isVisibleOptions" format="boolean"/>
+    </declare-styleable>
+</resources>
