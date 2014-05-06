@@ -1,19 +1,17 @@
 package com.view.harriscam;
 
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 
-import com.main.harriscam.util.HarrisUtil;
 import com.main.harriscam.R;
+import com.main.harriscam.util.HarrisUtil;
 
 public class SlideMenuView extends FrameLayout {
     // Constants
@@ -36,21 +34,14 @@ public class SlideMenuView extends FrameLayout {
     // Containers & Views
     private Context context;
     private FrameLayout mainContainer;
-    private LinearLayout llMainContainer;
-    private ImageButton ibCameraMode;
-    private ImageButton ibGalleryMode;
-    private ImageButton ibSettings;
+    private LeftSlideMenuView leftSlideMenuView;
+    private RightSlideMenuView rightSlideMenuView;
     private ImageButton ibShutter;
-    private LinearLayout llSubContainer;
-    private ImageButton ibFlashlight;
-    private ImageButton ibGuideline;
-    private ImageButton ibCameraSwitcher;
-    private ImageButton ibIntervalWatch;
     // Listner
     private View.OnClickListener listenerModeMenu = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
-            setEnableModeMenu( true );
+            leftSlideMenuView.setEnableModeMenu( true );
             v.setEnabled( false );
         }
     };
@@ -111,25 +102,13 @@ public class SlideMenuView extends FrameLayout {
     }
 
     private void initializeOfMenu() {
-        mainContainer = ( FrameLayout ) ( ( FrameLayout ) getChildAt( 0 ) ).getChildAt( 0 );
-        llMainContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llMainContainer );
-        ibCameraMode = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraMode );
-        ibGalleryMode = ( ImageButton ) mainContainer.findViewById( R.id.ibGalleryMode );
-        ibSettings = ( ImageButton ) mainContainer.findViewById( R.id.ibSettings );
-        ibCameraMode.setEnabled( false );
-        llMainContainer.setX( -modeMenuSize );
+        mainContainer = ( FrameLayout ) ( ( ViewGroup ) getChildAt( 0 ) ).getChildAt( 0 );
+        leftSlideMenuView = ( LeftSlideMenuView ) mainContainer.findViewById( R.id.leftSlideMenu );
+        rightSlideMenuView = ( RightSlideMenuView ) mainContainer.findViewById( R.id.rightSlideMenu );
+        ibShutter = ( ImageButton ) ( ( ViewGroup ) getChildAt( 0 ) ).getChildAt( 1 );
 
-        llSubContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llSubContainer );
-        ibFlashlight = ( ImageButton ) mainContainer.findViewById( R.id.ibFlashlight );
-        ibGuideline = ( ImageButton ) mainContainer.findViewById( R.id.ibGuideline );
-        ibCameraSwitcher = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraSwitcher );
-        ibIntervalWatch = ( ImageButton ) mainContainer.findViewById( R.id.ibIntervalWatch );
-        llSubContainer.setX( optionMenuSize );
-
-        ibShutter = ( ImageButton ) ( ( FrameLayout ) getChildAt( 0 ) ).getChildAt( 1 );
-
-        setOnClickModeMenu( listenerModeMenu );
-        setOnClickOptionMenu( listenerOptionMenu );
+        leftSlideMenuView.setOnClickModeMenu( listenerModeMenu );
+        rightSlideMenuView.setOnClickOptionMenu( listenerOptionMenu );
     }
 
     @Override
@@ -186,15 +165,15 @@ public class SlideMenuView extends FrameLayout {
     private void animatePointMove( int x ) {
         if ( isMovingLeftToRight( x ) ) {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                showingModeMenu( x );
+                leftSlideMenuView.showingModeMenu( x - startTrackPointX, SWIPE_MAX_DISTANCE );
             } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                hidingOptionMenu( x );
+                rightSlideMenuView.hidingOptionMenu( x - startTrackPointX, SWIPE_MAX_DISTANCE );
             }
         } else if ( isMovingRightToLeft( x ) ) {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                showingOptionMenu( x );
+                rightSlideMenuView.showingOptionMenu( startTrackPointX - x, SWIPE_MAX_DISTANCE );
             } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                hidingModeMenu( x );
+                leftSlideMenuView.hidingModeMenu( startTrackPointX - x, SWIPE_MAX_DISTANCE );
             }
         }
     }
@@ -202,28 +181,36 @@ public class SlideMenuView extends FrameLayout {
     private void animatePointUp() {
         if ( isOnFlingLeftToRight() ) {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                animateShowModeMenu();
+                leftSlideMenuView.showModeMenu();
+                isVisibleModeMenu = true;
             } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                animateHideOptionMenu();
+                rightSlideMenuView.hideOptionMenu();
+                isVisibleOptionsMenu = false;
             }
         } else {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                animateHideModeMenu();
+                leftSlideMenuView.hideModeMenu();
+                isVisibleModeMenu = false;
             } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                animateShowOptionMenu();
+                rightSlideMenuView.showOptionMenu();
+                isVisibleOptionsMenu = true;
             }
         }
         if ( isOnFlingRightToLeft() ) {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                animateShowOptionMenu();
+                rightSlideMenuView.showOptionMenu();
+                isVisibleOptionsMenu = true;
             } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                animateHideModeMenu();
+                leftSlideMenuView.hideModeMenu();
+                isVisibleModeMenu = false;
             }
         } else {
             if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                animateHideOptionMenu();
+                rightSlideMenuView.hideOptionMenu();
+                isVisibleOptionsMenu = false;
             } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
-                animateShowModeMenu();
+                leftSlideMenuView.showModeMenu();
+                isVisibleModeMenu = true;
             }
         }
     }
@@ -259,181 +246,20 @@ public class SlideMenuView extends FrameLayout {
         return stopTrackPointX - startTrackPointX >= SWIPE_MIN_DISTANCE ? true : false;
     }
 
-    private void showingModeMenu( int x ) {
-        int distance = x - startTrackPointX;
-        if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
-        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
-
-        mainContainer.setAlpha( ratioDistance );
-        llMainContainer.setX( ratioDistance * modeMenuSize - modeMenuSize );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( 1.0f - ratioDistance );
-
-        llSubContainer.setVisibility( View.GONE );
-        llMainContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Mode Showing" );
+    public void setOnClickShutter( OnClickListener listener ) {
+        ibShutter.setOnClickListener( listener );
     }
 
-    private void hidingModeMenu( int x ) {
-        int distance = startTrackPointX - x;
-        if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
-        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
-
-        mainContainer.setAlpha( 1.0f - ratioDistance );
-        llMainContainer.setX( ratioDistance * -modeMenuSize );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( ratioDistance );
-
-        llSubContainer.setVisibility( View.GONE );
-        llMainContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Mode Hiding" );
-    }
-
-    private void animateShowModeMenu() {
-        ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llMainContainer, "translationX", llMainContainer.getX(), 0.0f );
-        aniTranslate.setDuration( 300 );
-        aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( mainContainer, "alpha", mainContainer.getAlpha(), 1.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniTranslate.start();
-        aniAlpha.start();
-        isVisibleModeMenu = true;
-
-        llMainContainer.setVisibility( View.VISIBLE );
-        llSubContainer.setVisibility( View.GONE );
-
-        ibShutter.setVisibility( View.GONE );
-        ibShutter.setAlpha( 0.0f );
-        ibShutter.setEnabled( false );
-
-        HarrisUtil.jlog( "Mode Shown" );
-    }
-
-    private void animateHideModeMenu() {
-        ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llMainContainer, "translationX", llMainContainer.getX(), -modeMenuSize );
-        aniTranslate.setDuration( 300 );
-        aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( mainContainer, "alpha", mainContainer.getAlpha(), 0.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniTranslate.start();
-        aniAlpha.start();
-        isVisibleModeMenu = false;
-
-        llMainContainer.setVisibility( View.VISIBLE );
-        llSubContainer.setVisibility( View.GONE );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( 1.0f );
-        ibShutter.setEnabled( true );
-
-        HarrisUtil.jlog( "Mode Hided" );
-    }
-
-    private void showingOptionMenu( int x ) {
-        int distance = startTrackPointX - x;
-        if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
-        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
-
-        mainContainer.setAlpha( ratioDistance );
-        llSubContainer.setX( optionMenuSize - ( ratioDistance * optionMenuSize ) );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( 1.0f - ratioDistance );
-
-        llMainContainer.setVisibility( View.GONE );
-        llSubContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Option Showing" );
-    }
-
-    private void hidingOptionMenu( int x ) {
-        int distance = x - startTrackPointX;
-        if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) SWIPE_MAX_DISTANCE;
-        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
-
-        mainContainer.setAlpha( 1.0f - ratioDistance );
-        llSubContainer.setX( ratioDistance * optionMenuSize );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( ratioDistance );
-
-        llMainContainer.setVisibility( View.GONE );
-        llSubContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Option Hiding" );
-    }
-
-    private void animateShowOptionMenu() {
-        ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llSubContainer, "translationX", llSubContainer.getX(), 0.0f );
-        aniTranslate.setDuration( 300 );
-        aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( mainContainer, "alpha", mainContainer.getAlpha(), 1.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniTranslate.start();
-        aniAlpha.start();
-        isVisibleOptionsMenu = true;
-
-        llMainContainer.setVisibility( View.GONE );
-        llSubContainer.setVisibility( View.VISIBLE );
-
-        ibShutter.setVisibility( View.GONE );
-        ibShutter.setAlpha( 0.0f );
-        ibShutter.setEnabled( false );
-
-        HarrisUtil.jlog( "Option Shown" );
-    }
-
-    private void animateHideOptionMenu() {
-        ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llSubContainer, "translationX", llSubContainer.getX(),
-                optionMenuSize );
-        aniTranslate.setDuration( 300 );
-        aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( mainContainer, "alpha", mainContainer.getAlpha(), 0.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniTranslate.start();
-        aniAlpha.start();
-        isVisibleOptionsMenu = false;
-
-        llMainContainer.setVisibility( View.GONE );
-        llSubContainer.setVisibility( View.VISIBLE );
-
-        ibShutter.setVisibility( View.VISIBLE );
-        ibShutter.setAlpha( 1.0f );
-        ibShutter.setEnabled( true );
-
-        HarrisUtil.jlog( "Option Hided" );
-    }
-
-    public void showModeMenu() {
-        animateShowModeMenu();
+    public void setEnableShutter( boolean isEnable ) {
+        ibShutter.setEnabled( isEnable );
     }
 
     public void hideModeMenu() {
-        animateHideModeMenu();
-    }
-
-    public void showOptionMenu() {
-        animateShowOptionMenu();
+        leftSlideMenuView.hideModeMenu();
     }
 
     public void hideOptionMenu() {
-        animateHideOptionMenu();
+        rightSlideMenuView.hideOptionMenu();
     }
 
     public boolean isVisibleModeMenu() {
@@ -442,32 +268,5 @@ public class SlideMenuView extends FrameLayout {
 
     public boolean isVisibleOptionsMenu() {
         return isVisibleOptionsMenu;
-    }
-
-    public void setOnClickModeMenu( OnClickListener listener ) {
-        ibCameraMode.setOnClickListener( listener );
-        ibGalleryMode.setOnClickListener( listener );
-        ibSettings.setOnClickListener( listener );
-    }
-
-    public void setOnClickOptionMenu( OnClickListener listener ) {
-        ibFlashlight.setOnClickListener( listener );
-        ibGuideline.setOnClickListener( listener );
-        ibCameraSwitcher.setOnClickListener( listener );
-        ibIntervalWatch.setOnClickListener( listener );
-    }
-
-    public void setOnClickShutter( OnClickListener listener ) {
-        ibShutter.setOnClickListener( listener );
-    }
-
-    public void setEnableModeMenu( boolean isEnable ) {
-        ibCameraMode.setEnabled( isEnable );
-        ibGalleryMode.setEnabled( isEnable );
-        ibSettings.setEnabled( isEnable );
-    }
-
-    public void setEnableShutter( boolean isEnable ) {
-        ibShutter.setEnabled( isEnable );
     }
 }

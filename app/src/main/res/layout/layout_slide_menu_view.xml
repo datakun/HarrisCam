@@ -6,17 +6,15 @@
     <FrameLayout
         android:id="@+id/mainContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0.0"
-        android:background="#c8000000">
+        android:layout_height="match_parent">
 
-        <include
-            layout="@layout/layout_left_menu"
+        <com.view.harriscam.LeftSlideMenuView
+            android:id="@+id/leftSlideMenu"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-        <include
-            layout="@layout/layout_right_menu"
+        <com.view.harriscam.RightSlideMenuView
+            android:id="@+id/rightSlideMenu"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </FrameLayout>
