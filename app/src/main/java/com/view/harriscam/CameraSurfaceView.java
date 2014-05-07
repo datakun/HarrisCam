@@ -28,11 +28,8 @@ import java.util.Date;
 import java.util.List;
 
 public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
-
+    // Camera
     public Camera camera;
-    public byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
-    Context context;
-    SurfaceHolder holder;
     Camera.Parameters cameraParameters;
     List< Camera.Size > previewSizeList;
     List< Camera.Size > pictureSizeList;
@@ -40,13 +37,21 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private int totalOfCamera;
     private boolean isFrontCamera;
     private int flagOfFlashlight;
+
+    // Bitmap & Image
+    public byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
     private int indexOfImages;
     private boolean isCapture;
     private int intervalTime;
     private long lastTime;
-    private AudioManager audioManager;
-    private ToneGenerator tone;
+
+    // View
+    Context context;
+    SurfaceHolder holder;
     private ProgressDialog progressDialog;
+
+    // Sound
+    private ToneGenerator tone;
 
     public CameraSurfaceView( Context context ) {
         super( context );

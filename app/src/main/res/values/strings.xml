@@ -8,12 +8,13 @@
     <string name="mode_gallery">Choose Photos</string>
     <string name="mode_camera">Take Photos</string>
     <string name="yes">Yes</string>
+    <string name="apply">Apply</string>
     <string name="no">No</string>
-    <string name="Cancle">Cancel</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Messages -->
     <string name="msg_ask_quit">Do you want to close this app?\nOne more Back.</string>
-    <string name="msg_lastest_update">This is the latest version.</string>
+    <string name="msg_latest_update">This is the latest version.</string>
     <string name="msg_ask_update">Do you want to update the latest version?</string>
     <string name="msg_progressing">Applying the Effect...</string>
 

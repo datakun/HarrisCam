@@ -15,63 +15,60 @@ import android.widget.LinearLayout;
 import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisUtil;
 
-public class RightSlideMenuView extends FrameLayout {
+public class PhotoSelectMenuView extends FrameLayout {
     // Constants
-    private static final int OPTION_MENU_SIZE = 64;
+    private static final int PHOTO_MENU_SIZE = 128;
     private static final String TAG = "junu";
+    private static float SWIPE_MAX_DISTANCE;
     // Containers & Views
     private Context context;
     private ViewGroup mainContainer;
     private LinearLayout llSubContainer;
-    private ImageButton ibFlashlight;
-    private ImageButton ibGuideline;
-    private ImageButton ibCameraSwitcher;
-    private ImageButton ibIntervalWatch;
-    private boolean isVisibleOptionsMenu;
-    private int optionMenuSize;
+    private ImageButton ibFirstPhoto;
+    private ImageButton ibSecondPhoto;
+    private ImageButton ibThirdPhoto;
+    private boolean isVisibleMenu;
+    private int photoMenuSize;
     // Listner
-    private OnClickListener listenerOptionMenu = new OnClickListener() {
+    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
             switch ( v.getId() ) {
-                case R.id.ibFlashlight:
+                case R.id.ibFirstPhoto:
 
                     break;
-                case R.id.ibGuideline:
+                case R.id.ibSecondPhoto:
 
                     break;
-                case R.id.ibCameraSwitcher:
-
-                    break;
-                case R.id.ibIntervalWatch:
+                case R.id.ibThirdPhoto:
 
                     break;
             }
         }
     };
 
-    public RightSlideMenuView( Context context ) {
+    public PhotoSelectMenuView( Context context ) {
         super( context );
         init( context, null, 0 );
     }
 
-    public RightSlideMenuView( Context context, AttributeSet attrs ) {
+    public PhotoSelectMenuView( Context context, AttributeSet attrs ) {
         super( context, attrs );
         init( context, attrs, 0 );
     }
 
-    public RightSlideMenuView( Context context, AttributeSet attrs, int defStyle ) {
+    public PhotoSelectMenuView( Context context, AttributeSet attrs, int defStyle ) {
         super( context, attrs, defStyle );
         init( context, attrs, defStyle );
     }
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
-        optionMenuSize = HarrisUtil.dp2px( OPTION_MENU_SIZE, getResources() );
-        isVisibleOptionsMenu = false;
+        photoMenuSize = HarrisUtil.dp2px( PHOTO_MENU_SIZE, getResources() );
+        isVisibleMenu = false;
 
         LayoutInflater inflater = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-        inflater.inflate( R.layout.layout_right_menu, this, true );
+        inflater.inflate( R.layout.layout_photo_select_menu_view, this, true );
 
         initializeOfMenu();
     }
@@ -80,43 +77,51 @@ public class RightSlideMenuView extends FrameLayout {
         this.setBackgroundColor( Color.argb( 200, 0, 0, 0 ) );
         this.setAlpha( 0.0f );
         mainContainer = ( ViewGroup ) getChildAt( 0 );
-        llSubContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llSubContainer );
-        ibFlashlight = ( ImageButton ) mainContainer.findViewById( R.id.ibFlashlight );
-        ibGuideline = ( ImageButton ) mainContainer.findViewById( R.id.ibGuideline );
-        ibCameraSwitcher = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraSwitcher );
-        ibIntervalWatch = ( ImageButton ) mainContainer.findViewById( R.id.ibIntervalWatch );
-        llSubContainer.setX( optionMenuSize );
+        llSubContainer = ( LinearLayout ) mainContainer.findViewById( R.id.photoMenuContainer );
+        ibFirstPhoto = ( ImageButton ) mainContainer.findViewById( R.id.ibFirstPhoto );
+        ibSecondPhoto = ( ImageButton ) mainContainer.findViewById( R.id.ibSecondPhoto );
+        ibThirdPhoto = ( ImageButton ) mainContainer.findViewById( R.id.ibThirdPhoto );
+        llSubContainer.setX( photoMenuSize );
 
-        setOnClickOptionMenu( listenerOptionMenu );
+        ibFirstPhoto.setOnClickListener( listenerClickMenu );
+        ibSecondPhoto.setOnClickListener( listenerClickMenu );
+        ibThirdPhoto.setOnClickListener( listenerClickMenu );
     }
 
-    public void showingOptionMenu( int distance, int swipeMaxDistance ) {
+    @Override
+    protected void onMeasure( int widthMeasureSpec, int heightMeasureSpec ) {
+        super.onMeasure( widthMeasureSpec, heightMeasureSpec );
+
+        SWIPE_MAX_DISTANCE = this.getWidth() / 4;
+    }
+
+    public void showingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) swipeMaxDistance;
+        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( ratioDistance );
-        llSubContainer.setX( optionMenuSize - ( ratioDistance * optionMenuSize ) );
+        llSubContainer.setX( photoMenuSize - ( ratioDistance * photoMenuSize ) );
 
         llSubContainer.setVisibility( View.VISIBLE );
 
-        HarrisUtil.jlog( "Option Showing" );
+        HarrisUtil.jlog( "Photo Showing" );
     }
 
-    public void hidingOptionMenu( int distance, int swipeMaxDistance ) {
+    public void hidingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) swipeMaxDistance;
+        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( 1.0f - ratioDistance );
-        llSubContainer.setX( ratioDistance * optionMenuSize );
+        llSubContainer.setX( ratioDistance * photoMenuSize );
 
         llSubContainer.setVisibility( View.VISIBLE );
 
-        HarrisUtil.jlog( "Option Hiding" );
+        HarrisUtil.jlog( "Photo Hiding" );
     }
 
-    private void animateShowOptionMenu() {
+    private void animateShowMenu() {
         ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llSubContainer, "translationX", llSubContainer.getX(), 0.0f );
         aniTranslate.setDuration( 300 );
         aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
@@ -126,16 +131,16 @@ public class RightSlideMenuView extends FrameLayout {
 
         aniTranslate.start();
         aniAlpha.start();
-        isVisibleOptionsMenu = true;
 
         llSubContainer.setVisibility( View.VISIBLE );
+        isVisibleMenu = true;
 
-        HarrisUtil.jlog( "Option Shown" );
+        HarrisUtil.jlog( "Photo Shown" );
     }
 
-    private void animateHideOptionMenu() {
+    private void animateHideMenu() {
         ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llSubContainer, "translationX", llSubContainer.getX(),
-                optionMenuSize );
+                photoMenuSize );
         aniTranslate.setDuration( 300 );
         aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
         ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( this, "alpha", this.getAlpha(), 0.0f );
@@ -144,29 +149,22 @@ public class RightSlideMenuView extends FrameLayout {
 
         aniTranslate.start();
         aniAlpha.start();
-        isVisibleOptionsMenu = false;
 
         llSubContainer.setVisibility( View.VISIBLE );
+        isVisibleMenu = false;
 
-        HarrisUtil.jlog( "Option Hided" );
+        HarrisUtil.jlog( "Photo Hided" );
     }
 
-    public void showOptionMenu() {
-        animateShowOptionMenu();
+    public void showMenu() {
+        animateShowMenu();
     }
 
-    public void hideOptionMenu() {
-        animateHideOptionMenu();
+    public void hideMenu() {
+        animateHideMenu();
     }
 
-    public boolean isVisibleOptionsMenu() {
-        return isVisibleOptionsMenu;
-    }
-
-    public void setOnClickOptionMenu( OnClickListener listener ) {
-        ibFlashlight.setOnClickListener( listener );
-        ibGuideline.setOnClickListener( listener );
-        ibCameraSwitcher.setOnClickListener( listener );
-        ibIntervalWatch.setOnClickListener( listener );
+    public boolean isVisibleMenu() {
+        return isVisibleMenu;
     }
 }

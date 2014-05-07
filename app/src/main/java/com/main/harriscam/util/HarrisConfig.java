@@ -6,15 +6,9 @@ import android.os.Message;
 
 public class HarrisConfig {
     public enum VIEW_MODE {
-        CAMERA( 0 ), GALLERY( 1 ), SETTINGS( 2 );
-
-        private int mode;
-
-        VIEW_MODE( int mode ) { this.mode = mode; }
-
-        public int getMode() { return mode; }
+        CAMERA, GALLERY, SETTINGS
     }
-    public static int FLAG_MODE = VIEW_MODE.CAMERA.getMode();
+    public static VIEW_MODE FLAG_MODE = VIEW_MODE.CAMERA;
 
     // Varable for pictures.
     public static int INTERVAL = 500; // ms
@@ -25,7 +19,7 @@ public class HarrisConfig {
     // Varable for option flag
     public static int FLAG_FLASHLIGHT;
 
-    public static boolean IS_FINISH = false;
+    public static boolean IS_FINISHING = false;
 
     public static String SAVE_PATH = ""; // path/to/save
     public static String FILE_PATH = ""; // absolute path/to/file
@@ -34,7 +28,7 @@ public class HarrisConfig {
     public static final class HandlerAskQuit extends Handler {
         public void handleMessage( Message msg ) {
             if ( msg.what == 0 ) {
-                IS_FINISH = false;
+                IS_FINISHING = false;
             }
         }
     }

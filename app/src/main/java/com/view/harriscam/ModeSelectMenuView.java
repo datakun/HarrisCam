@@ -13,12 +13,14 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.main.harriscam.R;
+import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 
-public class LeftSlideMenuView extends FrameLayout {
+public class ModeSelectMenuView extends FrameLayout {
     // Constants
     private static final int MODE_MENU_SIZE = 96;
     private static final String TAG = "junu";
+    private static float SWIPE_MAX_DISTANCE;
     // Containers & Views
     private Context context;
     private ViewGroup mainContainer;
@@ -26,28 +28,43 @@ public class LeftSlideMenuView extends FrameLayout {
     private ImageButton ibCameraMode;
     private ImageButton ibGalleryMode;
     private ImageButton ibSettings;
-    private boolean isVisibleModeMenu;
+    private boolean isVisibleMenu;
     private int modeMenuSize;
     // Listner
-    private OnClickListener listenerModeMenu = new OnClickListener() {
+    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
-            setEnableModeMenu( true );
+            setEnableMenu( true );
             v.setEnabled( false );
+
+            switch ( v.getId() ) {
+                case R.id.ibCameraMode:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+
+                    break;
+                case R.id.ibGalleryMode:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.GALLERY;
+
+                    break;
+                case R.id.ibSettings:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
+
+                    break;
+            }
         }
     };
 
-    public LeftSlideMenuView( Context context ) {
+    public ModeSelectMenuView( Context context ) {
         super( context );
         init( context, null, 0 );
     }
 
-    public LeftSlideMenuView( Context context, AttributeSet attrs ) {
+    public ModeSelectMenuView( Context context, AttributeSet attrs ) {
         super( context, attrs );
         init( context, attrs, 0 );
     }
 
-    public LeftSlideMenuView( Context context, AttributeSet attrs, int defStyle ) {
+    public ModeSelectMenuView( Context context, AttributeSet attrs, int defStyle ) {
         super( context, attrs, defStyle );
         init( context, attrs, defStyle );
     }
@@ -55,10 +72,10 @@ public class LeftSlideMenuView extends FrameLayout {
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
         modeMenuSize = HarrisUtil.dp2px( MODE_MENU_SIZE, getResources() );
-        isVisibleModeMenu = false;
+        isVisibleMenu = false;
 
         LayoutInflater inflater = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-        inflater.inflate( R.layout.layout_left_menu, this, true );
+        inflater.inflate( R.layout.layout_mode_select_menu_view, this, true );
 
         initializeOfMenu();
     }
@@ -67,19 +84,28 @@ public class LeftSlideMenuView extends FrameLayout {
         this.setBackgroundColor( Color.argb( 200, 0, 0, 0 ) );
         this.setAlpha( 0.0f );
         mainContainer = ( ViewGroup ) getChildAt( 0 );
-        llMainContainer = ( LinearLayout ) mainContainer.findViewById( R.id.llMainContainer );
+        llMainContainer = ( LinearLayout ) mainContainer.findViewById( R.id.modeMenuContainer );
         ibCameraMode = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraMode );
         ibGalleryMode = ( ImageButton ) mainContainer.findViewById( R.id.ibGalleryMode );
         ibSettings = ( ImageButton ) mainContainer.findViewById( R.id.ibSettings );
         ibCameraMode.setEnabled( false );
         llMainContainer.setX( -modeMenuSize );
 
-        setOnClickModeMenu( listenerModeMenu );
+        ibCameraMode.setOnClickListener( listenerClickMenu );
+        ibGalleryMode.setOnClickListener( listenerClickMenu );
+        ibSettings.setOnClickListener( listenerClickMenu );
     }
 
-    public void showingModeMenu( int distance, int swipeMaxDistance ) {
+    @Override
+    protected void onMeasure( int widthMeasureSpec, int heightMeasureSpec ) {
+        super.onMeasure( widthMeasureSpec, heightMeasureSpec );
+
+        SWIPE_MAX_DISTANCE = this.getWidth() / 4;
+    }
+
+    public void showingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) swipeMaxDistance;
+        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( ratioDistance );
@@ -90,9 +116,9 @@ public class LeftSlideMenuView extends FrameLayout {
         HarrisUtil.jlog( "Mode Showing" );
     }
 
-    public void hidingModeMenu( int distance, int swipeMaxDistance ) {
+    public void hidingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = ( float ) distance / ( float ) swipeMaxDistance;
+        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( 1.0f - ratioDistance );
@@ -103,7 +129,7 @@ public class LeftSlideMenuView extends FrameLayout {
         HarrisUtil.jlog( "Mode Hiding" );
     }
 
-    private void animateShowModeMenu() {
+    private void animateShowMenu() {
         ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llMainContainer, "translationX", llMainContainer.getX(), 0.0f );
         aniTranslate.setDuration( 300 );
         aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
@@ -113,14 +139,14 @@ public class LeftSlideMenuView extends FrameLayout {
 
         aniTranslate.start();
         aniAlpha.start();
-        isVisibleModeMenu = true;
 
         llMainContainer.setVisibility( View.VISIBLE );
+        isVisibleMenu = true;
 
         HarrisUtil.jlog( "Mode Shown" );
     }
 
-    private void animateHideModeMenu() {
+    private void animateHideMenu() {
         ObjectAnimator aniTranslate = ObjectAnimator.ofFloat( llMainContainer, "translationX", llMainContainer.getX(), -modeMenuSize );
         aniTranslate.setDuration( 300 );
         aniTranslate.setInterpolator( new AccelerateDecelerateInterpolator() );
@@ -130,32 +156,26 @@ public class LeftSlideMenuView extends FrameLayout {
 
         aniTranslate.start();
         aniAlpha.start();
-        isVisibleModeMenu = false;
 
         llMainContainer.setVisibility( View.VISIBLE );
+        isVisibleMenu = false;
 
         HarrisUtil.jlog( "Mode Hided" );
     }
 
-    public void showModeMenu() {
-        animateShowModeMenu();
+    public void showMenu() {
+        animateShowMenu();
     }
 
-    public void hideModeMenu() {
-        animateHideModeMenu();
+    public void hideMenu() {
+        animateHideMenu();
     }
 
-    public boolean isVisibleModeMenu() {
-        return isVisibleModeMenu;
+    public boolean isVisibleMenu() {
+        return isVisibleMenu;
     }
 
-    public void setOnClickModeMenu( OnClickListener listener ) {
-        ibCameraMode.setOnClickListener( listener );
-        ibGalleryMode.setOnClickListener( listener );
-        ibSettings.setOnClickListener( listener );
-    }
-
-    public void setEnableModeMenu( boolean isEnable ) {
+    public void setEnableMenu( boolean isEnable ) {
         ibCameraMode.setEnabled( isEnable );
         ibGalleryMode.setEnabled( isEnable );
         ibSettings.setEnabled( isEnable );
