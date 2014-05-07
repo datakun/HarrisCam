@@ -10,6 +10,14 @@ public class HarrisConfig {
     }
     public static VIEW_MODE FLAG_MODE = VIEW_MODE.CAMERA;
 
+    public static final String TAG = "junu";
+    public static final int PHOTO_MENU_SIZE = 128;
+    public static final int MODE_MENU_SIZE = 96;
+    public static final int OPTION_MENU_SIZE = 64;
+    public static float SWIPE_MAX_DISTANCE;
+    public static float SWIPE_MIN_DISTANCE;
+    public static float SWIPE_POSSIBLE_DISTANCE;
+
     // Varable for pictures.
     public static int INTERVAL = 500; // ms
     public static int OFFSET_INTERVAL = 500; // ms

@@ -15,6 +15,7 @@ import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageButton;
 
 import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisConfig;
@@ -49,9 +50,14 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     Context context;
     SurfaceHolder holder;
     private ProgressDialog progressDialog;
+    private ImageButton ibShutter;
 
     // Sound
     private ToneGenerator tone;
+
+    // Native method
+    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
+    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
 
     public CameraSurfaceView( Context context ) {
         super( context );
@@ -67,10 +73,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         super( context, attrs, defStyle );
         init( context, attrs, defStyle );
     }
-
-    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
-
-    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
@@ -288,9 +290,14 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                     @Override
                     public void run() {
                         progressDialog.dismiss();
+                        ibShutter.setEnabled( true );
                     }
                 } );
             }
         }
+    }
+
+    public void setShutterButton(ImageButton ibShutter) {
+        this.ibShutter = ibShutter;
     }
 }

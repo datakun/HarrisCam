@@ -13,13 +13,10 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.main.harriscam.R;
+import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 
 public class OptionSelectMenuView extends FrameLayout {
-    // Constants
-    private static final int OPTION_MENU_SIZE = 64;
-    private static final String TAG = "junu";
-    private static float SWIPE_MAX_DISTANCE;
     // Containers & Views
     private Context context;
     private ViewGroup mainContainer;
@@ -68,7 +65,7 @@ public class OptionSelectMenuView extends FrameLayout {
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
-        optionMenuSize = HarrisUtil.dp2px( OPTION_MENU_SIZE, getResources() );
+        optionMenuSize = HarrisUtil.dp2px( HarrisConfig.OPTION_MENU_SIZE, getResources() );
         isVisibleMenu = false;
 
         LayoutInflater inflater = ( LayoutInflater ) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
@@ -94,16 +91,9 @@ public class OptionSelectMenuView extends FrameLayout {
         ibIntervalWatch.setOnClickListener( listenerClickMenu );
     }
 
-    @Override
-    protected void onMeasure( int widthMeasureSpec, int heightMeasureSpec ) {
-        super.onMeasure( widthMeasureSpec, heightMeasureSpec );
-
-        SWIPE_MAX_DISTANCE = this.getWidth() / 4;
-    }
-
     public void showingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
+        float ratioDistance = distance / HarrisConfig.SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( ratioDistance );
@@ -116,7 +106,7 @@ public class OptionSelectMenuView extends FrameLayout {
 
     public void hidingMenu( float distance ) {
         if ( distance <= 1 ) distance = 1;
-        float ratioDistance = distance / SWIPE_MAX_DISTANCE;
+        float ratioDistance = distance / HarrisConfig.SWIPE_MAX_DISTANCE;
         if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
 
         this.setAlpha( 1.0f - ratioDistance );
