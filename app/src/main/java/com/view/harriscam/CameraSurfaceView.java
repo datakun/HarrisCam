@@ -17,6 +17,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageButton;
 
+import com.image.harriscam.HarrisImageProcess;
 import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
@@ -31,33 +32,27 @@ import java.util.List;
 public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
     // Camera
     public Camera camera;
+    // Bitmap & Image
+    public byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
     Camera.Parameters cameraParameters;
     List< Camera.Size > previewSizeList;
     List< Camera.Size > pictureSizeList;
     Camera.Size previewSize;
-    private int totalOfCamera;
-    private boolean isFrontCamera;
-    private int flagOfFlashlight;
-
-    // Bitmap & Image
-    public byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
-    private int indexOfImages;
-    private boolean isCapture;
-    private int intervalTime;
-    private long lastTime;
-
     // View
     Context context;
     SurfaceHolder holder;
-    private ProgressDialog progressDialog;
+    private int totalOfCamera;
+    private boolean isFrontCamera;
+    private int flagOfFlashlight;
+    private int indexOfImages;
+    private int intervalTime;
+    private long lastTime;
+    private ProgressDialog progressApplying;
+    private ProgressDialog progressInitializing;
     private ImageButton ibShutter;
 
     // Sound
     private ToneGenerator tone;
-
-    // Native method
-    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
-    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
 
     public CameraSurfaceView( Context context ) {
         super( context );
@@ -74,6 +69,16 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         init( context, attrs, defStyle );
     }
 
+    // Native method
+//    static {
+//        System.loadLibrary( "HarrisCam" );
+//    }
+//    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
+//
+//    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
+//
+//    public static native void naBlurBitmap( Bitmap bmpInput, Bitmap bmpOutput, int radius );
+
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
 
@@ -84,11 +89,17 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         tone = new ToneGenerator( AudioManager.STREAM_ALARM, 100 );
 
-        if ( progressDialog == null ) {
-            progressDialog = new ProgressDialog( context );
-            progressDialog.setMessage( getResources().getString( R.string.msg_progressing ) );
-            progressDialog.setIndeterminate( true );
-            progressDialog.setCancelable( false );
+        if ( progressApplying == null ) {
+            progressApplying = new ProgressDialog( context );
+            progressApplying.setMessage( getResources().getString( R.string.msg_progressing ) );
+            progressApplying.setIndeterminate( true );
+            progressApplying.setCancelable( false );
+        }
+        if ( progressInitializing == null ) {
+            progressInitializing = new ProgressDialog( context );
+            progressInitializing.setMessage( getResources().getString( R.string.msg_initializing ) );
+            progressInitializing.setIndeterminate( true );
+            progressInitializing.setCancelable( false );
         }
     }
 
@@ -100,9 +111,16 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         isFrontCamera = false;
         flagOfFlashlight = 0;
         indexOfImages = 0;
+
+        ( ( Activity ) context ).runOnUiThread( new Runnable() {
+            @Override
+            public void run() {
+                progressInitializing.show();
+            }
+        } );
     }
 
-    private void openCamera( int camNum ) {
+    public void openCamera( int camNum ) {
         try {
             camera = Camera.open( camNum );
             camera.setPreviewCallback( this );
@@ -208,7 +226,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     }
 
     public void takePhotos() {
-        isCapture = true;
+        HarrisConfig.DOIN_CAPTURE = true;
         intervalTime = HarrisConfig.INTERVAL;
         lastTime = System.currentTimeMillis();
 
@@ -219,11 +237,32 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void onPreviewFrame( byte[] data, Camera camera ) {
-        if ( isCapture ) {
+        if ( HarrisConfig.BMP_GALLERY_BACKGROUND == null ) {
+            int w = cameraParameters.getPreviewSize().width;
+            int h = cameraParameters.getPreviewSize().height;
+            int format = cameraParameters.getPreviewFormat();
+            YuvImage image = new YuvImage( data, format, w, h, null );
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Rect area = new Rect( 0, 0, w, h );
+            image.compressToJpeg( area, 100, out );
+            Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+            Bitmap bitmap = rotateBitmap( bmpBackground, 90 );
+
+            HarrisConfig.BMP_GALLERY_BACKGROUND = HarrisImageProcess.blurBitmap( bitmap, 80 );
+//            naBlurBitmap( HarrisConfig.BMP_GALLERY_BACKGROUND, HarrisConfig.BMP_GALLERY_BACKGROUND, 80 );
             ( ( Activity ) context ).runOnUiThread( new Runnable() {
                 @Override
                 public void run() {
-                    progressDialog.show();
+                    progressInitializing.dismiss();
+                }
+            } );
+        }
+        if ( HarrisConfig.DOIN_CAPTURE ) {
+            ( ( Activity ) context ).runOnUiThread( new Runnable() {
+                @Override
+                public void run() {
+                    progressApplying.show();
                 }
             } );
 
@@ -238,7 +277,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
             if ( indexOfImages >= HarrisConfig.PICTURE_COUNT ) {
                 indexOfImages = 0;
-                isCapture = false;
+                HarrisConfig.DOIN_CAPTURE = false;
 
                 Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PICTURE_COUNT ];
 
@@ -261,8 +300,8 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 }
 
                 synchronized ( bmpImage[ 0 ] ) {
-                    HarrisConfig.BMP_HARRIS = Bitmap.createBitmap( bmpImage[ 0 ] );
-//                    naApplyHarris( HarrisConfig.BMP_HARRIS, bmpImage[1], bmpImage[2] );
+                    HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
+//                    naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[1], bmpImage[2] );
 //                    NativeHarrisCam.naApplyHarris( HarrisConfig.BMP_HARRIS, bmpImage[1], bmpImage[2] );
                 }
 
@@ -289,7 +328,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 ( ( Activity ) context ).runOnUiThread( new Runnable() {
                     @Override
                     public void run() {
-                        progressDialog.dismiss();
+                        progressApplying.dismiss();
                         ibShutter.setEnabled( true );
                     }
                 } );
@@ -297,7 +336,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         }
     }
 
-    public void setShutterButton(ImageButton ibShutter) {
+    public void setShutterButton( ImageButton ibShutter ) {
         this.ibShutter = ibShutter;
     }
 }

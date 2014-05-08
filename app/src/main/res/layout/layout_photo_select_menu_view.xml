@@ -17,7 +17,7 @@
             android:layout_margin="4dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_flashlight_off"/>
+            android:src="@drawable/ic_album"/>
 
         <ImageButton
             android:id="@+id/ibSecondPhoto"
@@ -27,7 +27,7 @@
             android:layout_margin="4dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_guideline_off"/>
+            android:src="@drawable/ic_album"/>
 
         <ImageButton
             android:id="@+id/ibThirdPhoto"
@@ -37,6 +37,6 @@
             android:layout_margin="4dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_switching"/>
+            android:src="@drawable/ic_album"/>
     </LinearLayout>
 </merge>

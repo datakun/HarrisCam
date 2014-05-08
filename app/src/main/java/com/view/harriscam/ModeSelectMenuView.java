@@ -3,6 +3,8 @@ package com.view.harriscam;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,29 +28,6 @@ public class ModeSelectMenuView extends FrameLayout {
     private ImageButton ibSettings;
     private boolean isVisibleMenu;
     private int modeMenuSize;
-    // Listner
-    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
-        @Override
-        public void onClick( View v ) {
-            setEnableMenu( true );
-            v.setEnabled( false );
-
-            switch ( v.getId() ) {
-                case R.id.ibCameraMode:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
-
-                    break;
-                case R.id.ibGalleryMode:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.GALLERY;
-
-                    break;
-                case R.id.ibSettings:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
-
-                    break;
-            }
-        }
-    };
 
     public ModeSelectMenuView( Context context ) {
         super( context );
@@ -86,10 +65,12 @@ public class ModeSelectMenuView extends FrameLayout {
         ibSettings = ( ImageButton ) mainContainer.findViewById( R.id.ibSettings );
         ibCameraMode.setEnabled( false );
         llMainContainer.setX( -modeMenuSize );
+    }
 
-        ibCameraMode.setOnClickListener( listenerClickMenu );
-        ibGalleryMode.setOnClickListener( listenerClickMenu );
-        ibSettings.setOnClickListener( listenerClickMenu );
+    public void setOnMenuClickListener(OnClickListener listener) {
+        ibCameraMode.setOnClickListener( listener );
+        ibGalleryMode.setOnClickListener( listener );
+        ibSettings.setOnClickListener( listener );
     }
 
     public void showingMenu( float distance ) {

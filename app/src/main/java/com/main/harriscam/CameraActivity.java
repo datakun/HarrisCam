@@ -3,13 +3,14 @@ package com.main.harriscam;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import com.main.harriscam.util.HarrisConfig;
@@ -25,6 +26,7 @@ public class CameraActivity extends Activity {
     private ModeSelectMenuView modeSelectMenuView;
     private OptionSelectMenuView optionSelectMenuView;
     private PhotoSelectMenuView photoSelectMenuView;
+    private FrameLayout flGalleryModeBackground;
     private ImageButton ibShutter;
 
     // Control to tracking pointer
@@ -47,6 +49,45 @@ public class CameraActivity extends Activity {
             HarrisUtil.toast( getBaseContext(), "Shutter" );
         }
     };
+    // Listner
+    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
+        @Override
+        public void onClick( View v ) {
+            modeSelectMenuView.setEnableMenu( true );
+            v.setEnabled( false );
+
+            switch ( v.getId() ) {
+                case R.id.ibCameraMode:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+                    HarrisConfig.BMP_GALLERY_BACKGROUND.recycle();
+                    HarrisConfig.BMP_GALLERY_BACKGROUND = null;
+                    showSurfaceView();
+                    cameraSurfaceView.setVisibility( View.VISIBLE );
+                    flGalleryModeBackground.setBackgroundDrawable( null );
+                    flGalleryModeBackground.setVisibility( View.GONE );
+                    modeSelectMenuView.hideMenu();
+                    showShutterButton();
+
+                    break;
+                case R.id.ibGalleryMode:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.GALLERY;
+                    hideSurfaceView();
+                    flGalleryModeBackground.setBackgroundDrawable( new BitmapDrawable( HarrisConfig.BMP_GALLERY_BACKGROUND ) );
+                    flGalleryModeBackground.setVisibility( View.VISIBLE );
+                    modeSelectMenuView.hideMenu();
+                    cameraSurfaceView.setVisibility( View.GONE );
+
+                    break;
+                case R.id.ibSettings:
+                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
+                    flGalleryModeBackground.setBackgroundDrawable( null );
+                    flGalleryModeBackground.setVisibility( View.GONE );
+                    modeSelectMenuView.hideMenu();
+
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -55,11 +96,7 @@ public class CameraActivity extends Activity {
 
         initializeOfView();
 
-        isVisibleModeMenu = false;
-        isVisibleOptionsMenu = false;
-        isVisiblePhotoMenu = false;
-
-        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
+        initializeOfConfiguration();
     }
 
     @Override
@@ -74,6 +111,8 @@ public class CameraActivity extends Activity {
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
+        flGalleryModeBackground = ( FrameLayout ) findViewById( R.id.flGalleryModeBackground );
+        modeSelectMenuView.setOnMenuClickListener( listenerClickMenu );
         ibShutter = ( ImageButton ) findViewById( R.id.ibShutter );
         ibShutter.setOnClickListener( listenerShutter );
         cameraSurfaceView.setShutterButton( ibShutter );
@@ -83,6 +122,24 @@ public class CameraActivity extends Activity {
         HarrisConfig.SWIPE_MAX_DISTANCE = size.x / 4;
         HarrisConfig.SWIPE_MIN_DISTANCE = HarrisConfig.SWIPE_MAX_DISTANCE / 2;
         HarrisConfig.SWIPE_POSSIBLE_DISTANCE = HarrisConfig.SWIPE_MIN_DISTANCE / 2;
+    }
+
+    private void initializeOfConfiguration() {
+        isVisibleModeMenu = false;
+        isVisibleOptionsMenu = false;
+        isVisiblePhotoMenu = false;
+
+        // TODO: SharedPreference
+        HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+        HarrisConfig.INTERVAL = 500;
+        HarrisConfig.BMP_HARRIS_RESULT = null;
+        HarrisConfig.DOIN_CAPTURE = false;
+        HarrisConfig.BMP_GALLERY_BACKGROUND = null;
+        HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
+        HarrisConfig.DOIN_FINISH = false;
+        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
+        HarrisConfig.FILE_PATH = "";
+        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = true;
     }
 
     @Override
@@ -97,10 +154,10 @@ public class CameraActivity extends Activity {
                 return false;
             }
 
-            if ( HarrisConfig.IS_FINISHING == false ) {
+            if ( HarrisConfig.DOIN_FINISH == false ) {
                 HarrisUtil.toast( this, getString( R.string.msg_ask_quit ) );
 
-                HarrisConfig.IS_FINISHING = true;
+                HarrisConfig.DOIN_FINISH = true;
 
                 Handler handler = new HarrisConfig.HandlerAskQuit();
                 handler.sendEmptyMessageDelayed( 0, 2000 );
@@ -120,6 +177,10 @@ public class CameraActivity extends Activity {
     public boolean onTouchEvent( MotionEvent event ) {
         int x = ( int ) event.getX();
         int y = ( int ) event.getY();
+
+        isVisibleModeMenu = modeSelectMenuView.isVisibleMenu();
+        isVisibleOptionsMenu = optionSelectMenuView.isVisibleMenu();
+        isVisiblePhotoMenu = photoSelectMenuView.isVisibleMenu();
 
         switch ( event.getAction() ) {
             case MotionEvent.ACTION_DOWN:
@@ -233,11 +294,12 @@ public class CameraActivity extends Activity {
                         showModeMenu();
                     } else {
                         hideModeMenu();
-                    }
-                    if ( isOnFlingRightToLeft() ) {
-                        showPhotoMenu();
-                    } else {
-                        hidePhotoMenu();
+
+                        if ( isOnFlingRightToLeft() ) {
+                            showPhotoMenu();
+                        } else {
+                            hidePhotoMenu();
+                        }
                     }
                 } else if ( isVisibleModeMenu == false && isVisiblePhotoMenu == true ) {
                     if ( isOnFlingLeftToRight() ) {
@@ -290,9 +352,26 @@ public class CameraActivity extends Activity {
         return stopTrackPointX - startTrackPointX >= HarrisConfig.SWIPE_MIN_DISTANCE ? true : false;
     }
 
+    private void hideSurfaceView() {
+        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( cameraSurfaceView, "alpha", cameraSurfaceView.getAlpha(), 0.0f );
+        aniAlpha.setDuration( 300 );
+        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
+
+        aniAlpha.start();
+    }
+
+    private void showSurfaceView() {
+        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( cameraSurfaceView, "alpha", cameraSurfaceView.getAlpha(), 1.0f );
+        aniAlpha.setDuration( 300 );
+        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
+
+        aniAlpha.start();
+    }
+
     private void hideModeMenu() {
         modeSelectMenuView.hideMenu();
-        showShutterButton();
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+            showShutterButton();
         isVisibleModeMenu = false;
     }
 
@@ -304,7 +383,6 @@ public class CameraActivity extends Activity {
 
     private void hidePhotoMenu() {
         photoSelectMenuView.hideMenu();
-        showShutterButton();
         isVisiblePhotoMenu = false;
     }
 
@@ -320,7 +398,8 @@ public class CameraActivity extends Activity {
 
     private void showModeMenu() {
         modeSelectMenuView.showMenu();
-        hideShutterButton();
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+            hideShutterButton();
         isVisibleModeMenu = true;
     }
 
@@ -332,7 +411,6 @@ public class CameraActivity extends Activity {
 
     private void showPhotoMenu() {
         photoSelectMenuView.showMenu();
-        hideShutterButton();
         isVisiblePhotoMenu = true;
     }
 
@@ -348,7 +426,8 @@ public class CameraActivity extends Activity {
 
     private void showingModeMenu( float distance ) {
         modeSelectMenuView.showingMenu( distance );
-        hidingShutterButton( distance );
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+            hidingShutterButton( distance );
     }
 
     private void showingOptionMenu( float distance ) {
@@ -358,7 +437,6 @@ public class CameraActivity extends Activity {
 
     private void showingPhotoMenu( float distance ) {
         photoSelectMenuView.showingMenu( distance );
-        hidingShutterButton( distance );
     }
 
     private void showingShutterButton( float distance ) {
@@ -371,7 +449,8 @@ public class CameraActivity extends Activity {
 
     private void hidingModeMenu( float distance ) {
         modeSelectMenuView.hidingMenu( distance );
-        showingShutterButton( distance );
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+            showingShutterButton( distance );
     }
 
     private void hidingOptionMenu( float distance ) {
@@ -381,7 +460,6 @@ public class CameraActivity extends Activity {
 
     private void hidingPhotoMenu( float distance ) {
         photoSelectMenuView.hidingMenu( distance );
-        showingShutterButton( distance );
     }
 
     private void hidingShutterButton( float distance ) {

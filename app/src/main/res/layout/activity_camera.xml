@@ -9,6 +9,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <FrameLayout
+        android:id="@+id/flGalleryModeBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#88000000">
+
+            <ImageView
+                android:id="@+id/ivHarrisResult"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/mode_menu_size"
+                android:src="@drawable/ic_album"
+                android:scaleType="fitCenter"/>
+        </LinearLayout>
+
+    </FrameLayout>
+
     <com.view.harriscam.ModeSelectMenuView
         android:id="@+id/modeSelectMenu"
         android:layout_width="match_parent"
@@ -29,9 +52,9 @@
         android:layout_width="@dimen/mode_menu_size"
         android:layout_height="@dimen/mode_menu_size"
         android:layout_gravity="center_horizontal|bottom"
+        android:layout_margin="8dp"
         android:background="@android:color/transparent"
         android:scaleType="fitCenter"
-        android:layout_margin="8dp"
         android:src="@drawable/xml_btn_shutter"/>
 
 </FrameLayout>
