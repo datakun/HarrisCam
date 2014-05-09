@@ -4,7 +4,6 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
@@ -81,6 +80,8 @@ public class CameraActivity extends Activity {
 //                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
                     modeSelectMenuView.hideMenu();
                     startActivity( new Intent( CameraActivity.this, SettingsActivity.class ) );
+                    modeSelectMenuView.setEnableMenu( true );
+                    findViewById( R.id.ibCameraMode ).setEnabled( false );
 
                     break;
             }
@@ -106,14 +107,16 @@ public class CameraActivity extends Activity {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_camera );
 
-        initializeOfView();
+        initializeView();
+
+        initializePreference();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        initializeOfConfiguration();
+        initializeEnvironment();
     }
 
     @Override
@@ -123,7 +126,7 @@ public class CameraActivity extends Activity {
         super.onPause();
     }
 
-    private void initializeOfView() {
+    private void initializeView() {
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
@@ -141,26 +144,25 @@ public class CameraActivity extends Activity {
         HarrisConfig.SWIPE_POSSIBLE_DISTANCE = HarrisConfig.SWIPE_MIN_DISTANCE / 2;
     }
 
-    private void initializeOfConfiguration() {
+    private void initializePreference() {
+        // TODO: SharedPreference
+        HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+        HarrisConfig.CAPTURE_INTERVAL = 500;
+        HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
+        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
+        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = true;
+    }
+
+    private void initializeEnvironment() {
         isVisibleModeMenu = false;
         isVisibleOptionsMenu = false;
         isVisiblePhotoMenu = false;
 
-        // TODO: SharedPreference
-        HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
-        HarrisConfig.INTERVAL = 500;
         HarrisConfig.BMP_HARRIS_RESULT = null;
         HarrisConfig.DOIN_CAPTURE = false;
         HarrisConfig.BD_GALLERY_BACKGROUND = null;
-        HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
         HarrisConfig.DOIN_FINISH = false;
-        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
         HarrisConfig.FILE_PATH = "";
-        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = true;
-
-        flGalleryModeBackground.setVisibility( View.GONE );
-        modeSelectMenuView.setEnableMenu( true );
-        findViewById( R.id.ibCameraMode ).setEnabled( false );
     }
 
     @Override
@@ -274,8 +276,6 @@ public class CameraActivity extends Activity {
                 }
 
                 break;
-            case SETTINGS:
-                break;
         }
     }
 
@@ -336,8 +336,6 @@ public class CameraActivity extends Activity {
                     }
                 }
 
-                break;
-            case SETTINGS:
                 break;
         }
     }

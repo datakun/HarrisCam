@@ -213,7 +213,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void takePhotos() {
         HarrisConfig.DOIN_CAPTURE = true;
-        intervalTime = HarrisConfig.INTERVAL;
+        intervalTime = HarrisConfig.CAPTURE_INTERVAL;
         lastTime = System.currentTimeMillis();
 
         Date now = new Date();

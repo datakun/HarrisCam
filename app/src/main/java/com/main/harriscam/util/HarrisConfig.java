@@ -7,7 +7,7 @@ import android.os.Message;
 
 public class HarrisConfig {
     public enum VIEW_MODE {
-        CAMERA, GALLERY, SETTINGS
+        CAMERA, GALLERY/*, SETTINGS*/
     }
     public static VIEW_MODE FLAG_MODE = VIEW_MODE.CAMERA;
 
@@ -20,8 +20,8 @@ public class HarrisConfig {
     public static float SWIPE_POSSIBLE_DISTANCE;
 
     // Varable for pictures.
-    public static int INTERVAL = 500; // ms, Capture time interval
-    public static int OFFSET_INTERVAL = 500; // ms
+    public static int CAPTURE_INTERVAL = 500; // ms
+    public static int INTERVAL_OFFSET = 500; // ms
     public static int PICTURE_COUNT = 3; // Count of pictures.
     public static Bitmap BMP_HARRIS_RESULT = null;
     public static boolean DOIN_CAPTURE = false;
