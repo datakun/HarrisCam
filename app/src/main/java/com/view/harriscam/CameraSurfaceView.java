@@ -8,9 +8,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -48,7 +50,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private int intervalTime;
     private long lastTime;
     private ProgressDialog progressApplying;
-    private ProgressDialog progressInitializing;
     private ImageButton ibShutter;
 
     // Sound
@@ -76,8 +77,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 //    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
 //
 //    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
-//
-//    public static native void naBlurBitmap( Bitmap bmpInput, Bitmap bmpOutput, int radius );
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
@@ -95,12 +94,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             progressApplying.setIndeterminate( true );
             progressApplying.setCancelable( false );
         }
-        if ( progressInitializing == null ) {
-            progressInitializing = new ProgressDialog( context );
-            progressInitializing.setMessage( getResources().getString( R.string.msg_initializing ) );
-            progressInitializing.setIndeterminate( true );
-            progressInitializing.setCancelable( false );
-        }
     }
 
     @Override
@@ -111,13 +104,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         isFrontCamera = false;
         flagOfFlashlight = 0;
         indexOfImages = 0;
-
-        ( ( Activity ) context ).runOnUiThread( new Runnable() {
-            @Override
-            public void run() {
-                progressInitializing.show();
-            }
-        } );
     }
 
     public void openCamera( int camNum ) {
@@ -237,26 +223,8 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void onPreviewFrame( byte[] data, Camera camera ) {
-        if ( HarrisConfig.BMP_GALLERY_BACKGROUND == null ) {
-            int w = cameraParameters.getPreviewSize().width;
-            int h = cameraParameters.getPreviewSize().height;
-            int format = cameraParameters.getPreviewFormat();
-            YuvImage image = new YuvImage( data, format, w, h, null );
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rect area = new Rect( 0, 0, w, h );
-            image.compressToJpeg( area, 100, out );
-            Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-            Bitmap bitmap = rotateBitmap( bmpBackground, 90 );
-
-            HarrisConfig.BMP_GALLERY_BACKGROUND = HarrisImageProcess.blurBitmap( bitmap, 80 );
-//            naBlurBitmap( HarrisConfig.BMP_GALLERY_BACKGROUND, HarrisConfig.BMP_GALLERY_BACKGROUND, 80 );
-            ( ( Activity ) context ).runOnUiThread( new Runnable() {
-                @Override
-                public void run() {
-                    progressInitializing.dismiss();
-                }
-            } );
+        if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
+            new BlurImageTask().execute( data );
         }
         if ( HarrisConfig.DOIN_CAPTURE ) {
             ( ( Activity ) context ).runOnUiThread( new Runnable() {
@@ -338,5 +306,29 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void setShutterButton( ImageButton ibShutter ) {
         this.ibShutter = ibShutter;
+    }
+
+    private class BlurImageTask extends AsyncTask<byte[], Void, Void> {
+
+        @Override
+        protected Void doInBackground( byte[]... params ) {
+            int w = cameraParameters.getPreviewSize().width;
+            int h = cameraParameters.getPreviewSize().height;
+            int format = cameraParameters.getPreviewFormat();
+            YuvImage image = new YuvImage( params[0], format, w, h, null );
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Rect area = new Rect( 0, 0, w, h );
+            image.compressToJpeg( area, 100, out );
+            Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+            Bitmap bmpRotated = rotateBitmap( bmpBackground, 90 );
+            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpRotated, bmpRotated.getWidth() / 4,
+                    bmpRotated.getHeight() / 4, false );
+
+            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 80 );
+            HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( bmpBlur );
+
+            return null;
+        }
     }
 }

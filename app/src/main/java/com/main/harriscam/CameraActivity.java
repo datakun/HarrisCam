@@ -59,11 +59,8 @@ public class CameraActivity extends Activity {
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
                     HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
-                    HarrisConfig.BMP_GALLERY_BACKGROUND.recycle();
-                    HarrisConfig.BMP_GALLERY_BACKGROUND = null;
-                    showSurfaceView();
-                    cameraSurfaceView.setVisibility( View.VISIBLE );
-                    flGalleryModeBackground.setBackgroundDrawable( null );
+                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
                     flGalleryModeBackground.setVisibility( View.GONE );
                     modeSelectMenuView.hideMenu();
                     showShutterButton();
@@ -71,23 +68,36 @@ public class CameraActivity extends Activity {
                     break;
                 case R.id.ibGalleryMode:
                     HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.GALLERY;
-                    hideSurfaceView();
-                    flGalleryModeBackground.setBackgroundDrawable( new BitmapDrawable( HarrisConfig.BMP_GALLERY_BACKGROUND ) );
+
+                    checkGalleryBackground();
+
+                    flGalleryModeBackground.setBackgroundDrawable( HarrisConfig.BD_GALLERY_BACKGROUND );
                     flGalleryModeBackground.setVisibility( View.VISIBLE );
                     modeSelectMenuView.hideMenu();
-                    cameraSurfaceView.setVisibility( View.GONE );
 
                     break;
                 case R.id.ibSettings:
                     HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
-                    flGalleryModeBackground.setBackgroundDrawable( null );
-                    flGalleryModeBackground.setVisibility( View.GONE );
                     modeSelectMenuView.hideMenu();
 
                     break;
             }
         }
     };
+
+    private void checkGalleryBackground() {
+        int count = 0;
+        while ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
+            try {
+                Thread.sleep( 10 );
+            } catch ( InterruptedException e ) {
+                HarrisUtil.jlog( e );
+            }
+
+            if ( count++ > 20 )
+                break;
+        }
+    }
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -134,7 +144,7 @@ public class CameraActivity extends Activity {
         HarrisConfig.INTERVAL = 500;
         HarrisConfig.BMP_HARRIS_RESULT = null;
         HarrisConfig.DOIN_CAPTURE = false;
-        HarrisConfig.BMP_GALLERY_BACKGROUND = null;
+        HarrisConfig.BD_GALLERY_BACKGROUND = null;
         HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
         HarrisConfig.DOIN_FINISH = false;
         HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
@@ -350,22 +360,6 @@ public class CameraActivity extends Activity {
 
     private boolean isOnFlingLeftToRight() {
         return stopTrackPointX - startTrackPointX >= HarrisConfig.SWIPE_MIN_DISTANCE ? true : false;
-    }
-
-    private void hideSurfaceView() {
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( cameraSurfaceView, "alpha", cameraSurfaceView.getAlpha(), 0.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniAlpha.start();
-    }
-
-    private void showSurfaceView() {
-        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( cameraSurfaceView, "alpha", cameraSurfaceView.getAlpha(), 1.0f );
-        aniAlpha.setDuration( 300 );
-        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
-
-        aniAlpha.start();
     }
 
     private void hideModeMenu() {

@@ -1,6 +1,7 @@
 package com.main.harriscam.util;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.os.Message;
 
@@ -24,7 +25,7 @@ public class HarrisConfig {
     public static int PICTURE_COUNT = 3; // Count of pictures.
     public static Bitmap BMP_HARRIS_RESULT = null;
     public static boolean DOIN_CAPTURE = false;
-    public static Bitmap BMP_GALLERY_BACKGROUND = null;
+    public static BitmapDrawable BD_GALLERY_BACKGROUND = null;
 
     // Varable for option flag
     public enum FLASH_MODE {
