@@ -2,6 +2,7 @@ package com.main.harriscam;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -77,8 +78,9 @@ public class CameraActivity extends Activity {
 
                     break;
                 case R.id.ibSettings:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
+//                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
                     modeSelectMenuView.hideMenu();
+                    startActivity( new Intent( CameraActivity.this, SettingsActivity.class ) );
 
                     break;
             }
@@ -105,6 +107,11 @@ public class CameraActivity extends Activity {
         setContentView( R.layout.activity_camera );
 
         initializeOfView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         initializeOfConfiguration();
     }
@@ -150,6 +157,10 @@ public class CameraActivity extends Activity {
         HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
         HarrisConfig.FILE_PATH = "";
         HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = true;
+
+        flGalleryModeBackground.setVisibility( View.GONE );
+        modeSelectMenuView.setEnableMenu( true );
+        findViewById( R.id.ibCameraMode ).setEnabled( false );
     }
 
     @Override
