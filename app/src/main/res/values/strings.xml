@@ -19,4 +19,62 @@
     <string name="msg_progressing">Applying the Effect...</string>
     <string name="msg_initializing">Initializing...</string>
 
+    <!-- Preference -->
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- General settings -->
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_id_quality">pref_quality</string>
+    <string name="pref_title_quality">Image quality</string>
+    <string name="pref_summary_quality">High</string>
+    <string-array name="pref_list_quality">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
+    <string-array name="pref_list_quality_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string name="pref_id_save_original">pref_save_original</string>
+    <string name="pref_title_save_original">Save a original photos</string>
+
+    <string name="pref_id_storage">pref_storage</string>
+    <string name="pref_title_storage">Storage location</string>
+    <string name="pref_summary_storage">Internal Storage</string>
+    <string-array name="pref_list_storage">
+        <item>Internal Storage</item>
+        <item>External Storage</item>
+    </string-array>
+    <string-array name="pref_list_storage_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string name="pref_id_social">pref_social</string>
+    <string name="pref_title_social">Social accounts</string>
+    <string name="pref_summary_social">Manage to social accounts.</string>
+    <string-array name="pref_list_social">
+        <item>Facebook</item>
+        <item>Twitter</item>
+        <item>Instagram</item>
+        <item>Google+</item>
+    </string-array>
+
+    <!-- About HarrisCam -->
+    <string name="pref_header_about">About</string>
+
+    <string name="pref_id_version">pref_social</string>
+    <string name="pref_title_version">HarrisCam version</string>
+    <string name="pref_summary_version">reboot 1.0</string>
+
+    <string name="pref_id_license">pref_social</string>
+    <string name="pref_title_license">License</string>
+
+    <string name="pref_id_feedback">pref_social</string>
+    <string name="pref_title_feedback">Feedback for HarrisCam</string>
+    <string name="pref_summary_feedback">Please feedback for HarrisCam</string>
 </resources>

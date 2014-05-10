@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.StatFs;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
@@ -15,18 +16,17 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * Created by Kimdata on 2014-05-04.
  */
 public final class HarrisUtil {
-    private HarrisUtil() {}
-
     private static final String TAG = "junu";
-
     static Comparator< Camera.Size > _ascSize = new Comparator< Camera.Size >() {
         @Override
         public int compare( Camera.Size arg0, Camera.Size arg1 ) {
@@ -51,6 +51,8 @@ public final class HarrisUtil {
             return arg1 > arg0 ? 1 : -1;
         }
     };
+    private HarrisUtil() {
+    }
 
     public static void sortCameraSize( List< Camera.Size > list, boolean desc ) {
         if ( desc ) {
@@ -122,5 +124,85 @@ public final class HarrisUtil {
         values.put( "format", DIR_FORMAT );
         values.put( MediaStore.MediaColumns.DATE_MODIFIED, System.currentTimeMillis() / 1000 );
         context.getContentResolver().insert( MediaUri, values );
+    }
+
+    public static String getMicroSDCardDirectory() {
+        List< String > mMounts = readMountsFile();
+
+        for ( int i = 0; i < mMounts.size(); i++ ) {
+            String mount = mMounts.get( i );
+
+            File root = new File( mount );
+            if ( !root.exists() || !root.isDirectory() ) {
+                mMounts.remove( i-- );
+                continue;
+            }
+
+            if ( !isAvailableFileSystem( mount ) ) {
+                mMounts.remove( i-- );
+                continue;
+            }
+
+            if ( !checkMicroSDCard( mount ) ) {
+                mMounts.remove( i-- );
+            }
+        }
+
+        if ( mMounts.size() == 1 ) {
+            return mMounts.get( 0 );
+        }
+
+        return "";
+    }
+
+    private static List< String > readMountsFile() {
+        List< String > mMounts = new ArrayList< String >();
+
+        try {
+            Scanner scanner = new Scanner( new File( "/proc/mounts" ) );
+
+            while ( scanner.hasNext() ) {
+                String line = scanner.nextLine();
+
+                if ( line.startsWith( "/dev/block/vold/" ) ) {
+                    String[] lineElements = line.split( "[ \t]+" );
+                    String element = lineElements[ 1 ];
+
+                    mMounts.add( element );
+                }
+            }
+        } catch ( Exception e ) {
+            HarrisUtil.jlog( e );
+        }
+
+        return mMounts;
+    }
+
+    private static boolean checkMicroSDCard( String fileSystemName ) {
+        StatFs statFs = new StatFs( fileSystemName );
+
+        long totalSize = ( long ) statFs.getBlockSize() * statFs.getBlockCount();
+
+        if ( totalSize < 1024 * 1024 * 1024 * 1024 ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean isAvailableFileSystem( String fileSystemName ) {
+        final String[] unAvailableFileSystemList = { "/dev", "/mnt/asec", "/mnt/obb", "/system", "/data", "/cache", "/efs", "/firmware" };
+
+        for ( String name : unAvailableFileSystemList ) {
+            if ( fileSystemName.contains( name ) == true ) {
+                return false;
+            }
+        }
+
+        if ( Environment.getExternalStorageDirectory().getAbsolutePath().equals( fileSystemName ) == true ) {
+            return false;
+        }
+
+        return true;
     }
 }

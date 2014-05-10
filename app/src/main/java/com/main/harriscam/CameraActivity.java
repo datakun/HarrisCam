@@ -3,9 +3,11 @@ package com.main.harriscam;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,6 +41,10 @@ public class CameraActivity extends Activity {
     private boolean isPossibleTracking;
     private boolean isDisabledTracking;
 
+    // Shared Preference
+    SharedPreferences sharedPref;
+    SharedPreferences.Editor spEditor;
+
     // Listner
     private View.OnClickListener listenerShutter = new View.OnClickListener() {
         @Override
@@ -59,8 +65,10 @@ public class CameraActivity extends Activity {
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
                     HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
-                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
+                    if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+                        HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+                        HarrisConfig.BD_GALLERY_BACKGROUND = null;
+                    }
                     flGalleryModeBackground.setVisibility( View.GONE );
                     modeSelectMenuView.hideMenu();
                     showShutterButton();
@@ -80,8 +88,6 @@ public class CameraActivity extends Activity {
 //                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
                     modeSelectMenuView.hideMenu();
                     startActivity( new Intent( CameraActivity.this, SettingsActivity.class ) );
-                    modeSelectMenuView.setEnableMenu( true );
-                    findViewById( R.id.ibCameraMode ).setEnabled( false );
 
                     break;
             }
@@ -108,13 +114,13 @@ public class CameraActivity extends Activity {
         setContentView( R.layout.activity_camera );
 
         initializeView();
-
-        initializePreference();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        initializePreference();
 
         initializeEnvironment();
     }
@@ -145,12 +151,28 @@ public class CameraActivity extends Activity {
     }
 
     private void initializePreference() {
-        // TODO: SharedPreference
-        HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+        sharedPref = PreferenceManager.getDefaultSharedPreferences( this );
+        spEditor = sharedPref.edit();
+
+        // Storage location
+        HarrisConfig.STORAGE_PATH[ 0 ] = HarrisUtil.makeDir( "/DCIM/harriscam" );
+        if ( !HarrisUtil.getMicroSDCardDirectory().equals( "" ) ) {
+            HarrisConfig.STORAGE_PATH[ 1 ] = HarrisUtil.makeDir( HarrisUtil.getMicroSDCardDirectory() + "/DCIM/harriscam" );
+        }
+        int idxOfStorage = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_storage ), "0" ) );
+        HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH[ idxOfStorage ];
+
+        // Photo quality
+        HarrisConfig.QUALITY_INDEX = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_quality ), "0" ) );
+
+        // Save original photos
+        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = sharedPref.getBoolean( getString( R.string.pref_id_save_original ), true );
+
+        // Capture interval
         HarrisConfig.CAPTURE_INTERVAL = 500;
+
+        // Flashlight
         HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
-        HarrisConfig.SAVE_PATH = HarrisUtil.makeDir( "/DCIM/harriscam" );
-        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = true;
     }
 
     private void initializeEnvironment() {
@@ -163,6 +185,18 @@ public class CameraActivity extends Activity {
         HarrisConfig.BD_GALLERY_BACKGROUND = null;
         HarrisConfig.DOIN_FINISH = false;
         HarrisConfig.FILE_PATH = "";
+
+        modeSelectMenuView.setEnableMenu( true );
+        switch ( HarrisConfig.FLAG_MODE ) {
+            case CAMERA:
+                findViewById( R.id.ibCameraMode ).setEnabled( false );
+
+                break;
+            case GALLERY:
+                findViewById( R.id.ibGalleryMode ).setEnabled( false );
+
+                break;
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
@@ -84,7 +85,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         holder = getHolder();
         holder.addCallback( this );
 
-        rawImages = new byte[ HarrisConfig.PICTURE_COUNT ][];
+        rawImages = new byte[ HarrisConfig.PHOTO_COUNT ][];
 
         tone = new ToneGenerator( AudioManager.STREAM_ALARM, 100 );
 
@@ -112,18 +113,17 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             camera.setPreviewCallback( this );
             camera.setDisplayOrientation( rotatePreview( 90 ) );
             camera.setPreviewDisplay( holder );
+
+            cameraParameters = camera.getParameters();
+            previewSizeList = cameraParameters.getSupportedPreviewSizes();
+            pictureSizeList = cameraParameters.getSupportedPictureSizes();
+            HarrisUtil.sortCameraSize( previewSizeList, true );
+            HarrisUtil.sortCameraSize( pictureSizeList, true );
+
+            initializeQuality();
         } catch ( IOException e ) {
             HarrisUtil.jlog( e );
         }
-
-        cameraParameters = camera.getParameters();
-        previewSizeList = cameraParameters.getSupportedPreviewSizes();
-        pictureSizeList = cameraParameters.getSupportedPictureSizes();
-
-        HarrisUtil.sortCameraSize( previewSizeList, true );
-        HarrisUtil.sortCameraSize( pictureSizeList, true );
-
-        initResolution();
     }
 
     private int rotatePreview( int roateAngle ) {
@@ -166,12 +166,22 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         return resizedBitmap;
     }
 
-    private void initResolution() {
-        int length = previewSizeList.size();
+    private void initializeQuality() {
+        HarrisConfig.PHOTO_QUALITY.clear();
+        float ratioPreview = ( float ) previewSizeList.get( 0 ).width / ( float ) previewSizeList.get( 0 ).height;
+        HarrisUtil.jlog( "ratio 1 : " + String.format( "%.2f", ratioPreview ) );
+        for ( Camera.Size size : previewSizeList ) {
+            // TODO: Implement preview size finder.
+            float ratio = ( float ) size.width / ( float ) size.height;
+            HarrisUtil.jlog( "ratio 2 : " + String.format( "%.2f", ratio ) );
+            if ( String.format( "%.2f", ratio ).equals( String.format( "%.2f", ratioPreview ) ) == false )
+                continue;
 
-        HarrisUtil.jlog( previewSizeList.get( 0 ).width + " width1, " + previewSizeList.get( 0 ).height + " height1" );
-        HarrisUtil.jlog( previewSizeList.get( length / 2 ).width + " width2, " + previewSizeList.get( length / 2 ).height + " height2" );
-        HarrisUtil.jlog( previewSizeList.get( length - 1 ).width + " width3, " + previewSizeList.get( length - 1 ).height + " height3" );
+            if ( size.width < 640 )
+                break;
+
+            HarrisConfig.PHOTO_QUALITY.add( size );
+        }
     }
 
     @Override
@@ -181,12 +191,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private void startCamera() {
         if ( cameraParameters != null && camera != null ) {
-            previewSize = previewSizeList.get( 0 );
+            previewSize = HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX );
             cameraParameters.setPreviewSize( previewSize.width, previewSize.height );
             camera.setParameters( cameraParameters );
             camera.startPreview();
 
-            HarrisUtil.jlog( previewSizeList.get( 0 ).width + ", " + previewSizeList.get( 0 ).height );
+            HarrisUtil.jlog( HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX ).width + ", "
+                    + HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX ).height );
         }
     }
 
@@ -243,11 +254,11 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 lastTime = System.currentTimeMillis();
             }
 
-            if ( indexOfImages >= HarrisConfig.PICTURE_COUNT ) {
+            if ( indexOfImages >= HarrisConfig.PHOTO_COUNT ) {
                 indexOfImages = 0;
                 HarrisConfig.DOIN_CAPTURE = false;
 
-                Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PICTURE_COUNT ];
+                Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PHOTO_COUNT ];
 
                 int i = 1;
                 for ( byte[] byImage : rawImages ) {
@@ -308,24 +319,24 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         this.ibShutter = ibShutter;
     }
 
-    private class BlurImageTask extends AsyncTask<byte[], Void, Void> {
+    private class BlurImageTask extends AsyncTask< byte[], Void, Void > {
 
         @Override
         protected Void doInBackground( byte[]... params ) {
             int w = cameraParameters.getPreviewSize().width;
             int h = cameraParameters.getPreviewSize().height;
             int format = cameraParameters.getPreviewFormat();
-            YuvImage image = new YuvImage( params[0], format, w, h, null );
+            YuvImage image = new YuvImage( params[ 0 ], format, w, h, null );
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Rect area = new Rect( 0, 0, w, h );
             image.compressToJpeg( area, 100, out );
             Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
             Bitmap bmpRotated = rotateBitmap( bmpBackground, 90 );
-            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpRotated, bmpRotated.getWidth() / 4,
-                    bmpRotated.getHeight() / 4, false );
+            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpRotated, bmpRotated.getWidth() / 8,
+                    bmpRotated.getHeight() / 8, false );
 
-            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 80 );
+            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 30 );
             HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( bmpBlur );
 
             return null;
