@@ -84,7 +84,6 @@ public class CameraActivity extends Activity {
 
                     break;
                 case R.id.ibSettings:
-//                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
                     modeSelectMenuView.hideMenu();
                     startActivity( new Intent( CameraActivity.this, SettingsActivity.class ) );
 
