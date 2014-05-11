@@ -20,6 +20,7 @@
     <string name="msg_latest_update">This is the latest version.</string>
     <string name="msg_ask_update">Do you want to update the latest version?</string>
     <string name="msg_progressing">Applying the Effect...</string>
+    <string name="msg_success">Successfully applied Harris Shutter effects.</string>
     <string name="msg_initializing">Initializing...</string>
     <string name="msg_choose_email">Send via email</string>
 

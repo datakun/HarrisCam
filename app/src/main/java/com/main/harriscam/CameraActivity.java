@@ -2,6 +2,7 @@ package com.main.harriscam;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
@@ -51,12 +52,10 @@ public class CameraActivity extends Activity {
         public void onClick( View v ) {
             cameraSurfaceView.takePhotos();
             ibShutter.setEnabled( false );
-
-            HarrisUtil.toast( getBaseContext(), "Shutter" );
         }
     };
-    // Listner
-    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
+
+    private View.OnClickListener listenerModeMenu = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
             modeSelectMenuView.setEnableMenu( true );
@@ -91,6 +90,28 @@ public class CameraActivity extends Activity {
 
                     break;
             }
+        }
+    };
+
+    private View.OnClickListener listenerOptionMenu = new View.OnClickListener() {
+        @Override
+        public void onClick( View v ) {
+            switch ( v.getId() ) {
+                case R.id.ibFlashlight:
+
+                    break;
+                case R.id.ibGuideline:
+
+                    break;
+                case R.id.ibCameraSwitcher:
+
+                    break;
+                case R.id.ibIntervalWatch:
+
+                    break;
+            }
+
+            savePreference();
         }
     };
 
@@ -138,7 +159,8 @@ public class CameraActivity extends Activity {
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
         flGalleryModeBackground = ( FrameLayout ) findViewById( R.id.flGalleryModeBackground );
-        modeSelectMenuView.setOnMenuClickListener( listenerClickMenu );
+        modeSelectMenuView.setOnMenuClickListener( listenerModeMenu );
+        optionSelectMenuView.setOnMenuClickListener( listenerOptionMenu );
         ibShutter = ( ImageButton ) findViewById( R.id.ibShutter );
         ibShutter.setOnClickListener( listenerShutter );
         cameraSurfaceView.setShutterButton( ibShutter );

@@ -27,26 +27,6 @@ public class OptionSelectMenuView extends FrameLayout {
     private ImageButton ibIntervalWatch;
     private boolean isVisibleMenu;
     private int optionMenuSize;
-    // Listner
-    private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
-        @Override
-        public void onClick( View v ) {
-            switch ( v.getId() ) {
-                case R.id.ibFlashlight:
-
-                    break;
-                case R.id.ibGuideline:
-
-                    break;
-                case R.id.ibCameraSwitcher:
-
-                    break;
-                case R.id.ibIntervalWatch:
-
-                    break;
-            }
-        }
-    };
 
     public OptionSelectMenuView( Context context ) {
         super( context );
@@ -84,11 +64,6 @@ public class OptionSelectMenuView extends FrameLayout {
         ibCameraSwitcher = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraSwitcher );
         ibIntervalWatch = ( ImageButton ) mainContainer.findViewById( R.id.ibIntervalWatch );
         llSubContainer.setX( optionMenuSize );
-
-        ibFlashlight.setOnClickListener( listenerClickMenu );
-        ibGuideline.setOnClickListener( listenerClickMenu );
-        ibCameraSwitcher.setOnClickListener( listenerClickMenu );
-        ibIntervalWatch.setOnClickListener( listenerClickMenu );
     }
 
     public void showingMenu( float distance ) {
@@ -162,5 +137,12 @@ public class OptionSelectMenuView extends FrameLayout {
 
     public boolean isVisibleMenu() {
         return isVisibleMenu;
+    }
+
+    public void setOnMenuClickListener( OnClickListener listener ) {
+        ibFlashlight.setOnClickListener( listener );
+        ibGuideline.setOnClickListener( listener );
+        ibCameraSwitcher.setOnClickListener( listener );
+        ibIntervalWatch.setOnClickListener( listener );
     }
 }

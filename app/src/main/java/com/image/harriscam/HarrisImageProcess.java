@@ -1,6 +1,7 @@
 package com.image.harriscam;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 
 public final class HarrisImageProcess {
     private HarrisImageProcess() {}
@@ -235,5 +236,18 @@ public final class HarrisImageProcess {
         sentBitmap = null;
 
         return ( bitmap );
+    }
+
+    public static Bitmap rotateBitmap( Bitmap bitmap, int angle ) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate( angle );
+
+        Bitmap resizedBitmap = Bitmap.createBitmap( bitmap, 0, 0, width, height, matrix, true );
+        bitmap.recycle();
+
+        return resizedBitmap;
     }
 }

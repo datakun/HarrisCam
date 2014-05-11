@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
@@ -20,6 +19,7 @@ import android.view.SurfaceView;
 import android.widget.ImageButton;
 
 import com.image.harriscam.HarrisImageProcess;
+import com.image.harriscam.HarrisNative;
 import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
@@ -69,14 +69,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         super( context, attrs, defStyle );
         init( context, attrs, defStyle );
     }
-
-    // Native method
-//    static {
-//        System.loadLibrary( "HarrisCam" );
-//    }
-//    public static native void naApplyHarris( Bitmap bitG, Bitmap bitR, Bitmap bitB );
-//
-//    public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpImage1, Bitmap bmpImage2 );
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
         this.context = context;
@@ -152,19 +144,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         return result;
     }
 
-    private Bitmap rotateBitmap( Bitmap bitmap, int angle ) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-
-        Matrix matrix = new Matrix();
-        matrix.postRotate( angle );
-
-        Bitmap resizedBitmap = Bitmap.createBitmap( bitmap, 0, 0, width, height, matrix, true );
-        bitmap.recycle();
-
-        return resizedBitmap;
-    }
-
     private void initializeQuality() {
         HarrisConfig.PHOTO_QUALITY.clear();
         float ratioPreview = ( float ) previewSizeList.get( 0 ).width / ( float ) previewSizeList.get( 0 ).height;
@@ -235,13 +214,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             new BlurImageTask().execute( data );
         }
         if ( HarrisConfig.DOIN_CAPTURE ) {
-            ( ( Activity ) context ).runOnUiThread( new Runnable() {
-                @Override
-                public void run() {
-                    progressApplying.show();
-                }
-            } );
-
             if ( indexOfImages <= 0 ) {
                 rawImages[ indexOfImages++ ] = data;
                 playSound();
@@ -255,59 +227,15 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 indexOfImages = 0;
                 HarrisConfig.DOIN_CAPTURE = false;
 
-                Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PHOTO_COUNT ];
-
-                int i = 1;
-                for ( byte[] byImage : rawImages ) {
-                    int w = cameraParameters.getPreviewSize().width;
-                    int h = cameraParameters.getPreviewSize().height;
-                    int format = cameraParameters.getPreviewFormat();
-                    YuvImage image = new YuvImage( byImage, format, w, h, null );
-
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    Rect area = new Rect( 0, 0, w, h );
-                    image.compressToJpeg( area, 100, out );
-                    bmpImage[ i - 1 ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-
-                    String filename = HarrisConfig.FILE_PATH + ( i ) + ".jpg";
-                    Bitmap bitmap = rotateBitmap( bmpImage[ i - 1 ], 90 );
-                    HarrisUtil.SaveBitmapToFileCache( bitmap, filename, 100 );
-                    i++;
-                }
-
-                synchronized ( bmpImage[ 0 ] ) {
-                    HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
-//                    naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[1], bmpImage[2] );
-//                    NativeHarrisCam.naApplyHarris( HarrisConfig.BMP_HARRIS, bmpImage[1], bmpImage[2] );
-                }
-
-                while ( !( new File( HarrisConfig.FILE_PATH + "1.jpg" ).exists() )
-                        || !( new File( HarrisConfig.FILE_PATH + "2.jpg" ).exists() )
-                        || !( new File( HarrisConfig.FILE_PATH + "3.jpg" ).exists() ) ) {
-                }
-
-                for ( Bitmap bitmap : bmpImage ) {
-                    bitmap.recycle();
-                    bitmap = null;
-                }
-
-                if ( HarrisConfig.IS_SAVE_ORIGINAL_IMAGE == false ) {
-                    ( new File( HarrisConfig.FILE_PATH + "1.jpg" ) ).delete();
-                    ( new File( HarrisConfig.FILE_PATH + "2.jpg" ) ).delete();
-                    ( new File( HarrisConfig.FILE_PATH + "3.jpg" ) ).delete();
-                } else {
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "1.jpg" );
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "2.jpg" );
-                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "3.jpg" );
-                }
-
                 ( ( Activity ) context ).runOnUiThread( new Runnable() {
+
                     @Override
                     public void run() {
-                        progressApplying.dismiss();
-                        ibShutter.setEnabled( true );
+                        progressApplying.show();
                     }
                 } );
+
+                new ApplyHarrisShutterEffectTask().execute();
             }
         }
     }
@@ -329,14 +257,84 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             Rect area = new Rect( 0, 0, w, h );
             image.compressToJpeg( area, 100, out );
             Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-            Bitmap bmpRotated = rotateBitmap( bmpBackground, 90 );
-            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpRotated, bmpRotated.getWidth() / 8,
-                    bmpRotated.getHeight() / 8, false );
+            bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 90 );
+            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpBackground, bmpBackground.getWidth() / 8,
+                    bmpBackground.getHeight() / 8, false );
 
             bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 30 );
-            HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( bmpBlur );
+            HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( getResources(), bmpBlur );
+
+            bmpBackground.recycle();
 
             return null;
+        }
+    }
+
+    private class ApplyHarrisShutterEffectTask extends AsyncTask< Void, Void, Void > {
+
+        @Override
+        protected Void doInBackground( Void... params ) {
+            Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PHOTO_COUNT ];
+
+            int i = 1;
+            for ( byte[] byImage : rawImages ) {
+                int w = cameraParameters.getPreviewSize().width;
+                int h = cameraParameters.getPreviewSize().height;
+                int format = cameraParameters.getPreviewFormat();
+                YuvImage image = new YuvImage( byImage, format, w, h, null );
+
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                Rect area = new Rect( 0, 0, w, h );
+                image.compressToJpeg( area, 100, out );
+                bmpImage[ i - 1 ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+
+                String filename = HarrisConfig.FILE_PATH + ( i ) + ".jpg";
+                bmpImage[ i - 1 ] = HarrisImageProcess.rotateBitmap( bmpImage[ i - 1 ], 90 );
+                HarrisUtil.SaveBitmapToFileCache( bmpImage[ i - 1 ], filename, 100 );
+                i++;
+            }
+
+            // TODO: Analyze process time
+            // TODO: fast blur image
+            long time = System.currentTimeMillis();
+
+            synchronized ( bmpImage[ 0 ] ) {
+                HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
+                HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[ 1 ], bmpImage[ 2 ] );
+            }
+
+            HarrisUtil.jlog( "time : " + ( System.currentTimeMillis() - time ) );
+
+            while ( !( new File( HarrisConfig.FILE_PATH + "1.jpg" ).exists() )
+                    || !( new File( HarrisConfig.FILE_PATH + "2.jpg" ).exists() )
+                    || !( new File( HarrisConfig.FILE_PATH + "3.jpg" ).exists() ) ) {
+            }
+
+            for ( Bitmap bitmap : bmpImage ) {
+                bitmap.recycle();
+            }
+
+            HarrisUtil.SaveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
+            HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "fx.jpg" );
+
+            if ( !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE ) {
+                ( new File( HarrisConfig.FILE_PATH + "1.jpg" ) ).delete();
+                ( new File( HarrisConfig.FILE_PATH + "2.jpg" ) ).delete();
+                ( new File( HarrisConfig.FILE_PATH + "3.jpg" ) ).delete();
+            } else {
+                HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "1.jpg" );
+                HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "2.jpg" );
+                HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "3.jpg" );
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute( Void aVoid ) {
+            progressApplying.dismiss();
+            ibShutter.setEnabled( true );
+            HarrisUtil.toast( context, getResources().getString( R.string.msg_success ) );
         }
     }
 }

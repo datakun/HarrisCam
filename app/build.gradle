@@ -10,11 +10,49 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
     buildTypes {
         release {
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
+    }
+
+    defaultConfig {
+        ndk {
+            moduleName "HarrisCam"
+        }
+    }
+
+    sourceSets.main {
+        jni.srcDirs = [] //disable automatic ndk-build call
+        jniLibs.srcDir 'src/main/libs'
+    }
+
+    flavorDimensions "abi"
+
+    productFlavors {
+        arm {
+            flavorDimension "abi"
+            ndk {
+                abiFilter "armeabi"
+            }
+            versionCode 2
+        }
+    }
+
+    applicationVariants.all { variant ->
+        def abiVersion = variant.productFlavors.get(0).versionCode
+
+        variant.mergedFlavor.versionCode = abiVersion * 100000 + defaultConfig.versionCode
+    }
+
+    task ndkBuild(type: Exec) {
+        commandLine 'ndk-build.cmd', '-C', file('src/main').absolutePath
+    }
+
+    tasks.withType(JavaCompile) {
+        compileTask -> compileTask.dependsOn ndkBuild
     }
 }
 
