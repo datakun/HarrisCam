@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">HarrisCam</string>
+    <string name="action_send">Send</string>
 
     <!-- Buttons -->
     <string name="mode_settings">Settings</string>
@@ -11,6 +12,8 @@
     <string name="apply">Apply</string>
     <string name="no">No</string>
     <string name="cancel">Cancel</string>
+    <string name="subject">Subject : </string>
+    <string name="message">Message : </string>
 
     <!-- Messages -->
     <string name="msg_ask_quit">Do you want to close this app?\nOne more Back.</string>
@@ -18,45 +21,38 @@
     <string name="msg_ask_update">Do you want to update the latest version?</string>
     <string name="msg_progressing">Applying the Effect...</string>
     <string name="msg_initializing">Initializing...</string>
+    <string name="msg_choose_email">Send via email</string>
 
     <!-- Preference -->
     <string name="title_activity_settings">Settings</string>
 
     <!-- General settings -->
     <string name="pref_header_general">General</string>
-
     <string name="pref_id_quality">pref_quality</string>
     <string name="pref_title_quality">Image quality</string>
     <string name="pref_summary_quality">High</string>
+
     <string-array name="pref_list_quality">
         <item>High</item>
         <item>Medium</item>
         <item>Low</item>
     </string-array>
-    <string-array name="pref_list_quality_values">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-    </string-array>
 
     <string name="pref_id_save_original">pref_save_original</string>
     <string name="pref_title_save_original">Save a original photos</string>
-
     <string name="pref_id_storage">pref_storage</string>
     <string name="pref_title_storage">Storage location</string>
     <string name="pref_summary_storage">Internal Storage</string>
+
     <string-array name="pref_list_storage">
-        <item>Internal Storage</item>
-        <item>External Storage</item>
-    </string-array>
-    <string-array name="pref_list_storage_values">
-        <item>0</item>
-        <item>1</item>
+        <item>Internal Storage\n(/DCIM/harriscam)</item>
+        <item>External Storage\n(/DCIM/harriscam)</item>
     </string-array>
 
     <string name="pref_id_social">pref_social</string>
     <string name="pref_title_social">Social accounts</string>
     <string name="pref_summary_social">Manage to social accounts.</string>
+
     <string-array name="pref_list_social">
         <item>Facebook</item>
         <item>Twitter</item>
@@ -66,15 +62,17 @@
 
     <!-- About HarrisCam -->
     <string name="pref_header_about">About</string>
-
-    <string name="pref_id_version">pref_social</string>
+    <string name="pref_id_version">pref_version</string>
     <string name="pref_title_version">HarrisCam version</string>
     <string name="pref_summary_version">reboot 1.0</string>
-
-    <string name="pref_id_license">pref_social</string>
+    <string name="pref_id_license">pref_license</string>
     <string name="pref_title_license">License</string>
-
-    <string name="pref_id_feedback">pref_social</string>
+    <string name="pref_id_feedback">pref_feedback</string>
     <string name="pref_title_feedback">Feedback for HarrisCam</string>
     <string name="pref_summary_feedback">Please feedback for HarrisCam</string>
+
+    <!-- Preference -->
+    <string name="pref_id_capture_interval">pref_capture_interval</string>
+    <string name="pref_id_flashlight">pref_flashlight</string>
+
 </resources>

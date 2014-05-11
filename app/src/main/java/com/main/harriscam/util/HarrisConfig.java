@@ -9,11 +9,10 @@ import android.os.Message;
 import java.util.ArrayList;
 
 public class HarrisConfig {
-    public enum VIEW_MODE {
-        CAMERA, GALLERY/*, SETTINGS*/
-    }
 
-    public static VIEW_MODE FLAG_MODE = VIEW_MODE.CAMERA;
+    public static final int CAMERA = 0;
+    public static final int GALLERY = 1;
+    public static int FLAG_MODE = CAMERA;
 
     public static final String TAG = "junu";
     public static final int PHOTO_MENU_SIZE = 128;
@@ -35,14 +34,14 @@ public class HarrisConfig {
     public static int MIN_PHOTO_WIDTH = 640;
 
     // For option flag
-    public enum FLASH_MODE {
-        OFF, ON, AUTO
-    }
+    public static final int OFF = 0;
+    public static final int ON = 1;
+    public static final int AUTO = 2;
 
-    public static FLASH_MODE FLAG_FLASHLIGHT = FLASH_MODE.OFF;
+    public static int FLAG_FLASHLIGHT = OFF;
 
     public static boolean DOIN_FINISH = false;
-    public static String STORAGE_PATH[] = new String[ 2 ];
+    public static ArrayList< String > STORAGE_PATH = new ArrayList< String >();
     public static String EXTERNAL_STORAGE_PATH = "";
     public static String SAVE_PATH = ""; // path/to/save
     public static String FILE_PATH = ""; // absolute path/to/file
@@ -55,4 +54,6 @@ public class HarrisConfig {
             }
         }
     }
+
+    public static String test = "test!";
 }

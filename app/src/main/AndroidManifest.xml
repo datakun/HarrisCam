@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.main.harriscam"
-          xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.main.harriscam">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -22,6 +22,7 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
+        android:theme="@android:style/Theme.Holo.Light"
         android:label="@string/app_name">
         <activity
             android:name="com.main.harriscam.CameraActivity"
@@ -37,8 +38,15 @@
         <activity
             android:name="com.main.harriscam.SettingsActivity"
             android:label="@string/title_activity_settings"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name="com.main.harriscam.FeedbackActivity"
             android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Holo.Light">
+            android:label="@string/pref_title_feedback">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.main.harriscam.SettingsActivity"/>
         </activity>
     </application>
 

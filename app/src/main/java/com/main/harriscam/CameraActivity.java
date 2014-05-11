@@ -64,7 +64,7 @@ public class CameraActivity extends Activity {
 
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.CAMERA;
+                    HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
                     if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
                         HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
                         HarrisConfig.BD_GALLERY_BACKGROUND = null;
@@ -75,7 +75,7 @@ public class CameraActivity extends Activity {
 
                     break;
                 case R.id.ibGalleryMode:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.GALLERY;
+                    HarrisConfig.FLAG_MODE = HarrisConfig.GALLERY;
 
                     checkGalleryBackground();
 
@@ -120,7 +120,7 @@ public class CameraActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        initializePreference();
+        loadPreference();
 
         initializeEnvironment();
     }
@@ -150,17 +150,24 @@ public class CameraActivity extends Activity {
         HarrisConfig.SWIPE_POSSIBLE_DISTANCE = HarrisConfig.SWIPE_MIN_DISTANCE / 2;
     }
 
-    private void initializePreference() {
+    private void loadPreference() {
         sharedPref = PreferenceManager.getDefaultSharedPreferences( this );
         spEditor = sharedPref.edit();
 
-        // Storage location
-        HarrisConfig.STORAGE_PATH[ 0 ] = HarrisUtil.makeDir( "/DCIM/harriscam" );
-        if ( !HarrisUtil.getMicroSDCardDirectory().equals( "" ) ) {
-            HarrisConfig.STORAGE_PATH[ 1 ] = HarrisUtil.makeDir( HarrisUtil.getMicroSDCardDirectory() + "/DCIM/harriscam" );
+        try {
+            // Storage location
+            HarrisConfig.STORAGE_PATH.clear();
+            HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
+            if ( !HarrisUtil.getMicroSDCardDirectory().equals( "" ) )
+                HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( HarrisUtil.getMicroSDCardDirectory() + "/DCIM/harriscam" ) );
+            int idxOfStorage = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_storage ), "0" ) );
+            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH.get( idxOfStorage );
+        } catch ( IndexOutOfBoundsException e ) {
+            HarrisUtil.jlog( e );
+            HarrisConfig.STORAGE_PATH.clear();
+            HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
+            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH.get( 0 );
         }
-        int idxOfStorage = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_storage ), "0" ) );
-        HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH[ idxOfStorage ];
 
         // Photo quality
         HarrisConfig.QUALITY_INDEX = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_quality ), "0" ) );
@@ -169,10 +176,10 @@ public class CameraActivity extends Activity {
         HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = sharedPref.getBoolean( getString( R.string.pref_id_save_original ), true );
 
         // Capture interval
-        HarrisConfig.CAPTURE_INTERVAL = 500;
+        HarrisConfig.CAPTURE_INTERVAL = sharedPref.getInt( getString( R.string.pref_id_capture_interval ), 500 );
 
         // Flashlight
-        HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLASH_MODE.OFF;
+        HarrisConfig.FLAG_FLASHLIGHT = sharedPref.getInt( getString( R.string.pref_id_flashlight ), 0 );
     }
 
     private void initializeEnvironment() {
@@ -188,15 +195,24 @@ public class CameraActivity extends Activity {
 
         modeSelectMenuView.setEnableMenu( true );
         switch ( HarrisConfig.FLAG_MODE ) {
-            case CAMERA:
+            case HarrisConfig.CAMERA:
                 findViewById( R.id.ibCameraMode ).setEnabled( false );
+                showShutterButton();
 
                 break;
-            case GALLERY:
+            case HarrisConfig.GALLERY:
                 findViewById( R.id.ibGalleryMode ).setEnabled( false );
 
                 break;
         }
+    }
+
+    private void savePreference() {
+        // Capture interval
+        spEditor.putInt( getString( R.string.pref_id_capture_interval ), HarrisConfig.CAPTURE_INTERVAL );
+
+        // Flashlight
+        spEditor.putInt( getString( R.string.pref_id_flashlight ), HarrisConfig.FLAG_FLASHLIGHT );
     }
 
     @Override
@@ -221,10 +237,10 @@ public class CameraActivity extends Activity {
 
                 return false;
             } else {
-                finish();
+                android.os.Process.killProcess( android.os.Process.myPid() );
             }
         } else if ( keyCode == KeyEvent.KEYCODE_HOME ) {
-            finish();
+            android.os.Process.killProcess( android.os.Process.myPid() );
         }
 
         return super.onKeyDown( keyCode, event );
@@ -278,7 +294,7 @@ public class CameraActivity extends Activity {
 
     private void animatePointMove( int x ) {
         switch ( HarrisConfig.FLAG_MODE ) {
-            case CAMERA:
+            case HarrisConfig.CAMERA:
                 if ( isMovingLeftToRight( x ) ) {
                     if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
                         showingModeMenu( x - startTrackPointX );
@@ -294,7 +310,7 @@ public class CameraActivity extends Activity {
                 }
 
                 break;
-            case GALLERY:
+            case HarrisConfig.GALLERY:
                 if ( isMovingLeftToRight( x ) ) {
                     if ( isVisibleModeMenu == false && isVisiblePhotoMenu == false ) {
                         showingModeMenu( x - startTrackPointX );
@@ -315,7 +331,7 @@ public class CameraActivity extends Activity {
 
     private void animatePointUp() {
         switch ( HarrisConfig.FLAG_MODE ) {
-            case CAMERA:
+            case HarrisConfig.CAMERA:
                 if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
                     if ( isOnFlingLeftToRight() ) {
                         showModeMenu();
@@ -343,7 +359,7 @@ public class CameraActivity extends Activity {
                 }
 
                 break;
-            case GALLERY:
+            case HarrisConfig.GALLERY:
                 if ( isVisibleModeMenu == false && isVisiblePhotoMenu == false ) {
                     if ( isOnFlingLeftToRight() ) {
                         showModeMenu();
@@ -407,7 +423,7 @@ public class CameraActivity extends Activity {
 
     private void hideModeMenu() {
         modeSelectMenuView.hideMenu();
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
             showShutterButton();
         isVisibleModeMenu = false;
     }
@@ -435,7 +451,7 @@ public class CameraActivity extends Activity {
 
     private void showModeMenu() {
         modeSelectMenuView.showMenu();
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
             hideShutterButton();
         isVisibleModeMenu = true;
     }
@@ -463,7 +479,7 @@ public class CameraActivity extends Activity {
 
     private void showingModeMenu( float distance ) {
         modeSelectMenuView.showingMenu( distance );
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
             hidingShutterButton( distance );
     }
 
@@ -486,7 +502,7 @@ public class CameraActivity extends Activity {
 
     private void hidingModeMenu( float distance ) {
         modeSelectMenuView.hidingMenu( distance );
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.VIEW_MODE.CAMERA )
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
             showingShutterButton( distance );
     }
 

@@ -6,7 +6,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
@@ -169,15 +168,16 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private void initializeQuality() {
         HarrisConfig.PHOTO_QUALITY.clear();
         float ratioPreview = ( float ) previewSizeList.get( 0 ).width / ( float ) previewSizeList.get( 0 ).height;
-        HarrisUtil.jlog( "ratio 1 : " + String.format( "%.2f", ratioPreview ) );
+        ratioPreview = Float.valueOf( String.format( "%.2f", ratioPreview ) );
+
         for ( Camera.Size size : previewSizeList ) {
-            // TODO: Implement preview size finder.
             float ratio = ( float ) size.width / ( float ) size.height;
-            HarrisUtil.jlog( "ratio 2 : " + String.format( "%.2f", ratio ) );
-            if ( String.format( "%.2f", ratio ).equals( String.format( "%.2f", ratioPreview ) ) == false )
+            ratio = Float.valueOf( String.format( "%.2f", ratio ) );
+
+            if ( ratioPreview * 0.9 > ratio || ratio > ratioPreview * 1.1 )
                 continue;
 
-            if ( size.width < 640 )
+            if ( size.width < HarrisConfig.MIN_PHOTO_WIDTH )
                 break;
 
             HarrisConfig.PHOTO_QUALITY.add( size );
@@ -195,9 +195,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             cameraParameters.setPreviewSize( previewSize.width, previewSize.height );
             camera.setParameters( cameraParameters );
             camera.startPreview();
-
-            HarrisUtil.jlog( HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX ).width + ", "
-                    + HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX ).height );
         }
     }
 
