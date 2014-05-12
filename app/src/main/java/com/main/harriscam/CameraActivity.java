@@ -2,7 +2,6 @@ package com.main.harriscam;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
@@ -19,6 +18,7 @@ import android.widget.ImageButton;
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 import com.view.harriscam.CameraSurfaceView;
+import com.view.harriscam.DrawLineView;
 import com.view.harriscam.ModeSelectMenuView;
 import com.view.harriscam.OptionSelectMenuView;
 import com.view.harriscam.PhotoSelectMenuView;
@@ -31,6 +31,7 @@ public class CameraActivity extends Activity {
     private PhotoSelectMenuView photoSelectMenuView;
     private FrameLayout flGalleryModeBackground;
     private ImageButton ibShutter;
+    private DrawLineView drawLineView;
 
     // Control to tracking pointer
     private int startTrackPointX;
@@ -55,7 +56,7 @@ public class CameraActivity extends Activity {
         }
     };
 
-    private View.OnClickListener listenerModeMenu = new View.OnClickListener() {
+    private View.OnClickListener listenerModeClick = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
             modeSelectMenuView.setEnableMenu( true );
@@ -93,25 +94,51 @@ public class CameraActivity extends Activity {
         }
     };
 
-    private View.OnClickListener listenerOptionMenu = new View.OnClickListener() {
+    private View.OnClickListener listenerOptionClick = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
-            switch ( v.getId() ) {
-                case R.id.ibFlashlight:
+        }
+    };
+
+    private View.OnTouchListener listenerOptionTouch = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch( View v, MotionEvent event ) {
+            switch ( event.getAction() ) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setBackgroundColor( getResources().getColor( R.color.AlphaGray ) );
 
                     break;
-                case R.id.ibGuideline:
+                case MotionEvent.ACTION_UP:
+                    v.setBackgroundColor( getResources().getColor( android.R.color.transparent ) );
 
-                    break;
-                case R.id.ibCameraSwitcher:
+                    switch ( v.getId() ) {
+                        case R.id.ibFlashlight:
+                            HarrisConfig.FLAG_FLASHLIGHT = ( HarrisConfig.FLAG_FLASHLIGHT + 1 ) % 3;
 
-                    break;
-                case R.id.ibIntervalWatch:
+                            break;
+                        case R.id.ibGuideline:
+                            HarrisConfig.FLAG_GUIDELINE = ( HarrisConfig.FLAG_GUIDELINE + 1 ) % 2;
+
+                            break;
+                        case R.id.ibCameraSwitcher:
+                            HarrisConfig.FLAG_CAMERA = ( HarrisConfig.FLAG_CAMERA + 1 ) % 2;
+
+                            break;
+                        case R.id.ibIntervalWatch:
+                            HarrisConfig.CAPTURE_INTERVAL = ( HarrisConfig.CAPTURE_INTERVAL + HarrisConfig.INTERVAL_OFFSET ) %
+                                    ( 4 * HarrisConfig.INTERVAL_OFFSET );
+
+                            break;
+                    }
+
+                    optionSelectMenuView.updateView();
+                    drawLineView.invalidate();
+                    savePreference();
 
                     break;
             }
 
-            savePreference();
+            return false;
         }
     };
 
@@ -159,8 +186,10 @@ public class CameraActivity extends Activity {
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
         flGalleryModeBackground = ( FrameLayout ) findViewById( R.id.flGalleryModeBackground );
-        modeSelectMenuView.setOnMenuClickListener( listenerModeMenu );
-        optionSelectMenuView.setOnMenuClickListener( listenerOptionMenu );
+        drawLineView = ( DrawLineView ) findViewById( R.id.dvLines );
+        modeSelectMenuView.setOnMenuClickListener( listenerModeClick );
+        optionSelectMenuView.setOnMenuClickListener( listenerOptionClick );
+        optionSelectMenuView.setOnMenuTouchListener( listenerOptionTouch );
         ibShutter = ( ImageButton ) findViewById( R.id.ibShutter );
         ibShutter.setOnClickListener( listenerShutter );
         cameraSurfaceView.setShutterButton( ibShutter );
@@ -178,17 +207,17 @@ public class CameraActivity extends Activity {
 
         try {
             // Storage location
-            HarrisConfig.STORAGE_PATH.clear();
-            HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
+            HarrisConfig.STORAGE_PATH_LIST.clear();
+            HarrisConfig.STORAGE_PATH_LIST.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
             if ( !HarrisUtil.getMicroSDCardDirectory().equals( "" ) )
-                HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( HarrisUtil.getMicroSDCardDirectory() + "/DCIM/harriscam" ) );
+                HarrisConfig.STORAGE_PATH_LIST.add( HarrisUtil.makeDir( HarrisUtil.getMicroSDCardDirectory() + "/DCIM/harriscam" ) );
             int idxOfStorage = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_storage ), "0" ) );
-            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH.get( idxOfStorage );
+            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH_LIST.get( idxOfStorage );
         } catch ( IndexOutOfBoundsException e ) {
             HarrisUtil.jlog( e );
-            HarrisConfig.STORAGE_PATH.clear();
-            HarrisConfig.STORAGE_PATH.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
-            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH.get( 0 );
+            HarrisConfig.STORAGE_PATH_LIST.clear();
+            HarrisConfig.STORAGE_PATH_LIST.add( HarrisUtil.makeDir( "/DCIM/harriscam" ) );
+            HarrisConfig.SAVE_PATH = HarrisConfig.STORAGE_PATH_LIST.get( 0 );
         }
 
         // Photo quality
@@ -197,11 +226,14 @@ public class CameraActivity extends Activity {
         // Save original photos
         HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = sharedPref.getBoolean( getString( R.string.pref_id_save_original ), true );
 
-        // Capture interval
-        HarrisConfig.CAPTURE_INTERVAL = sharedPref.getInt( getString( R.string.pref_id_capture_interval ), 500 );
-
         // Flashlight
         HarrisConfig.FLAG_FLASHLIGHT = sharedPref.getInt( getString( R.string.pref_id_flashlight ), 0 );
+
+        // Guideline
+        HarrisConfig.FLAG_GUIDELINE = sharedPref.getInt( getString( R.string.pref_id_guideline ), 0 );
+
+        // Capture interval
+        HarrisConfig.CAPTURE_INTERVAL = sharedPref.getInt( getString( R.string.pref_id_capture_interval ), 500 );
     }
 
     private void initializeEnvironment() {
@@ -227,14 +259,20 @@ public class CameraActivity extends Activity {
 
                 break;
         }
+        optionSelectMenuView.updateView();
     }
 
     private void savePreference() {
+        // Flashlight
+        spEditor.putInt( getString( R.string.pref_id_flashlight ), HarrisConfig.FLAG_FLASHLIGHT );
+
+        // Guideline
+        spEditor.putInt( getString( R.string.pref_id_guideline ), HarrisConfig.FLAG_GUIDELINE );
+
         // Capture interval
         spEditor.putInt( getString( R.string.pref_id_capture_interval ), HarrisConfig.CAPTURE_INTERVAL );
 
-        // Flashlight
-        spEditor.putInt( getString( R.string.pref_id_flashlight ), HarrisConfig.FLAG_FLASHLIGHT );
+        spEditor.commit();
     }
 
     @Override

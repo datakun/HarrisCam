@@ -145,4 +145,17 @@ public class OptionSelectMenuView extends FrameLayout {
         ibCameraSwitcher.setOnClickListener( listener );
         ibIntervalWatch.setOnClickListener( listener );
     }
+
+    public void setOnMenuTouchListener( OnTouchListener listener ) {
+        ibFlashlight.setOnTouchListener( listener );
+        ibGuideline.setOnTouchListener( listener );
+        ibCameraSwitcher.setOnTouchListener( listener );
+        ibIntervalWatch.setOnTouchListener( listener );
+    }
+
+    public void updateView() {
+        ibFlashlight.setImageResource( HarrisConfig.RESOURCE_FLASHLIGHT[ HarrisConfig.FLAG_FLASHLIGHT ] );
+        ibGuideline.setImageResource( HarrisConfig.RESOURCE_GUIDELINE[ HarrisConfig.FLAG_GUIDELINE ] );
+        ibIntervalWatch.setImageResource( HarrisConfig.RESOURCE_WATCH[ HarrisConfig.CAPTURE_INTERVAL / 500 ] );
+    }
 }

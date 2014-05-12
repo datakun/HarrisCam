@@ -109,7 +109,6 @@ typedef struct {
 } rgba;
 
 JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv* env, jobject obj, jobject bitmapIn, jobject bitmapOut, jint radius) {
-    // Properties
     AndroidBitmapInfo   infoIn;
     void*               pixelsIn;
     AndroidBitmapInfo   infoOut;
@@ -117,21 +116,15 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
 
     int ret;
 
-    // Get image info
     if ((ret = AndroidBitmap_getInfo(env, bitmapIn, &infoIn)) < 0 || (ret = AndroidBitmap_getInfo(env, bitmapOut, &infoOut)) < 0) {
-
         return;
     }
 
-    // Check image
     if (infoIn.format != ANDROID_BITMAP_FORMAT_RGBA_8888 || infoOut.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-
         return;
     }
 
-    // Lock all images
     if ((ret = AndroidBitmap_lockPixels(env, bitmapIn, &pixelsIn)) < 0 || (ret = AndroidBitmap_lockPixels(env, bitmapOut, &pixelsOut)) < 0) {
-
     }
 
     int h = infoIn.height;
@@ -177,7 +170,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
         for (i = -radius; i <= radius; i++) {
             p = input[yi + min(wm, max(i, 0))];
 
-            ir = i + radius; // same as sir
+            ir = i + radius;
 
             stack[ir][0] = p.red;
             stack[ir][1] = p.green;
@@ -209,7 +202,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
             bsum -= boutsum;
 
             stackstart = stackpointer - radius + div;
-            ir = stackstart % div; // same as sir
+            ir = stackstart % div;
 
             routsum -= stack[ir][0];
             goutsum -= stack[ir][1];
@@ -233,7 +226,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
             bsum += binsum;
 
             stackpointer = (stackpointer + 1) % div;
-            ir = (stackpointer) % div; // same as sir
+            ir = (stackpointer) % div;
 
             routsum += stack[ir][0];
             goutsum += stack[ir][1];
@@ -253,7 +246,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
         for (i = -radius; i <= radius; i++) {
             yi = max(0, yp) + x;
 
-            ir = i + radius; // same as sir
+            ir = i + radius;
 
             stack[ir][0] = r[yi];
             stack[ir][1] = g[yi];
@@ -291,7 +284,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
             bsum -= boutsum;
 
             stackstart = stackpointer - radius + div;
-            ir = stackstart % div; // same as sir
+            ir = stackstart % div;
 
             routsum -= stack[ir][0];
             goutsum -= stack[ir][1];
@@ -313,7 +306,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
             bsum += binsum;
 
             stackpointer = (stackpointer + 1) % div;
-            ir = stackpointer; // same as sir
+            ir = stackpointer;
 
             routsum += stack[ir][0];
             goutsum += stack[ir][1];
@@ -327,7 +320,6 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
         }
     }
 
-    // Unlocks everything
     AndroidBitmap_unlockPixels(env, bitmapIn);
     AndroidBitmap_unlockPixels(env, bitmapOut);
 }

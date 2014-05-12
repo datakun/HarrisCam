@@ -9,6 +9,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <com.view.harriscam.DrawLineView
+        android:id="@+id/dvLines"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
     <FrameLayout
         android:id="@+id/flGalleryModeBackground"
         android:layout_width="match_parent"
