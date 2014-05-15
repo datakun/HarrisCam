@@ -2,9 +2,13 @@ package com.main.harriscam;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -14,14 +18,20 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 import com.view.harriscam.CameraSurfaceView;
-import com.view.harriscam.DrawLineView;
+import com.view.harriscam.DrawGuidelineView;
 import com.view.harriscam.ModeSelectMenuView;
 import com.view.harriscam.OptionSelectMenuView;
 import com.view.harriscam.PhotoSelectMenuView;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class CameraActivity extends Activity {
     // Views
@@ -31,7 +41,9 @@ public class CameraActivity extends Activity {
     private PhotoSelectMenuView photoSelectMenuView;
     private FrameLayout flGalleryModeBackground;
     private ImageButton ibShutter;
-    private DrawLineView drawLineView;
+    private ImageView ivHarrisResult;
+    private ImageButton ibSubmitEffect;
+    private DrawGuidelineView drawLineView;
 
     // Control to tracking pointer
     private int startTrackPointX;
@@ -48,7 +60,7 @@ public class CameraActivity extends Activity {
     SharedPreferences.Editor spEditor;
 
     // Listner
-    private View.OnClickListener listenerShutter = new View.OnClickListener() {
+    private View.OnClickListener listenerClickShutter = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
             cameraSurfaceView.takePhotos();
@@ -56,7 +68,7 @@ public class CameraActivity extends Activity {
         }
     };
 
-    private View.OnClickListener listenerModeClick = new View.OnClickListener() {
+    private View.OnClickListener listenerClickMode = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
             modeSelectMenuView.setEnableMenu( true );
@@ -64,14 +76,21 @@ public class CameraActivity extends Activity {
 
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
-                    HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
-                    if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
-                        HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-                        HarrisConfig.BD_GALLERY_BACKGROUND = null;
-                    }
-                    flGalleryModeBackground.setVisibility( View.GONE );
-                    modeSelectMenuView.hideMenu();
-                    showShutterButton();
+                    // TODO : gallery
+//                    if ( photoSelectMenuView.isSelectedAnyPhoto() )
+//                        askCancelApplyEffect();
+//                    else {
+                        HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
+                        if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+                            HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+                            HarrisConfig.BD_GALLERY_BACKGROUND = null;
+                        }
+                        flGalleryModeBackground.setVisibility( View.GONE );
+                        modeSelectMenuView.hideMenu();
+                        showShutterButton();
+                        ibShutter.setVisibility( View.VISIBLE );
+                        ibSubmitEffect.setVisibility( View.GONE );
+//                    }
 
                     break;
                 case R.id.ibGalleryMode:
@@ -82,10 +101,12 @@ public class CameraActivity extends Activity {
                     flGalleryModeBackground.setBackgroundDrawable( HarrisConfig.BD_GALLERY_BACKGROUND );
                     flGalleryModeBackground.setVisibility( View.VISIBLE );
                     modeSelectMenuView.hideMenu();
+                    showSubmitButton();
+                    ibSubmitEffect.setVisibility( View.VISIBLE );
+                    ibShutter.setVisibility( View.GONE );
 
                     break;
                 case R.id.ibSettings:
-//                    HarrisConfig.FLAG_MODE = HarrisConfig.VIEW_MODE.SETTINGS;
                     modeSelectMenuView.hideMenu();
                     startActivity( new Intent( CameraActivity.this, SettingsActivity.class ) );
 
@@ -94,13 +115,7 @@ public class CameraActivity extends Activity {
         }
     };
 
-    private View.OnClickListener listenerOptionClick = new View.OnClickListener() {
-        @Override
-        public void onClick( View v ) {
-        }
-    };
-
-    private View.OnTouchListener listenerOptionTouch = new View.OnTouchListener() {
+    private View.OnTouchListener listenerTouchOption = new View.OnTouchListener() {
         @Override
         public boolean onTouch( View v, MotionEvent event ) {
             switch ( event.getAction() ) {
@@ -113,15 +128,21 @@ public class CameraActivity extends Activity {
 
                     switch ( v.getId() ) {
                         case R.id.ibFlashlight:
-                            HarrisConfig.FLAG_FLASHLIGHT = ( HarrisConfig.FLAG_FLASHLIGHT + 1 ) % 3;
+                            HarrisConfig.FLAG_FLASHLIGHT = HarrisConfig.FLAG_FLASHLIGHT == HarrisConfig.ON ? HarrisConfig.OFF :
+                                    HarrisConfig.ON;
 
                             break;
                         case R.id.ibGuideline:
-                            HarrisConfig.FLAG_GUIDELINE = ( HarrisConfig.FLAG_GUIDELINE + 1 ) % 2;
+                            HarrisConfig.FLAG_GUIDELINE = HarrisConfig.FLAG_GUIDELINE == HarrisConfig.ON ? HarrisConfig.OFF :
+                                    HarrisConfig.ON;
+                            drawLineView.invalidate();
 
                             break;
                         case R.id.ibCameraSwitcher:
-                            HarrisConfig.FLAG_CAMERA = ( HarrisConfig.FLAG_CAMERA + 1 ) % 2;
+                            HarrisConfig.FLAG_CAMERA = HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK ?
+                                    Camera.CameraInfo.CAMERA_FACING_FRONT : Camera.CameraInfo.CAMERA_FACING_BACK;
+                            cameraSurfaceView.setVisibility( View.GONE );
+                            cameraSurfaceView.setVisibility( View.VISIBLE );
 
                             break;
                         case R.id.ibIntervalWatch:
@@ -132,13 +153,31 @@ public class CameraActivity extends Activity {
                     }
 
                     optionSelectMenuView.updateView();
-                    drawLineView.invalidate();
                     savePreference();
 
                     break;
             }
 
             return false;
+        }
+    };
+
+    // TODO : gallery
+    private View.OnClickListener listenerClickSubmit = new View.OnClickListener() {
+        @Override
+        public void onClick( View v ) {
+//            if ( photoSelectMenuView.isSelectedAllPhoto() ) {
+//                HarrisConfig.BMP_HARRIS_RESULT = ( ( BitmapDrawable ) ivHarrisResult.getDrawable() ).getBitmap();
+//
+//                Date now = new Date();
+//                SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
+//                HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
+//
+//                HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
+//                HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
+//
+//                HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_success ) );
+//            }
         }
     };
 
@@ -180,19 +219,53 @@ public class CameraActivity extends Activity {
         super.onPause();
     }
 
+    // TODO : gallery
+//    @Override
+//    protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
+//        if ( data == null ) {
+//            return;
+//        }
+//
+//        InputStream is = HarrisUtil.getISFromURI( this, data.getData() );
+//        switch ( requestCode ) {
+//            case HarrisConfig.REQUEST_FIRST:
+//                photoSelectMenuView.applyFirstPhoto( is );
+//
+//                break;
+//            case HarrisConfig.REQUEST_SECOND:
+//                photoSelectMenuView.applySecondPhoto( is );
+//
+//                break;
+//            case HarrisConfig.REQUEST_THIRD:
+//                photoSelectMenuView.applyThirdPhoto( is );
+//
+//                break;
+//        }
+//        try {
+//            is.close();
+//        } catch ( IOException e ) {
+//            HarrisUtil.jlog( e );
+//        }
+//
+//        photoSelectMenuView.checkEnableApplyEffect();
+//    }
+
     private void initializeView() {
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
         flGalleryModeBackground = ( FrameLayout ) findViewById( R.id.flGalleryModeBackground );
-        drawLineView = ( DrawLineView ) findViewById( R.id.dvLines );
-        modeSelectMenuView.setOnMenuClickListener( listenerModeClick );
-        optionSelectMenuView.setOnMenuClickListener( listenerOptionClick );
-        optionSelectMenuView.setOnMenuTouchListener( listenerOptionTouch );
+        ivHarrisResult = ( ImageView ) findViewById( R.id.ivHarrisResult );
+        ibSubmitEffect = ( ImageButton ) findViewById( R.id.ibSubmitEffect );
+        drawLineView = ( DrawGuidelineView ) findViewById( R.id.dvLines );
+        modeSelectMenuView.setOnMenuClickListener( listenerClickMode );
+        optionSelectMenuView.setOnMenuTouchListener( listenerTouchOption );
         ibShutter = ( ImageButton ) findViewById( R.id.ibShutter );
-        ibShutter.setOnClickListener( listenerShutter );
+        ibShutter.setOnClickListener( listenerClickShutter );
         cameraSurfaceView.setShutterButton( ibShutter );
+        photoSelectMenuView.setResultImageView( ivHarrisResult );
+        ibSubmitEffect.setOnClickListener( listenerClickSubmit );
 
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize( size );
@@ -232,6 +305,10 @@ public class CameraActivity extends Activity {
         // Guideline
         HarrisConfig.FLAG_GUIDELINE = sharedPref.getInt( getString( R.string.pref_id_guideline ), 0 );
 
+        // Camera switcher
+        HarrisConfig.FLAG_CAMERA = sharedPref.getInt( getString( R.string.pref_id_camera_switcher ),
+                Camera.CameraInfo.CAMERA_FACING_BACK );
+
         // Capture interval
         HarrisConfig.CAPTURE_INTERVAL = sharedPref.getInt( getString( R.string.pref_id_capture_interval ), 500 );
     }
@@ -268,6 +345,9 @@ public class CameraActivity extends Activity {
 
         // Guideline
         spEditor.putInt( getString( R.string.pref_id_guideline ), HarrisConfig.FLAG_GUIDELINE );
+
+        // Camera switcher
+        spEditor.putInt( getString( R.string.pref_id_camera_switcher ), HarrisConfig.FLAG_CAMERA );
 
         // Capture interval
         spEditor.putInt( getString( R.string.pref_id_capture_interval ), HarrisConfig.CAPTURE_INTERVAL );
@@ -483,8 +563,16 @@ public class CameraActivity extends Activity {
 
     private void hideModeMenu() {
         modeSelectMenuView.hideMenu();
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
-            showShutterButton();
+        switch ( HarrisConfig.FLAG_MODE ) {
+            case HarrisConfig.CAMERA:
+                showShutterButton();
+
+                break;
+            case HarrisConfig.GALLERY:
+                showSubmitButton();
+
+                break;
+        }
         isVisibleModeMenu = false;
     }
 
@@ -496,6 +584,7 @@ public class CameraActivity extends Activity {
 
     private void hidePhotoMenu() {
         photoSelectMenuView.hideMenu();
+        showSubmitButton();
         isVisiblePhotoMenu = false;
     }
 
@@ -509,14 +598,34 @@ public class CameraActivity extends Activity {
         ibShutter.setEnabled( false );
     }
 
+    private void hideSubmitButton() {
+        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( ibSubmitEffect, "alpha", ibSubmitEffect.getAlpha(), 0.0f );
+        aniAlpha.setDuration( 300 );
+        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
+
+        aniAlpha.start();
+
+        ibSubmitEffect.setEnabled( false );
+    }
+
     private void showModeMenu() {
         modeSelectMenuView.showMenu();
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
-            hideShutterButton();
+        switch ( HarrisConfig.FLAG_MODE ) {
+            case HarrisConfig.CAMERA:
+                hideShutterButton();
+
+                break;
+            case HarrisConfig.GALLERY:
+                hideSubmitButton();
+
+                break;
+        }
         isVisibleModeMenu = true;
     }
 
     private void showOptionMenu() {
+        optionSelectMenuView.setFlashlightEnable( cameraSurfaceView.isFlashlightEnable() );
+        optionSelectMenuView.setCameraSwitcherEnable( cameraSurfaceView.isSwitchCameraEnable() );
         optionSelectMenuView.showMenu();
         hideShutterButton();
         isVisibleOptionsMenu = true;
@@ -524,6 +633,7 @@ public class CameraActivity extends Activity {
 
     private void showPhotoMenu() {
         photoSelectMenuView.showMenu();
+        hideSubmitButton();
         isVisiblePhotoMenu = true;
     }
 
@@ -537,10 +647,28 @@ public class CameraActivity extends Activity {
         ibShutter.setEnabled( true );
     }
 
+    private void showSubmitButton() {
+        ObjectAnimator aniAlpha = ObjectAnimator.ofFloat( ibSubmitEffect, "alpha", ibSubmitEffect.getAlpha(), 1.0f );
+        aniAlpha.setDuration( 300 );
+        aniAlpha.setInterpolator( new AccelerateDecelerateInterpolator() );
+
+        aniAlpha.start();
+
+        ibSubmitEffect.setEnabled( true );
+    }
+
     private void showingModeMenu( float distance ) {
         modeSelectMenuView.showingMenu( distance );
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
-            hidingShutterButton( distance );
+        switch ( HarrisConfig.FLAG_MODE ) {
+            case HarrisConfig.CAMERA:
+                hidingShutterButton( distance );
+
+                break;
+            case HarrisConfig.GALLERY:
+                hidingSubmitButton( distance );
+
+                break;
+        }
     }
 
     private void showingOptionMenu( float distance ) {
@@ -550,6 +678,7 @@ public class CameraActivity extends Activity {
 
     private void showingPhotoMenu( float distance ) {
         photoSelectMenuView.showingMenu( distance );
+        hidingSubmitButton( distance );
     }
 
     private void showingShutterButton( float distance ) {
@@ -560,10 +689,26 @@ public class CameraActivity extends Activity {
         ibShutter.setAlpha( ratioDistance );
     }
 
+    private void showingSubmitButton( float distance ) {
+        if ( distance <= 1 ) distance = 1;
+        float ratioDistance = distance / HarrisConfig.SWIPE_MAX_DISTANCE;
+        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
+
+        ibSubmitEffect.setAlpha( ratioDistance );
+    }
+
     private void hidingModeMenu( float distance ) {
         modeSelectMenuView.hidingMenu( distance );
-        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA )
-            showingShutterButton( distance );
+        switch ( HarrisConfig.FLAG_MODE ) {
+            case HarrisConfig.CAMERA:
+                showingShutterButton( distance );
+
+                break;
+            case HarrisConfig.GALLERY:
+                showingSubmitButton( distance );
+
+                break;
+        }
     }
 
     private void hidingOptionMenu( float distance ) {
@@ -573,6 +718,7 @@ public class CameraActivity extends Activity {
 
     private void hidingPhotoMenu( float distance ) {
         photoSelectMenuView.hidingMenu( distance );
+        showingSubmitButton( distance );
     }
 
     private void hidingShutterButton( float distance ) {
@@ -582,4 +728,46 @@ public class CameraActivity extends Activity {
 
         ibShutter.setAlpha( 1.0f - ratioDistance );
     }
+
+    private void hidingSubmitButton( float distance ) {
+        if ( distance <= 1 ) distance = 1;
+        float ratioDistance = distance / HarrisConfig.SWIPE_MAX_DISTANCE;
+        if ( ratioDistance >= 1.0f ) ratioDistance = 1.0f;
+
+        ibSubmitEffect.setAlpha( 1.0f - ratioDistance );
+    }
+
+    // TODO : gallery
+//    private void askCancelApplyEffect() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder( this );
+//        builder.setTitle( getString( R.string.app_name ) );
+//        builder.setMessage( getString( R.string.msg_ask_cancel ) );
+//        builder.setNegativeButton( getString( R.string.no ), new DialogInterface.OnClickListener() {
+//
+//            @Override
+//            public void onClick( DialogInterface dialog, int which ) {
+//                dialog.dismiss();
+//                listenerClickMode.onClick( findViewById( R.id.ibGalleryMode ) );
+//            }
+//        } );
+//        builder.setPositiveButton( getString( R.string.yes ), new DialogInterface.OnClickListener() {
+//
+//            @Override
+//            public void onClick( DialogInterface dialog, int which ) {
+//                dialog.dismiss();
+//                photoSelectMenuView.clearImageViewDrawable();
+//                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
+//                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+//                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+//                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
+//                }
+//                flGalleryModeBackground.setVisibility( View.GONE );
+//                modeSelectMenuView.hideMenu();
+//                showShutterButton();
+//            }
+//        } );
+//
+//        AlertDialog dialog = builder.create();
+//        dialog.show();
+//    }
 }

@@ -12,22 +12,11 @@ import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 
-class Line {
-    float startX, startY, stopX, stopY;
-
-    public Line( float startX, float startY, float stopX, float stopY ) {
-        this.startX = startX;
-        this.startY = startY;
-        this.stopX = stopX;
-        this.stopY = stopY;
-    }
-}
-
-public class DrawLineView extends View {
+public class DrawGuidelineView extends View {
     Paint paint = new Paint();
     Path pathStroke = new Path();
 
-    public DrawLineView( Context context, AttributeSet attrs ) {
+    public DrawGuidelineView( Context context, AttributeSet attrs ) {
         super( context, attrs );
 
         paint.setAntiAlias( true );

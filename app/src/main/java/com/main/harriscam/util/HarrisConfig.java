@@ -35,15 +35,18 @@ public class HarrisConfig {
     public static int QUALITY_INDEX = 0;
     public static int MIN_PHOTO_WIDTH = 640;
 
+    // For photo menu
+    public static final int REQUEST_FIRST = 101;
+    public static final int REQUEST_SECOND = 102;
+    public static final int REQUEST_THIRD = 103;
+    public static boolean IS_SCALE_FILL = true;
+
     // For option flag
     public static final int OFF = 0;
     public static final int ON = 1;
-    public static final int AUTO = 2;
     public static int FLAG_FLASHLIGHT = OFF;
     public static int FLAG_GUIDELINE = OFF;
-    public static final int BACK = 0;
-    public static final int FRONT = 1;
-    public static int FLAG_CAMERA = BACK;
+    public static int FLAG_CAMERA = Camera.CameraInfo.CAMERA_FACING_BACK;
 
     public static int RESOURCE_FLASHLIGHT[] = { R.drawable.ic_flashlight_off, R.drawable.ic_flashlight,
             R.drawable.ic_flashlight_auto };

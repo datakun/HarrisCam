@@ -19,3 +19,7 @@ Google Play Link
 =========
 Google Play link is as follows:
 https://play.google.com/store/apps/details?id=com.main.harriscam
+
+Stuff
+=========
+In stuff folder, "jlog.bat" is showing adb logcat. As "junu" tag.

@@ -10,16 +10,6 @@
         android:orientation="vertical">
 
         <ImageButton
-            android:id="@+id/ibFlashlight"
-            android:layout_width="@dimen/option_menu_size"
-            android:layout_height="@dimen/option_menu_size"
-            android:layout_gravity="right"
-            android:layout_margin="4dp"
-            android:background="@android:color/transparent"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_flashlight_off"/>
-
-        <ImageButton
             android:id="@+id/ibGuideline"
             android:layout_width="@dimen/option_menu_size"
             android:layout_height="@dimen/option_menu_size"
@@ -38,6 +28,16 @@
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_switching"/>
+
+        <ImageButton
+            android:id="@+id/ibFlashlight"
+            android:layout_width="@dimen/option_menu_size"
+            android:layout_height="@dimen/option_menu_size"
+            android:layout_gravity="right"
+            android:layout_margin="4dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_flashlight_off"/>
 
         <ImageButton
             android:id="@+id/ibIntervalWatch"

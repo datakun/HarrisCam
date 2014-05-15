@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.view.harriscam.DrawLineView
+    <com.view.harriscam.DrawGuidelineView
         android:id="@+id/dvLines"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
@@ -61,5 +61,16 @@
         android:background="@android:color/transparent"
         android:scaleType="fitCenter"
         android:src="@drawable/xml_btn_shutter"/>
+
+    <ImageButton
+        android:id="@+id/ibSubmitEffect"
+        android:layout_width="@dimen/mode_menu_size"
+        android:layout_height="@dimen/mode_menu_size"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_margin="8dp"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:src="@drawable/xml_btn_check"/>
 
 </FrameLayout>
