@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">HarrisCam</string>
+    <string name="action_send">보내기</string>
+
+    <!-- Buttons -->
+    <string name="mode_settings">설정</string>
+    <string name="mode_gallery">사진 선택</string>
+    <string name="mode_camera">사진 촬영</string>
+    <string name="yes">네</string>
+    <string name="apply">적용</string>
+    <string name="no">아니오</string>
+    <string name="cancel">취소</string>
+    <string name="subject">제목 : </string>
+    <string name="message">내용 : </string>
+
+    <!-- Messages -->
+    <string name="msg_ask_quit">앱을 종료하시겠습니까?\n이전 버튼을 한 번 더 눌러주세요.</string>
+    <string name="msg_latest_update">최신 버전입니다.</string>
+    <string name="msg_ask_update">최신 버전으로 업데이트 하시겠습니까?</string>
+    <string name="msg_progressing">효과 적용 중...</string>
+    <string name="msg_success">Harris Shutter 효과를 적용했습니다.</string>
+    <string name="msg_initializing">초기화 중...</string>
+    <string name="msg_choose_email">E-mail로 보내기</string>
+    <string name="msg_ask_cancel">효과 적용을 취소하시겠습니까?</string>
+
+    <!-- Preference -->
+    <string name="title_activity_settings">설정</string>
+
+    <!-- General settings -->
+    <string name="pref_header_general">일반 설정</string>
+    <string name="pref_title_quality">이미지 품질</string>
+
+    <string-array name="pref_list_quality">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
+
+    <string name="pref_title_save_original">원본 이미지 저장하기</string>
+    <string name="pref_title_storage">저장소 위치</string>
+
+    <string-array name="pref_list_storage">
+        <item>내장 저장소\n(/DCIM/harriscam)</item>
+        <item>외장 저장소\n(/DCIM/harriscam)</item>
+    </string-array>
+
+    <string name="pref_title_social">소셜 계정 관리</string>
+    <string name="pref_summary_social">소셜 서비스 계정을 관리합니다.</string>
+
+    <string-array name="pref_list_social">
+        <item>Facebook</item>
+        <item>Twitter</item>
+        <item>Instagram</item>
+        <item>Google+</item>
+    </string-array>
+
+    <!-- About HarrisCam -->
+    <string name="pref_header_about">HarrisCam에 대하여</string>
+    <string name="pref_title_version">HarrisCam 버전</string>
+    <string name="pref_summary_version">reboot 1.0</string>
+    <string name="pref_title_license">라이센스</string>
+    <string name="pref_title_feedback">HarrisCam에 의견 보내기</string>
+    <string name="pref_summary_feedback">HarrisCam에 의견을 보내주세요.</string>
+
+</resources>

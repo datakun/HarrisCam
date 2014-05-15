@@ -31,23 +31,23 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
+public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     // Camera
     public Camera camera;
     // Bitmap & Image
-    public byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
-    Camera.Parameters cameraParameters;
-    List< Camera.Size > previewSizeList;
-    List< Camera.Size > pictureSizeList;
-    Camera.Size previewSize;
+    private byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
+    private Bitmap[] bmpImage;
+
+    private Camera.Parameters cameraParameters;
+    private List< Camera.Size > previewSizeList;
+    private List< Camera.Size > pictureSizeList;
+    private Camera.Size previewSize;
     // View
-    Context context;
-    SurfaceHolder holder;
+    private Context context;
+    private SurfaceHolder holder;
     private int totalOfCamera;
-    private boolean isFrontCamera;
-    private int flagOfFlashlight;
+    private boolean isFlashlightEnable;
     private int indexOfImages;
-    private int intervalTime;
     private long lastTime;
     private ProgressDialog progressApplying;
     private ImageButton ibShutter;
@@ -77,6 +77,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         holder.addCallback( this );
 
         rawImages = new byte[ HarrisConfig.PHOTO_COUNT ][];
+        bmpImage = new Bitmap[ HarrisConfig.PHOTO_COUNT ];
 
         tone = new ToneGenerator( AudioManager.STREAM_ALARM, 100 );
 
@@ -90,18 +91,19 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceCreated( SurfaceHolder holder ) {
-        openCamera( Camera.CameraInfo.CAMERA_FACING_BACK );
+        openCamera( HarrisConfig.FLAG_CAMERA );
 
-        totalOfCamera = Camera.getNumberOfCameras();
-        isFrontCamera = false;
-        flagOfFlashlight = 0;
+        totalOfCamera = camera.getNumberOfCameras();
+        isFlashlightEnable = cameraParameters.getFlashMode() != null ? true : false;
         indexOfImages = 0;
     }
 
     public void openCamera( int camNum ) {
+        releaseCamera();
+
         try {
             camera = Camera.open( camNum );
-            camera.setPreviewCallback( this );
+            camera.setPreviewCallback( previewCallback );
             camera.setDisplayOrientation( rotatePreview( 90 ) );
             camera.setPreviewDisplay( holder );
 
@@ -114,6 +116,8 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             initializeQuality();
         } catch ( IOException e ) {
             HarrisUtil.jlog( e );
+
+            openCamera( Camera.CameraInfo.CAMERA_FACING_BACK );
         }
     }
 
@@ -140,12 +144,11 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         }
 
-        int result = ( roateAngle - degrees + 360 ) % 360;
-        return result;
+        return ( roateAngle - degrees + 360 ) % 360;
     }
 
     private void initializeQuality() {
-        HarrisConfig.PHOTO_QUALITY.clear();
+        HarrisConfig.PHOTO_QUALITY_LIST.clear();
         float ratioPreview = ( float ) previewSizeList.get( 0 ).width / ( float ) previewSizeList.get( 0 ).height;
         ratioPreview = Float.valueOf( String.format( "%.2f", ratioPreview ) );
 
@@ -159,7 +162,8 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             if ( size.width < HarrisConfig.MIN_PHOTO_WIDTH )
                 break;
 
-            HarrisConfig.PHOTO_QUALITY.add( size );
+            HarrisConfig.PHOTO_QUALITY_LIST.add( size );
+            HarrisUtil.jlog( "width : " + size.width + ", height : " + size.height );
         }
     }
 
@@ -170,7 +174,10 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     private void startCamera() {
         if ( cameraParameters != null && camera != null ) {
-            previewSize = HarrisConfig.PHOTO_QUALITY.get( HarrisConfig.QUALITY_INDEX );
+            if ( HarrisConfig.PHOTO_QUALITY_LIST.size() > HarrisConfig.QUALITY_INDEX )
+                previewSize = HarrisConfig.PHOTO_QUALITY_LIST.get( HarrisConfig.QUALITY_INDEX );
+            else
+                previewSize = HarrisConfig.PHOTO_QUALITY_LIST.get( 0 );
             cameraParameters.setPreviewSize( previewSize.width, previewSize.height );
             camera.setParameters( cameraParameters );
             camera.startPreview();
@@ -194,36 +201,108 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         }
     }
 
+    public boolean isSwitchCameraEnable() {
+        return totalOfCamera > 1 ? true : false;
+    }
+
+    public boolean isFlashlightEnable() {
+        return isFlashlightEnable;
+    }
+
+    // TODO : Enable to preview callback.
+    private void setFlashlight() {
+        if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_FRONT )
+            return;
+
+        if ( cameraParameters.getFlashMode() != null ) {
+            switch ( HarrisConfig.FLAG_FLASHLIGHT ) {
+                case HarrisConfig.OFF:
+                    cameraParameters.setFlashMode( Camera.Parameters.FLASH_MODE_OFF );
+
+                    break;
+                case HarrisConfig.ON:
+                    cameraParameters.setFlashMode( Camera.Parameters.FLASH_MODE_TORCH );
+
+                    break;
+            }
+
+            camera.setParameters( cameraParameters );
+        }
+    }
+
+    private void offFlashlight() {
+        if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_FRONT )
+            return;
+
+        if ( cameraParameters.getFlashMode() != null ) {
+            cameraParameters.setFlashMode( Camera.Parameters.FLASH_MODE_OFF );
+            camera.setParameters( cameraParameters );
+        }
+    }
+
     private void playSound() {
         tone.startTone( ToneGenerator.TONE_PROP_BEEP );
     }
 
     public void takePhotos() {
         HarrisConfig.DOIN_CAPTURE = true;
-        intervalTime = HarrisConfig.CAPTURE_INTERVAL;
         lastTime = System.currentTimeMillis();
 
-        Date now = new Date();
-        SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
-        HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
+        if ( HarrisConfig.FILE_PATH.equals( "" ) ) {
+            Date now = new Date();
+            SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
+            HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
+        }
     }
 
-    @Override
-    public void onPreviewFrame( byte[] data, Camera camera ) {
-        if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
-            new BlurImageTask().execute( data );
-        }
-        if ( HarrisConfig.DOIN_CAPTURE ) {
-            if ( indexOfImages <= 0 ) {
-                rawImages[ indexOfImages++ ] = data;
-                playSound();
-            } else if ( intervalTime <= System.currentTimeMillis() - lastTime ) {
-                rawImages[ indexOfImages++ ] = data;
-                playSound();
-                lastTime = System.currentTimeMillis();
+    public void setShutterButton( ImageButton ibShutter ) {
+        this.ibShutter = ibShutter;
+    }
+
+    Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
+        @Override
+        public void onPreviewFrame( byte[] data, Camera camera ) {
+            if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
+                new BlurImageTask().execute( data );
+            }
+            if ( HarrisConfig.DOIN_CAPTURE ) {
+                if ( HarrisConfig.CAPTURE_INTERVAL > 0 ) {
+                    setFlashlight();
+                    if ( indexOfImages == 0 ) {
+                        rawImages[ indexOfImages ] = data;
+                        new SaveBitmapFromYuv().execute( indexOfImages++ );
+                        playSound();
+                    } else if ( HarrisConfig.CAPTURE_INTERVAL <= System.currentTimeMillis() - lastTime ) {
+                        rawImages[ indexOfImages ] = data;
+                        new SaveBitmapFromYuv().execute( indexOfImages++ );
+                        playSound();
+                        lastTime = System.currentTimeMillis();
+                    }
+                } else {
+                    if ( indexOfImages <= 2 ) {
+                        setFlashlight();
+                        try {
+                            Thread.sleep( 50 );
+                        } catch ( InterruptedException e ) {
+                            HarrisUtil.jlog( e );
+                        }
+                        rawImages[ indexOfImages ] = data;
+                        new SaveBitmapFromYuv().execute( indexOfImages++ );
+                        playSound();
+                        HarrisConfig.DOIN_CAPTURE = false;
+                        ( ( Activity ) context ).runOnUiThread( new Runnable() {
+
+                            @Override
+                            public void run() {
+                                ibShutter.setEnabled( true );
+                            }
+                        } );
+                    }
+                }
             }
 
             if ( indexOfImages >= HarrisConfig.PHOTO_COUNT ) {
+                offFlashlight();
                 indexOfImages = 0;
                 HarrisConfig.DOIN_CAPTURE = false;
 
@@ -238,11 +317,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 new ApplyHarrisShutterEffectTask().execute();
             }
         }
-    }
-
-    public void setShutterButton( ImageButton ibShutter ) {
-        this.ibShutter = ibShutter;
-    }
+    };
 
     private class BlurImageTask extends AsyncTask< byte[], Void, Void > {
 
@@ -257,14 +332,48 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             Rect area = new Rect( 0, 0, w, h );
             image.compressToJpeg( area, 100, out );
             Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-            bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 90 );
+            if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
+                bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 90 );
+            else
+                bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 270 );
             Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpBackground, bmpBackground.getWidth() / 8,
                     bmpBackground.getHeight() / 8, false );
+//            Bitmap bmpTemp = Bitmap.createBitmap( bmpBlur );
 
-            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 30 );
+            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 20 );
+//            HarrisNative.naBlurBitmap( bmpTemp, bmpBlur, 40 );
             HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( getResources(), bmpBlur );
 
             bmpBackground.recycle();
+
+            return null;
+        }
+    }
+
+    private class SaveBitmapFromYuv extends AsyncTask< Integer, Void, Void > {
+
+        @Override
+        protected Void doInBackground( Integer... params ) {
+            int index = params[ 0 ];
+
+            int w = cameraParameters.getPreviewSize().width;
+            int h = cameraParameters.getPreviewSize().height;
+            int format = cameraParameters.getPreviewFormat();
+            YuvImage image = new YuvImage( rawImages[ index ], format, w, h, null );
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Rect area = new Rect( 0, 0, w, h );
+            image.compressToJpeg( area, 100, out );
+            bmpImage[ index ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+
+            String filename = HarrisConfig.FILE_PATH + ( index + 1 ) + ".jpg";
+            if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
+                bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 90 );
+            else
+                bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 270 );
+            HarrisUtil.saveBitmapToFileCache( bmpImage[ index ], filename, 100 );
+
+            offFlashlight();
 
             return null;
         }
@@ -274,47 +383,28 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         @Override
         protected Void doInBackground( Void... params ) {
-            Bitmap bmpImage[] = new Bitmap[ HarrisConfig.PHOTO_COUNT ];
-
-            int i = 1;
-            for ( byte[] byImage : rawImages ) {
-                int w = cameraParameters.getPreviewSize().width;
-                int h = cameraParameters.getPreviewSize().height;
-                int format = cameraParameters.getPreviewFormat();
-                YuvImage image = new YuvImage( byImage, format, w, h, null );
-
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                Rect area = new Rect( 0, 0, w, h );
-                image.compressToJpeg( area, 100, out );
-                bmpImage[ i - 1 ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-
-                String filename = HarrisConfig.FILE_PATH + ( i ) + ".jpg";
-                bmpImage[ i - 1 ] = HarrisImageProcess.rotateBitmap( bmpImage[ i - 1 ], 90 );
-                HarrisUtil.SaveBitmapToFileCache( bmpImage[ i - 1 ], filename, 100 );
-                i++;
-            }
-
-            // TODO: Analyze process time
             // TODO: fast blur image
-            long time = System.currentTimeMillis();
+            HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
+            HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[ 1 ], bmpImage[ 2 ] );
 
-            synchronized ( bmpImage[ 0 ] ) {
-                HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
-                HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[ 1 ], bmpImage[ 2 ] );
-            }
-
-            HarrisUtil.jlog( "time : " + ( System.currentTimeMillis() - time ) );
-
+            int count = 0;
             while ( !( new File( HarrisConfig.FILE_PATH + "1.jpg" ).exists() )
                     || !( new File( HarrisConfig.FILE_PATH + "2.jpg" ).exists() )
                     || !( new File( HarrisConfig.FILE_PATH + "3.jpg" ).exists() ) ) {
+                try {
+                    Thread.sleep( 100 );
+                } catch ( InterruptedException e ) {
+                    HarrisUtil.jlog( e );
+                }
+                if ( count++ >= 10 )
+                    break;
             }
 
             for ( Bitmap bitmap : bmpImage ) {
                 bitmap.recycle();
             }
 
-            HarrisUtil.SaveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
+            HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
             HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "fx.jpg" );
 
             if ( !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE ) {
@@ -332,6 +422,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         @Override
         protected void onPostExecute( Void aVoid ) {
+            HarrisConfig.FILE_PATH = "";
             progressApplying.dismiss();
             ibShutter.setEnabled( true );
             HarrisUtil.toast( context, getResources().getString( R.string.msg_success ) );

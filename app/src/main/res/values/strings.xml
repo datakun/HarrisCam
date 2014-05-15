@@ -23,6 +23,7 @@
     <string name="msg_success">Successfully applied Harris Shutter effects.</string>
     <string name="msg_initializing">Initializing...</string>
     <string name="msg_choose_email">Send via email</string>
+    <string name="msg_ask_cancel">Do you want to cancel apply effect?</string>
 
     <!-- Preference -->
     <string name="title_activity_settings">Settings</string>
@@ -70,10 +71,12 @@
     <string name="pref_title_license">License</string>
     <string name="pref_id_feedback">pref_feedback</string>
     <string name="pref_title_feedback">Feedback for HarrisCam</string>
-    <string name="pref_summary_feedback">Please feedback for HarrisCam</string>
+    <string name="pref_summary_feedback">Please feedback for HarrisCam.</string>
 
     <!-- Preference -->
-    <string name="pref_id_capture_interval">pref_capture_interval</string>
     <string name="pref_id_flashlight">pref_flashlight</string>
+    <string name="pref_id_guideline">pref_guideline</string>
+    <string name="pref_id_capture_interval">pref_capture_interval</string>
+    <string name="pref_id_camera_switcher">pref_camera_switcher</string>
 
 </resources>

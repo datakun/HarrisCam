@@ -82,8 +82,6 @@ public class ModeSelectMenuView extends FrameLayout {
         llMainContainer.setX( ratioDistance * modeMenuSize - modeMenuSize );
 
         llMainContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Mode Showing" );
     }
 
     public void hidingMenu( float distance ) {
@@ -95,8 +93,6 @@ public class ModeSelectMenuView extends FrameLayout {
         llMainContainer.setX( ratioDistance * -modeMenuSize );
 
         llMainContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Mode Hiding" );
     }
 
     private void animateShowMenu() {
@@ -112,8 +108,6 @@ public class ModeSelectMenuView extends FrameLayout {
 
         llMainContainer.setVisibility( View.VISIBLE );
         isVisibleMenu = true;
-
-        HarrisUtil.jlog( "Mode Shown" );
     }
 
     private void animateHideMenu() {
@@ -129,8 +123,6 @@ public class ModeSelectMenuView extends FrameLayout {
 
         llMainContainer.setVisibility( View.VISIBLE );
         isVisibleMenu = false;
-
-        HarrisUtil.jlog( "Mode Hided" );
     }
 
     public void showMenu() {

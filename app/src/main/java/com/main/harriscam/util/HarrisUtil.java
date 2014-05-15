@@ -1,20 +1,30 @@
 package com.main.harriscam.util;
 
+import android.app.ActivityManager;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +61,7 @@ public final class HarrisUtil {
             return arg1 > arg0 ? 1 : -1;
         }
     };
+
     private HarrisUtil() {
     }
 
@@ -82,7 +93,7 @@ public final class HarrisUtil {
         Toast.makeText( ctx, s, Toast.LENGTH_SHORT ).show();
     }
 
-    public static void SaveBitmapToFileCache( Bitmap bitmap, String strFilePath, int quality ) {
+    public static void saveBitmapToFileCache( Bitmap bitmap, String strFilePath, int quality ) {
         File fileCacheItem = new File( strFilePath );
         OutputStream out = null;
 
@@ -204,5 +215,113 @@ public final class HarrisUtil {
         }
 
         return true;
+    }
+
+    public static void unbindViewDrawable( View view ) {
+        Drawable d = view.getBackground();
+        if ( d != null ) {
+            try {
+                d.setCallback( null );
+            } catch ( Exception ignore ) {
+            }
+        }
+
+        try {
+            if ( view instanceof ImageView ) {
+                ImageView imageView = ( ImageView ) view;
+                d = imageView.getDrawable();
+                if ( d != null ) {
+                    d.setCallback( null );
+                }
+
+                if ( d instanceof BitmapDrawable ) {
+                    Bitmap bm = ( ( BitmapDrawable ) d ).getBitmap();
+                    bm.recycle();
+                }
+
+                imageView.setImageDrawable( null );
+            }
+        } catch ( Exception ignore ) {
+        }
+
+        try {
+            view.setBackgroundDrawable( null );
+        } catch ( Exception ignore ) {
+        }
+    }
+
+    public static InputStream getISFromURI( Context context, Uri contentURI ) {
+        ContentResolver res = context.getContentResolver();
+        Uri uri = Uri.parse( contentURI.toString() );
+        InputStream is = null;
+        try {
+            is = res.openInputStream( uri );
+        } catch ( FileNotFoundException e ) {
+            jlog( e );
+        }
+
+        return is;
+    }
+
+    public static byte[] bitmapToByteArray( Bitmap $bitmap ) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        $bitmap.compress( Bitmap.CompressFormat.JPEG, 100, stream );
+        byte[] byteArray = stream.toByteArray();
+
+        return byteArray;
+    }
+
+    public static Bitmap scaleToFillBitmap( Bitmap dst, InputStream is ) {
+        Bitmap src = BitmapFactory.decodeStream( is );
+
+        float scaled = 1.0f;
+        if ( (float) dst.getWidth() / (float) src.getWidth() < (float) dst.getHeight() / (float) src.getHeight() ) {
+            scaled = (float) dst.getHeight() / (float) src.getHeight();
+        } else {
+            scaled = (float) dst.getWidth() / (float) src.getWidth();
+        }
+
+        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, (int) Math.ceil( src.getWidth() * scaled ),
+                (int) Math.ceil( src.getHeight() * scaled ), true );
+
+        int offsetX = 0;
+        int offsetY = 0;
+        offsetX = bmpScaled.getWidth() - dst.getWidth() != 0 ? ( bmpScaled.getWidth() - dst.getWidth() ) / 2 : 0;
+        offsetY = bmpScaled.getHeight() - dst.getHeight() != 0 ? ( bmpScaled.getHeight() - dst.getHeight() ) / 2 : 0;
+
+        return Bitmap.createBitmap( bmpScaled, offsetX, offsetY, dst.getWidth(), dst.getHeight() );
+    }
+
+    public static Bitmap scaleToFillBitmap( Bitmap dst, byte[] byImage ) {
+        Bitmap src = BitmapFactory.decodeByteArray( byImage, 0, byImage.length );
+
+        float scaled = 1.0f;
+        if ( (float) dst.getWidth() / (float) src.getWidth() < (float) dst.getHeight() / (float) src.getHeight() ) {
+            scaled = (float) dst.getHeight() / (float) src.getHeight();
+        } else {
+            scaled = (float) dst.getWidth() / (float) src.getWidth();
+        }
+
+        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, (int) Math.ceil( src.getWidth() * scaled ),
+                (int) Math.ceil( src.getHeight() * scaled ), true );
+
+        int offsetX = 0;
+        int offsetY = 0;
+        offsetX = bmpScaled.getWidth() - dst.getWidth() != 0 ? ( bmpScaled.getWidth() - dst.getWidth() ) / 2 : 0;
+        offsetY = bmpScaled.getHeight() - dst.getHeight() != 0 ? ( bmpScaled.getHeight() - dst.getHeight() ) / 2 : 0;
+
+        return Bitmap.createBitmap( bmpScaled, offsetX, offsetY, dst.getWidth(), dst.getHeight() );
+    }
+
+    public static Bitmap scaleToStretchBitmap( Bitmap dst, InputStream is ) {
+        Bitmap src = BitmapFactory.decodeStream( is );
+
+        return Bitmap.createScaledBitmap( src, dst.getWidth(), dst.getHeight(), true );
+    }
+
+    public static Bitmap scaleToStretchBitmap( Bitmap dst, byte[] byImage ) {
+        Bitmap src = BitmapFactory.decodeByteArray( byImage, 0, byImage.length );
+
+        return Bitmap.createScaledBitmap( src, dst.getWidth(), dst.getHeight(), true );
     }
 }

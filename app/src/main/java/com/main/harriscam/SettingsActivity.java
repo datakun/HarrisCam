@@ -79,18 +79,18 @@ public class SettingsActivity extends PreferenceActivity {
         addPreferencesFromResource( R.xml.pref_general );
         addPreferencesFromResource( R.xml.pref_about );
 
-        CharSequence[] quality_list = new CharSequence[ HarrisConfig.PHOTO_QUALITY.size() ];
-        CharSequence[] quality_list_values = new CharSequence[ HarrisConfig.PHOTO_QUALITY.size() ];
+        CharSequence[] quality_list = new CharSequence[ HarrisConfig.PHOTO_QUALITY_LIST.size() ];
+        CharSequence[] quality_list_values = new CharSequence[ HarrisConfig.PHOTO_QUALITY_LIST.size() ];
         for ( int i = 0; i < quality_list.length; i++ ) {
-            quality_list[ i ] = HarrisConfig.PHOTO_QUALITY.get( i ).width + " x " + HarrisConfig.PHOTO_QUALITY.get( i ).height;
+            quality_list[ i ] = HarrisConfig.PHOTO_QUALITY_LIST.get( i ).width + " x " + HarrisConfig.PHOTO_QUALITY_LIST.get( i ).height;
             quality_list_values[ i ] = String.valueOf( i );
         }
 
         ( ( ListPreference ) findPreference( getString( R.string.pref_id_quality ) ) ).setEntries( quality_list );
         ( ( ListPreference ) findPreference( getString( R.string.pref_id_quality ) ) ).setEntryValues( quality_list_values );
 
-        CharSequence[] storage_list = new CharSequence[ HarrisConfig.STORAGE_PATH.size() ];
-        CharSequence[] storage_list_values = new CharSequence[ HarrisConfig.STORAGE_PATH.size() ];
+        CharSequence[] storage_list = new CharSequence[ HarrisConfig.STORAGE_PATH_LIST.size() ];
+        CharSequence[] storage_list_values = new CharSequence[ HarrisConfig.STORAGE_PATH_LIST.size() ];
         for ( int i = 0; i < storage_list.length; i++ ) {
             storage_list[ i ] = getResources().getStringArray( R.array.pref_list_storage )[ i ];
             storage_list_values[ i ] = String.valueOf( i );

@@ -75,8 +75,6 @@ public class OptionSelectMenuView extends FrameLayout {
         llSubContainer.setX( optionMenuSize - ( ratioDistance * optionMenuSize ) );
 
         llSubContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Option Showing" );
     }
 
     public void hidingMenu( float distance ) {
@@ -88,8 +86,6 @@ public class OptionSelectMenuView extends FrameLayout {
         llSubContainer.setX( ratioDistance * optionMenuSize );
 
         llSubContainer.setVisibility( View.VISIBLE );
-
-        HarrisUtil.jlog( "Option Hiding" );
     }
 
     private void animateShowMenu() {
@@ -105,8 +101,6 @@ public class OptionSelectMenuView extends FrameLayout {
 
         llSubContainer.setVisibility( View.VISIBLE );
         isVisibleMenu = true;
-
-        HarrisUtil.jlog( "Option Shown" );
     }
 
     private void animateHideMenu() {
@@ -123,8 +117,6 @@ public class OptionSelectMenuView extends FrameLayout {
 
         llSubContainer.setVisibility( View.VISIBLE );
         isVisibleMenu = false;
-
-        HarrisUtil.jlog( "Option Hided" );
     }
 
     public void showMenu() {
@@ -144,5 +136,35 @@ public class OptionSelectMenuView extends FrameLayout {
         ibGuideline.setOnClickListener( listener );
         ibCameraSwitcher.setOnClickListener( listener );
         ibIntervalWatch.setOnClickListener( listener );
+    }
+
+    public void setOnMenuTouchListener( OnTouchListener listener ) {
+        ibFlashlight.setOnTouchListener( listener );
+        ibGuideline.setOnTouchListener( listener );
+        ibCameraSwitcher.setOnTouchListener( listener );
+        ibIntervalWatch.setOnTouchListener( listener );
+    }
+
+    public void setFlashlightEnable( boolean isEnable ) {
+        ibFlashlight.setEnabled( isEnable );
+        if ( isEnable )
+            ibFlashlight.setVisibility( View.VISIBLE );
+        else
+            ibFlashlight.setVisibility( View.GONE );
+
+    }
+
+    public void setCameraSwitcherEnable( boolean isEnable ) {
+        ibCameraSwitcher.setEnabled( isEnable );
+        if ( isEnable )
+            ibCameraSwitcher.setVisibility( View.VISIBLE );
+        else
+            ibCameraSwitcher.setVisibility( View.GONE );
+    }
+
+    public void updateView() {
+        ibFlashlight.setImageResource( HarrisConfig.RESOURCE_FLASHLIGHT[ HarrisConfig.FLAG_FLASHLIGHT ] );
+        ibGuideline.setImageResource( HarrisConfig.RESOURCE_GUIDELINE[ HarrisConfig.FLAG_GUIDELINE ] );
+        ibIntervalWatch.setImageResource( HarrisConfig.RESOURCE_WATCH[ HarrisConfig.CAPTURE_INTERVAL / 500 ] );
     }
 }
