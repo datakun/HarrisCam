@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -35,8 +36,8 @@ public class PhotoSelectMenuView extends FrameLayout {
     private ImageView ivHarrisResult;
     private boolean isVisibleMenu;
     private int photoMenuSize;
-    byte[] byImage1, byImage2, byImage3;
     boolean isFirst, isSecond, isThird;
+    private Bitmap bmpSource; // Source bitmap on image sizable function.
     // Listner
     private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
         @Override
@@ -45,15 +46,15 @@ public class PhotoSelectMenuView extends FrameLayout {
             intent.setType( android.provider.MediaStore.Images.Media.CONTENT_TYPE );
             switch ( v.getId() ) {
                 case R.id.ibFirstPhoto:
-//                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_FIRST );
+                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_FIRST );
 
                     break;
                 case R.id.ibSecondPhoto:
-//                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_SECOND );
+                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_SECOND );
 
                     break;
                 case R.id.ibThirdPhoto:
-//                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_THIRD );
+                    ( ( Activity ) context ).startActivityForResult( intent, HarrisConfig.REQUEST_THIRD );
 
                     break;
             }
@@ -170,98 +171,74 @@ public class PhotoSelectMenuView extends FrameLayout {
         ivHarrisResult = iv;
     }
 
-    // TODO : gallery
-//    public void clearImageViewDrawable() {
-//        HarrisUtil.unbindViewDrawable( ibFirstPhoto );
-//        HarrisUtil.unbindViewDrawable( ibSecondPhoto );
-//        HarrisUtil.unbindViewDrawable( ibThirdPhoto );
-//        HarrisUtil.unbindViewDrawable( ivHarrisResult );
-//
-//        ibFirstPhoto.setImageResource( R.drawable.ic_album );
-//        ibSecondPhoto.setImageResource( R.drawable.ic_album );
-//        ibThirdPhoto.setImageResource( R.drawable.ic_album );
-//        ivHarrisResult.setImageResource( R.drawable.ic_album );
-//    }
-//
-//    public void applyFirstPhoto( InputStream is ) {
-//        isFirst = true;
-////        HarrisUtil.unbindViewDrawable( ibFirstPhoto );
-//        ibFirstPhoto.setImageBitmap( BitmapFactory.decodeStream( is ) );
-//        byImage1 = null;
-//        System.gc();
-//        byImage1 = HarrisUtil.bitmapToByteArray( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() ).getBitmap() );
-//
-//        if ( isSecond ) {
-//            HarrisUtil.unbindViewDrawable( ibSecondPhoto );
-//            if ( HarrisConfig.IS_SCALE_FILL ) {
-//                ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToFillBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                        .getBitmap(), byImage2 ) );
-//            } else {
-//                ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToStretchBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                        .getBitmap(), byImage2 ) );
-//            }
-//        }
-//
-//        if ( isThird ) {
-//            HarrisUtil.unbindViewDrawable( ibSecondPhoto );
-//            if ( HarrisConfig.IS_SCALE_FILL ) {
-//                ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToFillBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                        .getBitmap(), byImage3 ) );
-//            } else {
-//                ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToStretchBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                        .getBitmap(), byImage3 ) );
-//            }
-//        }
-//
-//        ibSecondPhoto.setEnabled( true );
-//        ibThirdPhoto.setEnabled( true );
-//    }
-//
-//    public void applySecondPhoto( InputStream is ) {
-//        isSecond = true;
-////        HarrisUtil.unbindViewDrawable( ibSecondPhoto );
-//        if ( HarrisConfig.IS_SCALE_FILL ) {
-//            ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToFillBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                    .getBitmap(), is ) );
-//        } else {
-//            ibSecondPhoto.setImageBitmap( HarrisUtil.scaleToStretchBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                    .getBitmap(), is ) );
-//        }
-//        byImage2 = null;
-//        System.gc();
-//        byImage2 = HarrisUtil.bitmapToByteArray( ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() ).getBitmap() );
-//    }
-//
-//    public void applyThirdPhoto( InputStream is ) {
-//        isThird = true;
-////        HarrisUtil.unbindViewDrawable( ibThirdPhoto );
-//        if ( HarrisConfig.IS_SCALE_FILL ) {
-//            ibThirdPhoto.setImageBitmap( HarrisUtil.scaleToFillBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                    .getBitmap(), is ) );
-//        } else {
-//            ibThirdPhoto.setImageBitmap( HarrisUtil.scaleToStretchBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-//                    .getBitmap(), is ) );
-//        }
-//        byImage3 = null;
-//        System.gc();
-//        byImage3 = HarrisUtil.bitmapToByteArray( ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap() );
-//    }
-//
-//    public void checkEnableApplyEffect() {
-//        if ( isFirst && isSecond && isThird ) {
-//            HarrisConfig.BMP_HARRIS_RESULT = BitmapFactory.decodeByteArray( byImage1, 0, byImage1.length );
-//            HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() )
-//                    .getBitmap(), ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap() );
-//            HarrisUtil.unbindViewDrawable( ivHarrisResult );
-//            ivHarrisResult.setImageBitmap( HarrisConfig.BMP_HARRIS_RESULT );
-//        }
-//    }
-//
-//    public boolean isSelectedAnyPhoto() {
-//        return isFirst || isSecond || isThird;
-//    }
-//
-//    public boolean isSelectedAllPhoto() {
-//        return isFirst && isSecond && isThird;
-//    }
+    public void clearImageViewDrawable() {
+        isFirst = isSecond = isThird = false;
+
+        ibFirstPhoto.setImageResource( R.drawable.ic_album );
+        ibSecondPhoto.setImageResource( R.drawable.ic_album );
+        ibThirdPhoto.setImageResource( R.drawable.ic_album );
+        ivHarrisResult.setImageResource( R.drawable.ic_album );
+
+        bmpSource = null;
+        System.gc();
+    }
+
+    public void setImageButtonImage( ImageButton ib, Bitmap bmp, InputStream is ) {
+        if ( HarrisConfig.IS_SCALE_FILL ) {
+            ib.setImageBitmap( HarrisUtil.scaleToFillBitmap( bmp, is ) );
+        } else {
+            ib.setImageBitmap( HarrisUtil.scaleToStretchBitmap( bmp, is ) );
+        }
+    }
+
+    public void applyFirstPhoto( InputStream is ) {
+        isFirst = true;
+
+        if ( bmpSource == null ) {
+            ibFirstPhoto.setImageBitmap( BitmapFactory.decodeStream( is ) );
+            bmpSource = ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() ).getBitmap();
+        } else {
+            setImageButtonImage( ibFirstPhoto, bmpSource, is );
+        }
+    }
+
+    public void applySecondPhoto( InputStream is ) {
+        isSecond = true;
+
+        if ( bmpSource == null ) {
+            ibSecondPhoto.setImageBitmap( BitmapFactory.decodeStream( is ) );
+            bmpSource = ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() ).getBitmap();
+        } else {
+            setImageButtonImage( ibSecondPhoto, bmpSource, is );
+        }
+    }
+
+    public void applyThirdPhoto( InputStream is ) {
+        isThird = true;
+
+        if ( bmpSource == null ) {
+            ibThirdPhoto.setImageBitmap( BitmapFactory.decodeStream( is ) );
+            bmpSource = ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap();
+        } else {
+            setImageButtonImage( ibThirdPhoto, bmpSource, is );
+        }
+    }
+
+    public void checkEnableApplyEffect() {
+        if ( isFirst && isSecond && isThird ) {
+            HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
+                    .getBitmap() );
+            HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() )
+                    .getBitmap(), ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap() );
+            ivHarrisResult.setImageBitmap( HarrisConfig.BMP_HARRIS_RESULT );
+        }
+    }
+
+    public boolean isSelectedAnyPhoto() {
+        return isFirst || isSecond || isThird;
+    }
+
+    public boolean isSelectedAllPhoto() {
+        return isFirst && isSecond && isThird;
+    }
 }

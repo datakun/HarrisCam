@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,6 +92,104 @@ public final class HarrisUtil {
 
     public static void toast( Context ctx, String s ) {
         Toast.makeText( ctx, s, Toast.LENGTH_SHORT ).show();
+    }
+
+    @SuppressWarnings( "resource" )
+    public static String getTotalRAM() {
+        RandomAccessFile reader = null;
+        String load = null;
+        try {
+            reader = new RandomAccessFile( "/proc/meminfo", "r" );
+            load = reader.readLine();
+        } catch ( IOException ex ) {
+            ex.printStackTrace();
+        } finally {
+            // Streams.close(reader);
+        }
+
+        return load.replaceAll( "MemTotal:", "" ).replaceAll( "kB", "" ).trim();
+    }
+
+    public static void logMemInfo( Context context ) {
+        ActivityManager activityManager = ( ActivityManager ) context.getSystemService( Context.ACTIVITY_SERVICE );
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo( memoryInfo );
+        Long total;
+
+        total = ( Long.parseLong( getTotalRAM() ) / 1024L );
+        jlog( "MemoryInfo.totalMem : " + ( Long.parseLong( getTotalRAM() ) / 1024L ) + "MB" );
+        jlog( "MemoryInfo.availMem : " + ( memoryInfo.availMem / 1048576L ) + "MB" );
+        jlog( "MemoryInfo.lowMemory : " + memoryInfo.lowMemory );
+        jlog( "MemoryInfo.threshold : " + ( memoryInfo.threshold / 1048576L ) + "MB" );
+        jlog( "MemoryInfo.USE : " + ( total - ( memoryInfo.availMem / 1048576L ) ) + "MB" );
+    }
+
+    public static void logExtMemInfo() {
+        if ( isExternalMemoryAvailable() == true ) {
+            jlog( "MemoryInfo.extTotalMem : " + formatSize( getTotalExternalMemorySize() ) );
+            jlog( "MemoryInfo.extAvailMem : " + formatSize( getAvailableExternalMemorySize() ) );
+        }
+    }
+
+    public static boolean isExternalMemoryAvailable() {
+        return android.os.Environment.getExternalStorageState().equals( android.os.Environment.MEDIA_MOUNTED );
+    }
+
+    public static long getTotalExternalMemorySize() {
+        if ( isExternalMemoryAvailable() == true ) {
+            File path = Environment.getExternalStorageDirectory();
+            StatFs stat = new StatFs( path.getPath() );
+            long blockSize = 0;
+            long totalBlocks = 0;
+            blockSize = stat.getBlockSize();
+            totalBlocks = stat.getBlockCount();
+
+            return totalBlocks * blockSize;
+        } else {
+            return -1;
+        }
+    }
+
+    public static long getAvailableExternalMemorySize() {
+        if ( isExternalMemoryAvailable() == true ) {
+            File path = Environment.getExternalStorageDirectory();
+            StatFs stat = new StatFs( path.getPath() );
+            long blockSize = 0;
+            long availableBlocks = 0;
+            blockSize = stat.getBlockSize();
+            availableBlocks = stat.getAvailableBlocks();
+
+            return availableBlocks * blockSize;
+        } else {
+            return -1;
+        }
+    }
+
+    public static String formatSize( long size ) {
+        String suffix = null;
+
+        if ( size >= 1024 ) {
+            suffix = "KB";
+            size /= 1024;
+            if ( size >= 1024 ) {
+                suffix = "MB";
+                size /= 1024;
+            }
+        }
+
+        StringBuilder resultBuffer = new StringBuilder( Long.toString( size ) );
+
+        int commaOffset = resultBuffer.length() - 3;
+        while ( commaOffset > 0 ) {
+            resultBuffer.insert( commaOffset, ',' );
+            commaOffset -= 3;
+        }
+
+        if ( suffix != null ) {
+            resultBuffer.append( suffix );
+        }
+
+        return resultBuffer.toString();
     }
 
     public static void saveBitmapToFileCache( Bitmap bitmap, String strFilePath, int quality ) {
@@ -217,38 +316,40 @@ public final class HarrisUtil {
         return true;
     }
 
-    public static void unbindViewDrawable( View view ) {
-        Drawable d = view.getBackground();
-        if ( d != null ) {
-            try {
-                d.setCallback( null );
-            } catch ( Exception ignore ) {
-            }
-        }
-
-        try {
-            if ( view instanceof ImageView ) {
-                ImageView imageView = ( ImageView ) view;
-                d = imageView.getDrawable();
-                if ( d != null ) {
-                    d.setCallback( null );
-                }
-
-                if ( d instanceof BitmapDrawable ) {
-                    Bitmap bm = ( ( BitmapDrawable ) d ).getBitmap();
-                    bm.recycle();
-                }
-
-                imageView.setImageDrawable( null );
-            }
-        } catch ( Exception ignore ) {
-        }
-
-        try {
-            view.setBackgroundDrawable( null );
-        } catch ( Exception ignore ) {
-        }
-    }
+//    public static void unbindViewDrawable( View view ) {
+//        Drawable d = view.getBackground();
+//        if ( d != null ) {
+//            try {
+//                d.setCallback( null );
+//            } catch ( Exception ignore ) {
+//            }
+//        }
+//
+//        try {
+//            if ( view instanceof ImageView ) {
+//                ImageView imageView = ( ImageView ) view;
+//                d = imageView.getDrawable();
+//                if ( d != null ) {
+//                    d.setCallback( null );
+//                }
+//
+//                if ( d instanceof BitmapDrawable ) {
+//                    Bitmap bm = ( ( BitmapDrawable ) d ).getBitmap();
+//                    bm.recycle();
+//                }
+//
+//                imageView.setImageDrawable( null );
+//            }
+//        } catch ( Exception ignore ) {
+//        }
+//
+//        try {
+//            view.setBackgroundDrawable( null );
+//        } catch ( Exception ignore ) {
+//        }
+//
+//        System.gc();
+//    }
 
     public static InputStream getISFromURI( Context context, Uri contentURI ) {
         ContentResolver res = context.getContentResolver();
@@ -275,14 +376,14 @@ public final class HarrisUtil {
         Bitmap src = BitmapFactory.decodeStream( is );
 
         float scaled = 1.0f;
-        if ( (float) dst.getWidth() / (float) src.getWidth() < (float) dst.getHeight() / (float) src.getHeight() ) {
-            scaled = (float) dst.getHeight() / (float) src.getHeight();
+        if ( ( float ) dst.getWidth() / ( float ) src.getWidth() < ( float ) dst.getHeight() / ( float ) src.getHeight() ) {
+            scaled = ( float ) dst.getHeight() / ( float ) src.getHeight();
         } else {
-            scaled = (float) dst.getWidth() / (float) src.getWidth();
+            scaled = ( float ) dst.getWidth() / ( float ) src.getWidth();
         }
 
-        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, (int) Math.ceil( src.getWidth() * scaled ),
-                (int) Math.ceil( src.getHeight() * scaled ), true );
+        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, ( int ) Math.ceil( src.getWidth() * scaled ),
+                ( int ) Math.ceil( src.getHeight() * scaled ), true );
 
         int offsetX = 0;
         int offsetY = 0;
@@ -296,14 +397,14 @@ public final class HarrisUtil {
         Bitmap src = BitmapFactory.decodeByteArray( byImage, 0, byImage.length );
 
         float scaled = 1.0f;
-        if ( (float) dst.getWidth() / (float) src.getWidth() < (float) dst.getHeight() / (float) src.getHeight() ) {
-            scaled = (float) dst.getHeight() / (float) src.getHeight();
+        if ( ( float ) dst.getWidth() / ( float ) src.getWidth() < ( float ) dst.getHeight() / ( float ) src.getHeight() ) {
+            scaled = ( float ) dst.getHeight() / ( float ) src.getHeight();
         } else {
-            scaled = (float) dst.getWidth() / (float) src.getWidth();
+            scaled = ( float ) dst.getWidth() / ( float ) src.getWidth();
         }
 
-        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, (int) Math.ceil( src.getWidth() * scaled ),
-                (int) Math.ceil( src.getHeight() * scaled ), true );
+        Bitmap bmpScaled = Bitmap.createScaledBitmap( src, ( int ) Math.ceil( src.getWidth() * scaled ),
+                ( int ) Math.ceil( src.getHeight() * scaled ), true );
 
         int offsetX = 0;
         int offsetY = 0;

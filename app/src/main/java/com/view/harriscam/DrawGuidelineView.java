@@ -20,7 +20,7 @@ public class DrawGuidelineView extends View {
         super( context, attrs );
 
         paint.setAntiAlias( true );
-        paint.setStrokeWidth( HarrisUtil.dp2px( 2, getResources() ) );
+        paint.setStrokeWidth( HarrisUtil.dp2px( 1, getResources() ) );
         paint.setColor( getResources().getColor( R.color.AlphaGray ) );
         paint.setStyle( Paint.Style.STROKE );
     }

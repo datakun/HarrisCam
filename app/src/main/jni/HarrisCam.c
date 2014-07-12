@@ -125,6 +125,7 @@ JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naBlurBitmap(JNIEnv
     }
 
     if ((ret = AndroidBitmap_lockPixels(env, bitmapIn, &pixelsIn)) < 0 || (ret = AndroidBitmap_lockPixels(env, bitmapOut, &pixelsOut)) < 0) {
+        return;
     }
 
     int h = infoIn.height;

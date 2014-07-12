@@ -37,6 +37,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     // Bitmap & Image
     private byte[][] rawImages; // 0: first, 1: second, 2: third Raw data
     private Bitmap[] bmpImage;
+    private boolean isMakingBackground;
 
     private Camera.Parameters cameraParameters;
     private List< Camera.Size > previewSizeList;
@@ -163,7 +164,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 break;
 
             HarrisConfig.PHOTO_QUALITY_LIST.add( size );
-            HarrisUtil.jlog( "width : " + size.width + ", height : " + size.height );
+//            HarrisUtil.jlog( "width : " + size.width + ", height : " + size.height );
         }
     }
 
@@ -262,7 +263,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
         @Override
         public void onPreviewFrame( byte[] data, Camera camera ) {
-            if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
+            if ( HarrisConfig.BD_GALLERY_BACKGROUND == null && isMakingBackground == false ) {
                 new BlurImageTask().execute( data );
             }
             if ( HarrisConfig.DOIN_CAPTURE ) {
@@ -323,6 +324,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         @Override
         protected Void doInBackground( byte[]... params ) {
+            isMakingBackground = true;
             int w = cameraParameters.getPreviewSize().width;
             int h = cameraParameters.getPreviewSize().height;
             int format = cameraParameters.getPreviewFormat();
@@ -338,13 +340,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 270 );
             Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpBackground, bmpBackground.getWidth() / 8,
                     bmpBackground.getHeight() / 8, false );
-//            Bitmap bmpTemp = Bitmap.createBitmap( bmpBlur );
+            Bitmap bmpTemp = Bitmap.createBitmap( bmpBlur );
 
-            bmpBlur = HarrisImageProcess.blurBitmap( bmpBlur, 20 );
-//            HarrisNative.naBlurBitmap( bmpTemp, bmpBlur, 40 );
+            HarrisNative.naBlurBitmap( bmpTemp, bmpBlur, 20 );
             HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( getResources(), bmpBlur );
 
             bmpBackground.recycle();
+            isMakingBackground = false;
 
             return null;
         }

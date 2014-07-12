@@ -77,9 +77,9 @@ public class CameraActivity extends Activity {
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
                     // TODO : gallery
-//                    if ( photoSelectMenuView.isSelectedAnyPhoto() )
-//                        askCancelApplyEffect();
-//                    else {
+                    if ( photoSelectMenuView.isSelectedAnyPhoto() )
+                        askCancelApplyEffect();
+                    else {
                         HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
                         if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
                             HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
@@ -90,7 +90,7 @@ public class CameraActivity extends Activity {
                         showShutterButton();
                         ibShutter.setVisibility( View.VISIBLE );
                         ibSubmitEffect.setVisibility( View.GONE );
-//                    }
+                    }
 
                     break;
                 case R.id.ibGalleryMode:
@@ -162,22 +162,22 @@ public class CameraActivity extends Activity {
         }
     };
 
-    // TODO : gallery
+    // TODO : gallery, apply harris shutter
     private View.OnClickListener listenerClickSubmit = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
-//            if ( photoSelectMenuView.isSelectedAllPhoto() ) {
-//                HarrisConfig.BMP_HARRIS_RESULT = ( ( BitmapDrawable ) ivHarrisResult.getDrawable() ).getBitmap();
-//
-//                Date now = new Date();
-//                SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
-//                HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
-//
-//                HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
-//                HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
-//
-//                HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_success ) );
-//            }
+            if ( photoSelectMenuView.isSelectedAllPhoto() ) {
+                HarrisConfig.BMP_HARRIS_RESULT = ( ( BitmapDrawable ) ivHarrisResult.getDrawable() ).getBitmap();
+
+                Date now = new Date();
+                SimpleDateFormat format = new SimpleDateFormat( "yyyyMMdd_HHmmss" );
+                HarrisConfig.FILE_PATH = HarrisConfig.SAVE_PATH + "/harriscam_" + format.format( now ) + "_";
+
+                HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
+                HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
+
+                HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_success ) );
+            }
         }
     };
 
@@ -190,7 +190,7 @@ public class CameraActivity extends Activity {
                 HarrisUtil.jlog( e );
             }
 
-            if ( count++ > 20 )
+            if ( count++ > 50 )
                 break;
         }
     }
@@ -220,35 +220,38 @@ public class CameraActivity extends Activity {
     }
 
     // TODO : gallery
-//    @Override
-//    protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
-//        if ( data == null ) {
-//            return;
-//        }
-//
-//        InputStream is = HarrisUtil.getISFromURI( this, data.getData() );
-//        switch ( requestCode ) {
-//            case HarrisConfig.REQUEST_FIRST:
-//                photoSelectMenuView.applyFirstPhoto( is );
-//
-//                break;
-//            case HarrisConfig.REQUEST_SECOND:
-//                photoSelectMenuView.applySecondPhoto( is );
-//
-//                break;
-//            case HarrisConfig.REQUEST_THIRD:
-//                photoSelectMenuView.applyThirdPhoto( is );
-//
-//                break;
-//        }
-//        try {
-//            is.close();
-//        } catch ( IOException e ) {
-//            HarrisUtil.jlog( e );
-//        }
-//
-//        photoSelectMenuView.checkEnableApplyEffect();
-//    }
+    @Override
+    protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
+        if ( data == null ) {
+            return;
+        }
+
+        InputStream is = HarrisUtil.getISFromURI( this, data.getData() );
+        switch ( requestCode ) {
+            case HarrisConfig.REQUEST_FIRST:
+                photoSelectMenuView.applyFirstPhoto( is );
+
+                break;
+            case HarrisConfig.REQUEST_SECOND:
+                photoSelectMenuView.applySecondPhoto( is );
+
+                break;
+            case HarrisConfig.REQUEST_THIRD:
+                photoSelectMenuView.applyThirdPhoto( is );
+
+                break;
+        }
+
+        HarrisUtil.logMemInfo( getBaseContext() );
+
+        try {
+            is.close();
+        } catch ( IOException e ) {
+            HarrisUtil.jlog( e );
+        }
+
+        photoSelectMenuView.checkEnableApplyEffect();
+    }
 
     private void initializeView() {
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
@@ -738,36 +741,36 @@ public class CameraActivity extends Activity {
     }
 
     // TODO : gallery
-//    private void askCancelApplyEffect() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder( this );
-//        builder.setTitle( getString( R.string.app_name ) );
-//        builder.setMessage( getString( R.string.msg_ask_cancel ) );
-//        builder.setNegativeButton( getString( R.string.no ), new DialogInterface.OnClickListener() {
-//
-//            @Override
-//            public void onClick( DialogInterface dialog, int which ) {
-//                dialog.dismiss();
-//                listenerClickMode.onClick( findViewById( R.id.ibGalleryMode ) );
-//            }
-//        } );
-//        builder.setPositiveButton( getString( R.string.yes ), new DialogInterface.OnClickListener() {
-//
-//            @Override
-//            public void onClick( DialogInterface dialog, int which ) {
-//                dialog.dismiss();
-//                photoSelectMenuView.clearImageViewDrawable();
-//                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
-//                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
-//                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-//                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
-//                }
-//                flGalleryModeBackground.setVisibility( View.GONE );
-//                modeSelectMenuView.hideMenu();
-//                showShutterButton();
-//            }
-//        } );
-//
-//        AlertDialog dialog = builder.create();
-//        dialog.show();
-//    }
+    private void askCancelApplyEffect() {
+        AlertDialog.Builder builder = new AlertDialog.Builder( this );
+        builder.setTitle( getString( R.string.app_name ) );
+        builder.setMessage( getString( R.string.msg_ask_cancel ) );
+        builder.setNegativeButton( getString( R.string.no ), new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick( DialogInterface dialog, int which ) {
+                dialog.dismiss();
+                listenerClickMode.onClick( findViewById( R.id.ibGalleryMode ) );
+            }
+        } );
+        builder.setPositiveButton( getString( R.string.yes ), new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick( DialogInterface dialog, int which ) {
+                dialog.dismiss();
+                photoSelectMenuView.clearImageViewDrawable();
+                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
+                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
+                }
+                flGalleryModeBackground.setVisibility( View.GONE );
+                modeSelectMenuView.hideMenu();
+                showShutterButton();
+            }
+        } );
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 }
