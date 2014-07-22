@@ -78,5 +78,8 @@
     <string name="pref_id_guideline">pref_guideline</string>
     <string name="pref_id_capture_interval">pref_capture_interval</string>
     <string name="pref_id_camera_switcher">pref_camera_switcher</string>
+    <string name="title_activity_edit">EditActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
 
 </resources>

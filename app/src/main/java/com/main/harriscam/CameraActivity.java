@@ -76,7 +76,6 @@ public class CameraActivity extends Activity {
 
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
-                    // TODO : gallery
                     if ( photoSelectMenuView.isSelectedAnyPhoto() )
                         askCancelApplyEffect();
                     else {
@@ -162,7 +161,6 @@ public class CameraActivity extends Activity {
         }
     };
 
-    // TODO : gallery, apply harris shutter
     private View.OnClickListener listenerClickSubmit = new View.OnClickListener() {
         @Override
         public void onClick( View v ) {
@@ -177,6 +175,9 @@ public class CameraActivity extends Activity {
                 HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
 
                 HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_success ) );
+
+                // TODO : Create edit activity
+
             }
         }
     };
@@ -219,7 +220,6 @@ public class CameraActivity extends Activity {
         super.onPause();
     }
 
-    // TODO : gallery
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
         if ( data == null ) {
@@ -740,7 +740,6 @@ public class CameraActivity extends Activity {
         ibSubmitEffect.setAlpha( 1.0f - ratioDistance );
     }
 
-    // TODO : gallery
     private void askCancelApplyEffect() {
         AlertDialog.Builder builder = new AlertDialog.Builder( this );
         builder.setTitle( getString( R.string.app_name ) );

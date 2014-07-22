@@ -210,7 +210,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         return isFlashlightEnable;
     }
 
-    // TODO : Enable to preview callback.
     private void setFlashlight() {
         if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_FRONT )
             return;
@@ -385,7 +384,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         @Override
         protected Void doInBackground( Void... params ) {
-            // TODO: fast blur image
             HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpImage[ 0 ] );
             HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, bmpImage[ 1 ], bmpImage[ 2 ] );
 
@@ -428,6 +426,9 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             progressApplying.dismiss();
             ibShutter.setEnabled( true );
             HarrisUtil.toast( context, getResources().getString( R.string.msg_success ) );
+
+            // TODO : Create edit activity
+
         }
     }
 }
