@@ -1,1 +1,1 @@
-adb logcat -s -vtime junu:I
+adb logcat -s -vtime hcam:I

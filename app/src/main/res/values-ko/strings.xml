@@ -19,18 +19,19 @@
     <string name="msg_ask_quit">앱을 종료하시겠습니까?\n이전 버튼을 한 번 더 눌러주세요.</string>
     <string name="msg_latest_update">최신 버전입니다.</string>
     <string name="msg_ask_update">최신 버전으로 업데이트 하시겠습니까?</string>
-    <string name="msg_progressing">효과 적용 중...</string>
+    <string name="msg_progressing">효과 적용 중</string>
     <string name="msg_success">Harris Shutter 효과를 적용했습니다.</string>
-    <string name="msg_initializing">초기화 중...</string>
+    <string name="msg_initializing">초기화 중</string>
     <string name="msg_choose_email">E-mail로 보내기</string>
     <string name="msg_ask_cancel">효과 적용을 취소하시겠습니까?</string>
+    <string name="msg_saved_image">사진을 저장했습니다.</string>
 
     <!-- Preference -->
     <string name="title_activity_settings">설정</string>
 
     <!-- General settings -->
     <string name="pref_header_general">일반 설정</string>
-    <string name="pref_title_quality">이미지 품질</string>
+    <string name="pref_title_quality">사진 품질</string>
 
     <string-array name="pref_list_quality">
         <item>High</item>
@@ -38,7 +39,8 @@
         <item>Low</item>
     </string-array>
 
-    <string name="pref_title_save_original">원본 이미지 저장하기</string>
+    <string name="pref_title_save_original">첫 원본 사진만 저장하기</string>
+    <string name="pref_title_save_original_of_all">모든 원본 사진 저장하기</string>
     <string name="pref_title_storage">저장소 위치</string>
 
     <string-array name="pref_list_storage">

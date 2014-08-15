@@ -16,6 +16,11 @@
         android:key="@string/pref_id_save_original"
         android:title="@string/pref_title_save_original"/>
 
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="@string/pref_id_save_original_of_all"
+        android:title="@string/pref_title_save_original_of_all"/>
+
     <ListPreference
         android:defaultValue="0"
         android:key="@string/pref_id_storage"

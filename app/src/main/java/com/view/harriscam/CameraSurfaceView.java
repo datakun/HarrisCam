@@ -3,6 +3,7 @@ package com.view.harriscam;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -20,6 +21,7 @@ import android.widget.ImageButton;
 
 import com.image.harriscam.HarrisImageProcess;
 import com.image.harriscam.HarrisNative;
+import com.main.harriscam.EditActivity;
 import com.main.harriscam.R;
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
@@ -405,16 +407,21 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             }
 
             HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
-            HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "fx.jpg" );
 
-            if ( !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE ) {
+            if ( !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE && !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE_OF_ALL ) {
                 ( new File( HarrisConfig.FILE_PATH + "1.jpg" ) ).delete();
                 ( new File( HarrisConfig.FILE_PATH + "2.jpg" ) ).delete();
                 ( new File( HarrisConfig.FILE_PATH + "3.jpg" ) ).delete();
             } else {
                 HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "1.jpg" );
-                HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "2.jpg" );
-                HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "3.jpg" );
+
+                if ( HarrisConfig.IS_SAVE_ORIGINAL_IMAGE ) {
+                    ( new File( HarrisConfig.FILE_PATH + "2.jpg" ) ).delete();
+                    ( new File( HarrisConfig.FILE_PATH + "3.jpg" ) ).delete();
+                } else if ( HarrisConfig.IS_SAVE_ORIGINAL_IMAGE_OF_ALL ) {
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "2.jpg" );
+                    HarrisUtil.singleBroadcast( context, HarrisConfig.FILE_PATH + "3.jpg" );
+                }
             }
 
             return null;
@@ -427,8 +434,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             ibShutter.setEnabled( true );
             HarrisUtil.toast( context, getResources().getString( R.string.msg_success ) );
 
-            // TODO : Create edit activity
-
+            context.startActivity( new Intent( context, EditActivity.class ) );
         }
     }
 }

@@ -2,4 +2,5 @@
 <resources>
     <color name="LightGray">#eeeeee</color>
     <color name="AlphaGray">#88eeeeee</color>
+    <color name="Black">#ff000000</color>
 </resources>

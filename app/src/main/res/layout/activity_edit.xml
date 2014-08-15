@@ -4,31 +4,53 @@
              android:layout_height="match_parent">
 
     <FrameLayout
+        android:id="@+id/flGalleryModeBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/ivResultImage"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/mode_menu_size"
-            android:scaleType="fitCenter"/>
+            android:background="#88000000">
 
-        <ImageView
-            android:id="@+id/ivOriginalImage"
-            android:visibility="invisible"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/mode_menu_size"
-            android:scaleType="fitCenter"/>
+            <ImageView
+                android:id="@+id/ivHarrisResult"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/mode_menu_size"
+                android:src="@color/Black"
+                android:scaleType="fitCenter"/>
+        </LinearLayout>
+
     </FrameLayout>
 
     <LinearLayout
+        android:layout_gravity="bottom"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/mode_menu_size">
+        android:layout_height="wrap_content">
 
+        <ImageButton
+            android:id="@+id/ibCancelSave"
+            android:layout_width="@dimen/mode_menu_size"
+            android:layout_height="@dimen/mode_menu_size"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_margin="8dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/xml_btn_clear"/>
+
+        <ImageButton
+            android:id="@+id/ibSubmitSave"
+            android:layout_width="@dimen/mode_menu_size"
+            android:layout_height="@dimen/mode_menu_size"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_margin="8dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/xml_btn_check"/>
     </LinearLayout>
 
 </FrameLayout>

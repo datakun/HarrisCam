@@ -250,4 +250,44 @@ public final class HarrisImageProcess {
 
         return resizedBitmap;
     }
+
+    // TODO: rotate image
+//    public void rotateImage(Bitmap bmInput) {
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(90);
+//        matrix.postScale(1, 1);
+//
+//        try {
+//            Bitmap bitTemp = Bitmap.createBitmap(bmInput);
+//
+//            bmInput = Bitmap.createBitmap(bitTemp, 0, 0, bitTemp.getWidth(), bitTemp.getHeight(), matrix, true);
+//            ivCropView.setImageBitmap(bitResultImage);
+//
+//            if (bitTemp != null) {
+//                bitTemp.recycle();
+//                bitTemp = null;
+//            }
+//            System.gc();
+//        } catch (OutOfMemoryError e) {
+//            showToast("Memory space is full... Try again.");
+//
+//            MainActivity.deleteAllBitmap();
+//
+//            setResult(RESULT_FAILED);
+//            finish();
+//        }
+//
+//        nImageWidth = bitResultImage.getWidth();
+//        nImageHeight = bitResultImage.getHeight();
+//
+//        if (MainActivity.bScaledSquare == false) {
+//            if (bVertical == true) {
+//                bVertical = false;
+//                adjustViewSize(ivCropView, displayWidth, displayWidth * 3 / 4);
+//            } else {
+//                bVertical = true;
+//                adjustViewSize(ivCropView, displayWidth, displayWidth * 4 / 3);
+//            }
+//        }
+//    }
 }

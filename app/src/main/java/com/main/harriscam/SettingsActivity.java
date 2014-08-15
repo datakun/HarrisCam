@@ -2,6 +2,7 @@ package com.main.harriscam;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -10,6 +11,7 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 
 import com.main.harriscam.util.HarrisConfig;
+import com.main.harriscam.util.HarrisUtil;
 
 public class SettingsActivity extends PreferenceActivity {
 
@@ -40,6 +42,21 @@ public class SettingsActivity extends PreferenceActivity {
         }
     };
 
+    private Preference.OnPreferenceChangeListener listenerPreferenceCheckChange =
+            new Preference.OnPreferenceChangeListener() {
+                public boolean onPreferenceChange( Preference preference, Object checked ) {
+                    if ( Boolean.parseBoolean( checked.toString() ) ) {
+                        HarrisUtil.jlog( Boolean.parseBoolean( checked.toString() ) );
+                        if ( preference.getKey().equals( preference.getContext().getString( R.string.pref_id_save_original ) ) )
+                            ( ( CheckBoxPreference ) findPreference( getString( R.string.pref_id_save_original_of_all ) ) ).setChecked( false );
+                        else
+                            ( ( CheckBoxPreference ) findPreference( getString( R.string.pref_id_save_original ) ) ).setChecked( false );
+                    }
+
+                    return true;
+                }
+            };
+
     private static void bindPreferenceSummaryToValue( Preference preference ) {
         preference.setOnPreferenceChangeListener( listenerPreferenceChange );
 
@@ -51,7 +68,11 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
 
-        getActionBar().setHomeButtonEnabled( true );
+        try {
+            getActionBar().setHomeButtonEnabled( true );
+        } catch ( Exception e ) {
+            HarrisUtil.jlog( "On Preference : " + e.toString() );
+        }
 
         setupPreferencesScreen();
     }
@@ -103,5 +124,8 @@ public class SettingsActivity extends PreferenceActivity {
         bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_id_storage ) ) );
 
         findPreference( getString( R.string.pref_id_feedback ) ).setOnPreferenceClickListener( listenerPreferenceClick );
+
+        findPreference( getString( R.string.pref_id_save_original ) ).setOnPreferenceChangeListener( listenerPreferenceCheckChange );
+        findPreference( getString( R.string.pref_id_save_original_of_all ) ).setOnPreferenceChangeListener( listenerPreferenceCheckChange );
     }
 }

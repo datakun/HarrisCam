@@ -95,7 +95,7 @@ public class CameraActivity extends Activity {
                 case R.id.ibGalleryMode:
                     HarrisConfig.FLAG_MODE = HarrisConfig.GALLERY;
 
-                    checkGalleryBackground();
+                    HarrisConfig.checkGalleryBackground();
 
                     flGalleryModeBackground.setBackgroundDrawable( HarrisConfig.BD_GALLERY_BACKGROUND );
                     flGalleryModeBackground.setVisibility( View.VISIBLE );
@@ -174,27 +174,21 @@ public class CameraActivity extends Activity {
                 HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
                 HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
 
-                HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_success ) );
+                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
+                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
+                }
+                flGalleryModeBackground.setVisibility( View.GONE );
+                modeSelectMenuView.hideMenu();
+                showShutterButton();
+                ibShutter.setVisibility( View.VISIBLE );
+                ibSubmitEffect.setVisibility( View.GONE );
 
-                // TODO : Create edit activity
-
+                HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_saved_image ) );
             }
         }
     };
-
-    private void checkGalleryBackground() {
-        int count = 0;
-        while ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
-            try {
-                Thread.sleep( 10 );
-            } catch ( InterruptedException e ) {
-                HarrisUtil.jlog( e );
-            }
-
-            if ( count++ > 50 )
-                break;
-        }
-    }
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -299,8 +293,11 @@ public class CameraActivity extends Activity {
         // Photo quality
         HarrisConfig.QUALITY_INDEX = Integer.valueOf( sharedPref.getString( getString( R.string.pref_id_quality ), "0" ) );
 
-        // Save original photos
+        // Save original photo
         HarrisConfig.IS_SAVE_ORIGINAL_IMAGE = sharedPref.getBoolean( getString( R.string.pref_id_save_original ), true );
+
+        // Save original photos of all
+        HarrisConfig.IS_SAVE_ORIGINAL_IMAGE_OF_ALL = sharedPref.getBoolean( getString( R.string.pref_id_save_original_of_all ), true );
 
         // Flashlight
         HarrisConfig.FLAG_FLASHLIGHT = sharedPref.getInt( getString( R.string.pref_id_flashlight ), 0 );
@@ -370,7 +367,7 @@ public class CameraActivity extends Activity {
                 return false;
             }
 
-            if ( HarrisConfig.DOIN_FINISH == false ) {
+            if ( HarrisConfig.DOIN_FINISH ) {
                 HarrisUtil.toast( this, getString( R.string.msg_ask_quit ) );
 
                 HarrisConfig.DOIN_FINISH = true;

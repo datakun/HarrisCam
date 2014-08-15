@@ -59,6 +59,7 @@ public class HarrisConfig {
     public static String SAVE_PATH = ""; // path/to/save
     public static String FILE_PATH = ""; // absolute path/to/file
     public static boolean IS_SAVE_ORIGINAL_IMAGE = true;
+    public static boolean IS_SAVE_ORIGINAL_IMAGE_OF_ALL = true;
 
     public static final class HandlerAskQuit extends Handler {
         public void handleMessage( Message msg ) {
@@ -68,5 +69,17 @@ public class HarrisConfig {
         }
     }
 
-    public static String test = "test!";
+    public static void checkGalleryBackground() {
+        int count = 0;
+        while ( BD_GALLERY_BACKGROUND == null ) {
+            try {
+                Thread.sleep( 10 );
+            } catch ( InterruptedException e ) {
+                HarrisUtil.jlog( e );
+            }
+
+            if ( count++ > 50 )
+                break;
+        }
+    }
 }
