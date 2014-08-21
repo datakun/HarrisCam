@@ -6,8 +6,10 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +21,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
@@ -35,6 +38,8 @@ import java.util.Date;
 
 public class CameraActivity extends Activity {
     // Views
+    // TODO: Programmatically add CameraSurfaceView
+//    private LinearLayout llCameraContainer;
     private CameraSurfaceView cameraSurfaceView;
     private ModeSelectMenuView modeSelectMenuView;
     private OptionSelectMenuView optionSelectMenuView;
@@ -76,6 +81,10 @@ public class CameraActivity extends Activity {
 
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
+                    // TODO: Programmatically add CameraSurfaceView
+//                    cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+//                    llCameraContainer.addView( cameraSurfaceView );
+
                     if ( photoSelectMenuView.isSelectedAnyPhoto() )
                         askCancelApplyEffect();
                     else {
@@ -95,14 +104,31 @@ public class CameraActivity extends Activity {
                 case R.id.ibGalleryMode:
                     HarrisConfig.FLAG_MODE = HarrisConfig.GALLERY;
 
-                    HarrisConfig.checkGalleryBackground();
+                    // TODO: Programmatically add CameraSurfaceView
+//                    llCameraContainer.removeAllViews();
+//                    cameraSurfaceView.releaseCamera();
+//                    cameraSurfaceView = null;
 
-                    flGalleryModeBackground.setBackgroundDrawable( HarrisConfig.BD_GALLERY_BACKGROUND );
+                    if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
+                        flGalleryModeBackground.setBackgroundDrawable( new ColorDrawable( Color.BLACK ) );
+                    } else {
+                        flGalleryModeBackground.setBackgroundDrawable( HarrisConfig.BD_GALLERY_BACKGROUND );
+                    }
                     flGalleryModeBackground.setVisibility( View.VISIBLE );
                     modeSelectMenuView.hideMenu();
                     showSubmitButton();
                     ibSubmitEffect.setVisibility( View.VISIBLE );
                     ibShutter.setVisibility( View.GONE );
+
+                    showPhotoMenu();
+
+                    Handler h = new Handler();
+                    h.postDelayed( new Runnable() {
+                        @Override
+                        public void run() {
+                            hidePhotoMenu();
+                        }
+                    }, 1000 );
 
                     break;
                 case R.id.ibSettings:
@@ -196,6 +222,16 @@ public class CameraActivity extends Activity {
         setContentView( R.layout.activity_camera );
 
         initializeView();
+
+        showModeMenu();
+
+        final Handler h = new Handler();
+        h.postDelayed( new Runnable() {
+            @Override
+            public void run() {
+                hideModeMenu();
+            }
+        }, 1000 );
     }
 
     @Override
@@ -209,7 +245,9 @@ public class CameraActivity extends Activity {
 
     @Override
     protected void onPause() {
-        cameraSurfaceView.releaseCamera();
+        if ( cameraSurfaceView != null ) {
+            cameraSurfaceView.releaseCamera();
+        }
 
         super.onPause();
     }
@@ -249,6 +287,11 @@ public class CameraActivity extends Activity {
 
     private void initializeView() {
         cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
+        // TODO: Programmatically add CameraSurfaceView
+//        llCameraContainer = ( LinearLayout ) findViewById( R.id.llCameraContainer );
+//        cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+//        llCameraContainer.addView( cameraSurfaceView );
+
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
@@ -367,7 +410,7 @@ public class CameraActivity extends Activity {
                 return false;
             }
 
-            if ( HarrisConfig.DOIN_FINISH ) {
+            if ( HarrisConfig.DOIN_FINISH == false ) {
                 HarrisUtil.toast( this, getString( R.string.msg_ask_quit ) );
 
                 HarrisConfig.DOIN_FINISH = true;

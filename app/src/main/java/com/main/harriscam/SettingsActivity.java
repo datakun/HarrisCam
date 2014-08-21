@@ -1,5 +1,6 @@
 package com.main.harriscam;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -14,6 +15,7 @@ import com.main.harriscam.util.HarrisConfig;
 import com.main.harriscam.util.HarrisUtil;
 
 public class SettingsActivity extends PreferenceActivity {
+    private ActionBar actionBar;
 
     private static Preference.OnPreferenceChangeListener listenerPreferenceChange
             = new Preference.OnPreferenceChangeListener() {
@@ -68,10 +70,10 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
 
-        try {
-            getActionBar().setHomeButtonEnabled( true );
-        } catch ( Exception e ) {
-            HarrisUtil.jlog( "On Preference : " + e.toString() );
+        actionBar = getActionBar();
+        if ( actionBar != null ) {
+            actionBar.setDisplayHomeAsUpEnabled( true );
+            actionBar.setHomeButtonEnabled( true );
         }
 
         setupPreferencesScreen();
@@ -93,6 +95,7 @@ public class SettingsActivity extends PreferenceActivity {
 
                 return true;
         }
+
         return super.onOptionsItemSelected( item );
     }
 

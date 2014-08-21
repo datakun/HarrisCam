@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     // Camera
@@ -96,8 +97,8 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public void surfaceCreated( SurfaceHolder holder ) {
         openCamera( HarrisConfig.FLAG_CAMERA );
 
-        totalOfCamera = camera.getNumberOfCameras();
-        isFlashlightEnable = cameraParameters.getFlashMode() != null ? true : false;
+        totalOfCamera = Camera.getNumberOfCameras();
+        isFlashlightEnable = cameraParameters.getFlashMode() != null;
         indexOfImages = 0;
     }
 
@@ -153,11 +154,11 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private void initializeQuality() {
         HarrisConfig.PHOTO_QUALITY_LIST.clear();
         float ratioPreview = ( float ) previewSizeList.get( 0 ).width / ( float ) previewSizeList.get( 0 ).height;
-        ratioPreview = Float.valueOf( String.format( "%.2f", ratioPreview ) );
+        ratioPreview = Float.valueOf( String.format( Locale.US, "%.2f", ratioPreview ) );
 
         for ( Camera.Size size : previewSizeList ) {
             float ratio = ( float ) size.width / ( float ) size.height;
-            ratio = Float.valueOf( String.format( "%.2f", ratio ) );
+            ratio = Float.valueOf( String.format( Locale.US, "%.2f", ratio ) );
 
             if ( ratioPreview * 0.9 > ratio || ratio > ratioPreview * 1.1 )
                 continue;
@@ -334,20 +335,32 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Rect area = new Rect( 0, 0, w, h );
             image.compressToJpeg( area, 100, out );
-            Bitmap bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
-            if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
-                bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 90 );
-            else
-                bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 270 );
-            Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpBackground, bmpBackground.getWidth() / 8,
-                    bmpBackground.getHeight() / 8, false );
-            Bitmap bmpTemp = Bitmap.createBitmap( bmpBlur );
 
-            HarrisNative.naBlurBitmap( bmpTemp, bmpBlur, 20 );
-            HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( getResources(), bmpBlur );
+            Bitmap bmpBackground = null;
+            try {
+                bmpBackground = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+                if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
+                    bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 90 );
+                else
+                    bmpBackground = HarrisImageProcess.rotateBitmap( bmpBackground, 270 );
+            } catch ( OutOfMemoryError e ) {
+                e.printStackTrace();
+            }
 
-            bmpBackground.recycle();
-            isMakingBackground = false;
+            try {
+                Bitmap bmpBlur = Bitmap.createScaledBitmap( bmpBackground, bmpBackground.getWidth() / 8,
+                        bmpBackground.getHeight() / 8, false );
+                Bitmap bmpTemp = Bitmap.createBitmap( bmpBlur );
+
+                HarrisNative.naBlurBitmap( bmpTemp, bmpBlur, 20 );
+                HarrisConfig.BD_GALLERY_BACKGROUND = new BitmapDrawable( getResources(), bmpBlur );
+
+                bmpBackground.recycle();
+                isMakingBackground = false;
+            } catch ( NullPointerException e ) {
+                e.printStackTrace();
+                HarrisConfig.BD_GALLERY_BACKGROUND = null;
+            }
 
             return null;
         }
@@ -357,6 +370,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
         @Override
         protected Void doInBackground( Integer... params ) {
+
             int index = params[ 0 ];
 
             int w = cameraParameters.getPreviewSize().width;
@@ -367,14 +381,23 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Rect area = new Rect( 0, 0, w, h );
             image.compressToJpeg( area, 100, out );
-            bmpImage[ index ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
 
             String filename = HarrisConfig.FILE_PATH + ( index + 1 ) + ".jpg";
-            if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
-                bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 90 );
-            else
-                bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 270 );
-            HarrisUtil.saveBitmapToFileCache( bmpImage[ index ], filename, 100 );
+            try {
+                bmpImage[ index ] = BitmapFactory.decodeByteArray( out.toByteArray(), 0, out.size() );
+                if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK )
+                    bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 90 );
+                else
+                    bmpImage[ index ] = HarrisImageProcess.rotateBitmap( bmpImage[ index ], 270 );
+            } catch ( OutOfMemoryError e ) {
+                e.printStackTrace();
+            }
+
+            try {
+                HarrisUtil.saveBitmapToFileCache( bmpImage[ index ], filename, 100 );
+            } catch ( NullPointerException e ) {
+                e.printStackTrace();
+            }
 
             offFlashlight();
 
@@ -398,15 +421,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 } catch ( InterruptedException e ) {
                     HarrisUtil.jlog( e );
                 }
-                if ( count++ >= 10 )
+                if ( count++ >= 50 )
                     break;
             }
 
             for ( Bitmap bitmap : bmpImage ) {
                 bitmap.recycle();
             }
-
-            HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
 
             if ( !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE && !HarrisConfig.IS_SAVE_ORIGINAL_IMAGE_OF_ALL ) {
                 ( new File( HarrisConfig.FILE_PATH + "1.jpg" ) ).delete();
@@ -431,7 +452,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         protected void onPostExecute( Void aVoid ) {
             HarrisConfig.FILE_PATH = "";
             progressApplying.dismiss();
-            ibShutter.setEnabled( true );
+//            ibShutter.setEnabled( true );
             HarrisUtil.toast( context, getResources().getString( R.string.msg_success ) );
 
             context.startActivity( new Intent( context, EditActivity.class ) );

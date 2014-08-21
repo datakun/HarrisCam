@@ -28,13 +28,13 @@
 
     <!-- Activity -->
     <string name="title_activity_settings">Settings</string>
-    <string name="title_activity_edit">EditActivity</string>
+    <string name="title_activity_edit">Photo Editing</string>
 
     <!-- General settings -->
     <string name="pref_header_general">General</string>
-    <string name="pref_id_quality">pref_quality</string>
+    <string name="pref_id_quality" translatable="false">pref_quality</string>
     <string name="pref_title_quality">Image quality</string>
-    <string name="pref_summary_quality">High</string>
+    <string name="pref_summary_quality" translatable="false">High</string>
 
     <string-array name="pref_list_quality">
         <item>High</item>
@@ -42,20 +42,20 @@
         <item>Low</item>
     </string-array>
 
-    <string name="pref_id_save_original">pref_save_original</string>
+    <string name="pref_id_save_original" translatable="false">pref_save_original</string>
     <string name="pref_title_save_original">Save a first original photo</string>
-    <string name="pref_id_save_original_of_all">pref_save_original_of_all</string>
+    <string name="pref_id_save_original_of_all" translatable="false">pref_save_original_of_all</string>
     <string name="pref_title_save_original_of_all">Save a original photos of all</string>
-    <string name="pref_id_storage">pref_storage</string>
+    <string name="pref_id_storage" translatable="false">pref_storage</string>
     <string name="pref_title_storage">Storage location</string>
-    <string name="pref_summary_storage">Internal Storage</string>
+    <string name="pref_summary_storage" translatable="false">Internal Storage</string>
 
     <string-array name="pref_list_storage">
         <item>Internal Storage\n(/DCIM/harriscam)</item>
         <item>External Storage\n(/DCIM/harriscam)</item>
     </string-array>
 
-    <string name="pref_id_social">pref_social</string>
+    <string name="pref_id_social" translatable="false">pref_social</string>
     <string name="pref_title_social">Social accounts</string>
     <string name="pref_summary_social">Manage to social accounts.</string>
 
@@ -68,21 +68,25 @@
 
     <!-- About HarrisCam -->
     <string name="pref_header_about">About</string>
-    <string name="pref_id_version">pref_version</string>
+    <string name="pref_id_version" translatable="false">pref_version</string>
     <string name="pref_title_version">HarrisCam version</string>
     <string name="pref_summary_version">reboot 1.0</string>
-    <string name="pref_id_license">pref_license</string>
+    <string name="pref_id_license" translatable="false">pref_license</string>
     <string name="pref_title_license">License</string>
-    <string name="pref_id_feedback">pref_feedback</string>
+    <string name="pref_id_feedback" translatable="false">pref_feedback</string>
     <string name="pref_title_feedback">Feedback for HarrisCam</string>
     <string name="pref_summary_feedback">Please feedback for HarrisCam.</string>
 
     <!-- Preference -->
-    <string name="pref_id_flashlight">pref_flashlight</string>
-    <string name="pref_id_guideline">pref_guideline</string>
-    <string name="pref_id_capture_interval">pref_capture_interval</string>
-    <string name="pref_id_camera_switcher">pref_camera_switcher</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="pref_id_flashlight" translatable="false">pref_flashlight</string>
+    <string name="pref_id_guideline" translatable="false">pref_guideline</string>
+    <string name="pref_id_capture_interval" translatable="false">pref_capture_interval</string>
+    <string name="pref_id_camera_switcher" translatable="false">pref_camera_switcher</string>
+    <string name="hello_world" translatable="false">Hello world!</string>
+
+    <!-- EditActivity -->
+    <string name="action_done">Done</string>
+    <string name="title_activity_my" translatable="false">MyActivity</string>
+    <string name="action_settings" translatable="false">Settings</string>
 
 </resources>

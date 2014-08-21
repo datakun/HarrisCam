@@ -28,6 +28,7 @@
 
     <!-- Preference -->
     <string name="title_activity_settings">설정</string>
+    <string name="title_activity_edit">사진 편집</string>
 
     <!-- General settings -->
     <string name="pref_header_general">일반 설정</string>
@@ -65,5 +66,8 @@
     <string name="pref_title_license">라이센스</string>
     <string name="pref_title_feedback">HarrisCam에 의견 보내기</string>
     <string name="pref_summary_feedback">HarrisCam에 의견을 보내주세요.</string>
+
+    <!-- EditActivity -->
+    <string name="action_done">완료</string>
 
 </resources>

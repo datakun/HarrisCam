@@ -33,9 +33,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Created by Kimdata on 2014-05-04.
- */
 public final class HarrisUtil {
     private static final String TAG = "junu";
     static Comparator< Camera.Size > _ascSize = new Comparator< Camera.Size >() {
@@ -315,41 +312,6 @@ public final class HarrisUtil {
 
         return true;
     }
-
-//    public static void unbindViewDrawable( View view ) {
-//        Drawable d = view.getBackground();
-//        if ( d != null ) {
-//            try {
-//                d.setCallback( null );
-//            } catch ( Exception ignore ) {
-//            }
-//        }
-//
-//        try {
-//            if ( view instanceof ImageView ) {
-//                ImageView imageView = ( ImageView ) view;
-//                d = imageView.getDrawable();
-//                if ( d != null ) {
-//                    d.setCallback( null );
-//                }
-//
-//                if ( d instanceof BitmapDrawable ) {
-//                    Bitmap bm = ( ( BitmapDrawable ) d ).getBitmap();
-//                    bm.recycle();
-//                }
-//
-//                imageView.setImageDrawable( null );
-//            }
-//        } catch ( Exception ignore ) {
-//        }
-//
-//        try {
-//            view.setBackgroundDrawable( null );
-//        } catch ( Exception ignore ) {
-//        }
-//
-//        System.gc();
-//    }
 
     public static InputStream getISFromURI( Context context, Uri contentURI ) {
         ContentResolver res = context.getContentResolver();

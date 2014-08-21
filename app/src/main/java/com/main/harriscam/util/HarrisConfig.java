@@ -68,18 +68,4 @@ public class HarrisConfig {
             }
         }
     }
-
-    public static void checkGalleryBackground() {
-        int count = 0;
-        while ( BD_GALLERY_BACKGROUND == null ) {
-            try {
-                Thread.sleep( 10 );
-            } catch ( InterruptedException e ) {
-                HarrisUtil.jlog( e );
-            }
-
-            if ( count++ > 50 )
-                break;
-        }
-    }
 }

@@ -4,10 +4,17 @@
              android:layout_height="match_parent"
              tools:context="com.main.harriscam.CameraActivity">
 
+    <!-- TODO: Programmatically add CameraSurfaceView -->
+    <!--<LinearLayout-->
+    <!--android:id="@+id/llCameraContainer"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
+
     <com.view.harriscam.CameraSurfaceView
         android:id="@+id/cameraSurfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+    <!--</LinearLayout>-->
 
     <com.view.harriscam.DrawGuidelineView
         android:id="@+id/dvLines"
