@@ -55,15 +55,15 @@ public class OptionSelectMenuView extends FrameLayout {
     }
 
     private void initializeOfMenu() {
-        this.setBackgroundColor( Color.argb( 200, 0, 0, 0 ) );
-        this.setAlpha( 0.0f );
+//        this.setBackgroundColor( Color.argb( 200, 0, 0, 0 ) );
+//        this.setAlpha( 0.0f );
         mainContainer = ( ViewGroup ) getChildAt( 0 );
         llSubContainer = ( LinearLayout ) mainContainer.findViewById( R.id.optionMenuContainer );
         ibFlashlight = ( ImageButton ) mainContainer.findViewById( R.id.ibFlashlight );
         ibGuideline = ( ImageButton ) mainContainer.findViewById( R.id.ibGuideline );
         ibCameraSwitcher = ( ImageButton ) mainContainer.findViewById( R.id.ibCameraSwitcher );
         ibIntervalWatch = ( ImageButton ) mainContainer.findViewById( R.id.ibIntervalWatch );
-        llSubContainer.setX( optionMenuSize );
+//        llSubContainer.setX( optionMenuSize );
     }
 
     public void showingMenu( float distance ) {

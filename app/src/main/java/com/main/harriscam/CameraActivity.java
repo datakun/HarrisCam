@@ -56,7 +56,8 @@ public class CameraActivity extends Activity {
     private int stopTrackPointX;
     private int startTrackPointY;
     private boolean isVisibleModeMenu;
-    private boolean isVisibleOptionsMenu;
+    // TODO: Option 메뉴 항상 보이기
+//    private boolean isVisibleOptionsMenu;
     private boolean isVisiblePhotoMenu;
     private boolean isPossibleTracking;
     private boolean isDisabledTracking;
@@ -86,6 +87,7 @@ public class CameraActivity extends Activity {
                         askCancelApplyEffect();
                     } else {
                         setCameraPreview();
+                        optionSelectMenuView.showMenu();
                     }
 
                     break;
@@ -96,6 +98,7 @@ public class CameraActivity extends Activity {
                     llCameraContainer.removeAllViews();
                     cameraSurfaceView.releaseCamera();
                     cameraSurfaceView = null;
+                    optionSelectMenuView.hideMenu();
 
                     if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
                         flGalleryModeBackground.setBackgroundDrawable( new ColorDrawable( Color.BLACK ) );
@@ -157,6 +160,12 @@ public class CameraActivity extends Activity {
                             cameraSurfaceView.setVisibility( View.GONE );
                             cameraSurfaceView.setVisibility( View.VISIBLE );
 
+                            if ( HarrisConfig.FLAG_CAMERA == Camera.CameraInfo.CAMERA_FACING_BACK ) {
+                                optionSelectMenuView.setFlashlightEnable( true );
+                            } else {
+                                optionSelectMenuView.setFlashlightEnable( false );
+                            }
+
                             break;
                         case R.id.ibIntervalWatch:
                             HarrisConfig.CAPTURE_INTERVAL = ( HarrisConfig.CAPTURE_INTERVAL + HarrisConfig.INTERVAL_OFFSET ) %
@@ -216,7 +225,6 @@ public class CameraActivity extends Activity {
             isInitialized = true;
 
             if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA ) {
-                HarrisUtil.jlog( "camera!!!!" );
                 // cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
                 // TODO: Programmatically add CameraSurfaceView
 //                cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
@@ -357,7 +365,8 @@ public class CameraActivity extends Activity {
 
     private void initializeEnvironment() {
         isVisibleModeMenu = false;
-        isVisibleOptionsMenu = false;
+        // TODO: Option 메뉴 항상 보이기
+//        isVisibleOptionsMenu = false;
         isVisiblePhotoMenu = false;
 
         HarrisConfig.BMP_HARRIS_RESULT = null;
@@ -400,11 +409,20 @@ public class CameraActivity extends Activity {
     @Override
     public boolean onKeyDown( int keyCode, KeyEvent event ) {
         if ( keyCode == KeyEvent.KEYCODE_BACK ) {
-            if ( modeSelectMenuView.isVisibleMenu() || optionSelectMenuView.isVisibleMenu()
+            if ( modeSelectMenuView.isVisibleMenu()/* || optionSelectMenuView.isVisibleMenu() */
                     || photoSelectMenuView.isVisibleMenu() ) {
+
+                if ( photoSelectMenuView.isVisibleMenu() ) {
+                } else if ( modeSelectMenuView.isVisibleMenu() ) {
+                }
+
                 modeSelectMenuView.hideMenu();
-                optionSelectMenuView.hideMenu();
+                // TODO: Option 메뉴 항상 보이기
+//                optionSelectMenuView.hideMenu();
                 photoSelectMenuView.hideMenu();
+
+                showSubmitButton();
+                showShutterButton();
 
                 return false;
             }
@@ -452,7 +470,8 @@ public class CameraActivity extends Activity {
         int y = ( int ) event.getY();
 
         isVisibleModeMenu = modeSelectMenuView.isVisibleMenu();
-        isVisibleOptionsMenu = optionSelectMenuView.isVisibleMenu();
+        // TODO: Option 메뉴 항상 보이기
+//        isVisibleOptionsMenu = optionSelectMenuView.isVisibleMenu();
         isVisiblePhotoMenu = photoSelectMenuView.isVisibleMenu();
 
         switch ( event.getAction() ) {
@@ -499,16 +518,26 @@ public class CameraActivity extends Activity {
     private void animatePointMove( int x ) {
         switch ( HarrisConfig.FLAG_MODE ) {
             case HarrisConfig.CAMERA:
+                // TODO: Option 메뉴 항상 보이기
+//                if ( isMovingLeftToRight( x ) ) {
+//                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+//                        showingModeMenu( x - startTrackPointX );
+//                    } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
+//                        hidingOptionMenu( x - startTrackPointX );
+//                    }
+//                } else if ( isMovingRightToLeft( x ) ) {
+//                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+//                        showingOptionMenu( startTrackPointX - x );
+//                    } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+//                        hidingModeMenu( startTrackPointX - x );
+//                    }
+//                }
                 if ( isMovingLeftToRight( x ) ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                    if ( isVisibleModeMenu == false ) {
                         showingModeMenu( x - startTrackPointX );
-                    } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                        hidingOptionMenu( x - startTrackPointX );
                     }
                 } else if ( isMovingRightToLeft( x ) ) {
-                    if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
-                        showingOptionMenu( startTrackPointX - x );
-                    } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+                    if ( isVisibleModeMenu == true ) {
                         hidingModeMenu( startTrackPointX - x );
                     }
                 }
@@ -536,25 +565,39 @@ public class CameraActivity extends Activity {
     private void animatePointUp() {
         switch ( HarrisConfig.FLAG_MODE ) {
             case HarrisConfig.CAMERA:
-                if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+                // TODO: Option 메뉴 항상 보이기
+//                if ( isVisibleModeMenu == false && isVisibleOptionsMenu == false ) {
+//                    if ( isOnFlingLeftToRight() ) {
+//                        showModeMenu();
+//                    } else {
+//                        hideModeMenu();
+//
+//                        if ( isOnFlingRightToLeft() ) {
+//                            showOptionMenu();
+//                        } else {
+//                            hideOptionMenu();
+//                        }
+//                    }
+//                } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
+//                    if ( isOnFlingLeftToRight() ) {
+//                        hideOptionMenu();
+//                    } else {
+//                        showOptionMenu();
+//                    }
+//                } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+//                    if ( isOnFlingRightToLeft() ) {
+//                        hideModeMenu();
+//                    } else {
+//                        showModeMenu();
+//                    }
+//                }
+                if ( isVisibleModeMenu == false ) {
                     if ( isOnFlingLeftToRight() ) {
                         showModeMenu();
                     } else {
                         hideModeMenu();
-
-                        if ( isOnFlingRightToLeft() ) {
-                            showOptionMenu();
-                        } else {
-                            hideOptionMenu();
-                        }
                     }
-                } else if ( isVisibleModeMenu == false && isVisibleOptionsMenu == true ) {
-                    if ( isOnFlingLeftToRight() ) {
-                        hideOptionMenu();
-                    } else {
-                        showOptionMenu();
-                    }
-                } else if ( isVisibleModeMenu == true && isVisibleOptionsMenu == false ) {
+                } else {
                     if ( isOnFlingRightToLeft() ) {
                         hideModeMenu();
                     } else {
@@ -640,11 +683,12 @@ public class CameraActivity extends Activity {
         isVisibleModeMenu = false;
     }
 
-    private void hideOptionMenu() {
-        optionSelectMenuView.hideMenu();
-        showShutterButton();
-        isVisibleOptionsMenu = false;
-    }
+    // TODO: Option 메뉴 항상 보이기
+//    private void hideOptionMenu() {
+//        optionSelectMenuView.hideMenu();
+//        showShutterButton();
+//        isVisibleOptionsMenu = false;
+//    }
 
     private void hidePhotoMenu() {
         photoSelectMenuView.hideMenu();
@@ -687,13 +731,14 @@ public class CameraActivity extends Activity {
         isVisibleModeMenu = true;
     }
 
-    private void showOptionMenu() {
-        optionSelectMenuView.setFlashlightEnable( cameraSurfaceView.isFlashlightEnable() );
-        optionSelectMenuView.setCameraSwitcherEnable( cameraSurfaceView.isSwitchCameraEnable() );
-        optionSelectMenuView.showMenu();
-        hideShutterButton();
-        isVisibleOptionsMenu = true;
-    }
+    // TODO: Option 메뉴 항상 보이기
+//    private void showOptionMenu() {
+//        optionSelectMenuView.setFlashlightEnable( cameraSurfaceView.isFlashlightEnable() );
+//        optionSelectMenuView.setCameraSwitcherEnable( cameraSurfaceView.isSwitchCameraEnable() );
+//        optionSelectMenuView.showMenu();
+//        hideShutterButton();
+//        isVisibleOptionsMenu = true;
+//    }
 
     private void showPhotoMenu() {
         photoSelectMenuView.showMenu();
@@ -735,10 +780,11 @@ public class CameraActivity extends Activity {
         }
     }
 
-    private void showingOptionMenu( float distance ) {
-        optionSelectMenuView.showingMenu( distance );
-        hidingShutterButton( distance );
-    }
+    // TODO: Option 메뉴 항상 보이기
+//    private void showingOptionMenu( float distance ) {
+//        optionSelectMenuView.showingMenu( distance );
+//        hidingShutterButton( distance );
+//    }
 
     private void showingPhotoMenu( float distance ) {
         photoSelectMenuView.showingMenu( distance );
@@ -775,10 +821,11 @@ public class CameraActivity extends Activity {
         }
     }
 
-    private void hidingOptionMenu( float distance ) {
-        optionSelectMenuView.hidingMenu( distance );
-        showingShutterButton( distance );
-    }
+    // TODO: Option 메뉴 항상 보이기
+//    private void hidingOptionMenu( float distance ) {
+//        optionSelectMenuView.hidingMenu( distance );
+//        showingShutterButton( distance );
+//    }
 
     private void hidingPhotoMenu( float distance ) {
         photoSelectMenuView.hidingMenu( distance );
@@ -818,15 +865,7 @@ public class CameraActivity extends Activity {
             @Override
             public void onClick( DialogInterface dialog, int which ) {
                 dialog.dismiss();
-                photoSelectMenuView.clearImageViewDrawable();
-                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
-                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
-                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
-                }
-                flGalleryModeBackground.setVisibility( View.GONE );
-                modeSelectMenuView.hideMenu();
-                showShutterButton();
+                setCameraPreview();
             }
         } );
 

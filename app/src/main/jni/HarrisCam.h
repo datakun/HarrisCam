@@ -24,4 +24,4 @@
 uint8_t weightedGrayValue ( float fR, float fG, float fB, uint32_t rgbValue );
 
 JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naApplyHarris
-( JNIEnv *pEnv, jobject pObj, jobject bitG, jobject bitR, jobject bitB );
+( JNIEnv *pEnv, jobject pObj, jobject bitResult, jobject bitG, jobject bitR, jobject bitB );

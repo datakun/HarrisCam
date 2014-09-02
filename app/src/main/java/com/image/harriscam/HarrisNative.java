@@ -10,7 +10,7 @@ public final class HarrisNative {
         System.loadLibrary( "HarrisCam" );
     }
 
-    public static native void naApplyHarris( Bitmap bmpGreen, Bitmap bmpRed, Bitmap bmpBlue );
+    public static native void naApplyHarris( Bitmap bmpResult,  Bitmap bmpGreen, Bitmap bmpRed, Bitmap bmpBlue );
 
     public static native void naApplyScreen( Bitmap bmpResult, Bitmap bmpOriginal, Bitmap bmpTemp );
 

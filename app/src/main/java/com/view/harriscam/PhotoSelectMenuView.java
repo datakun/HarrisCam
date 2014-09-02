@@ -38,6 +38,7 @@ public class PhotoSelectMenuView extends FrameLayout {
     private int photoMenuSize;
     boolean isFirst, isSecond, isThird;
     private Bitmap bmpSource; // Source bitmap on image sizable function.
+
     // Listner
     private View.OnClickListener listenerClickMenu = new View.OnClickListener() {
         @Override
@@ -226,10 +227,14 @@ public class PhotoSelectMenuView extends FrameLayout {
 
     public void checkEnableApplyEffect() {
         if ( isFirst && isSecond && isThird ) {
-            HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
-                    .getBitmap() );
-            HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT, ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() )
-                    .getBitmap(), ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap() );
+            HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( bmpSource.getWidth(), bmpSource.getHeight(),
+                    Bitmap.Config.ARGB_8888 );
+//            HarrisConfig.BMP_HARRIS_RESULT = Bitmap.createBitmap( ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() )
+//                    .getBitmap() );
+            HarrisNative.naApplyHarris( HarrisConfig.BMP_HARRIS_RESULT,
+                    ( ( BitmapDrawable ) ibFirstPhoto.getDrawable() ).getBitmap(),
+                    ( ( BitmapDrawable ) ibSecondPhoto.getDrawable() ).getBitmap(),
+                    ( ( BitmapDrawable ) ibThirdPhoto.getDrawable() ).getBitmap() );
             ivHarrisResult.setImageBitmap( HarrisConfig.BMP_HARRIS_RESULT );
         }
     }

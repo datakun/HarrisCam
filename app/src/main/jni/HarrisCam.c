@@ -1,21 +1,25 @@
 #include "HarrisCam.h"
 
-JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naApplyHarris ( JNIEnv *pEnv, jobject pObj, jobject bitG, jobject bitR,
-jobject bitB ) {
+JNIEXPORT void JNICALL Java_com_image_harriscam_HarrisNative_naApplyHarris ( JNIEnv *pEnv, jobject pObj, jobject bitResult,
+jobject bitG, jobject bitR, jobject bitB ) {
 	AndroidBitmapInfo lBitmapInfo;
+	void * lBitmapResult;
 	void * lBitmapR;
 	void * lBitmapG;
 	void * lBitmapB;
 
-	AndroidBitmap_getInfo( pEnv, bitG, &lBitmapInfo );
+	AndroidBitmap_getInfo( pEnv, bitResult, &lBitmapInfo );
+	AndroidBitmap_lockPixels( pEnv, bitResult, &lBitmapResult );
 	AndroidBitmap_lockPixels( pEnv, bitR, &lBitmapR );
 	AndroidBitmap_lockPixels( pEnv, bitG, &lBitmapG );
 	AndroidBitmap_lockPixels( pEnv, bitB, &lBitmapB );
 
+	uint32_t *nBitResult;
 	uint32_t *nBitR;
 	uint32_t *nBitG;
 	uint32_t *nBitB;
 
+	nBitResult = (uint32_t *) lBitmapResult;
 	nBitR = (uint32_t *) lBitmapR;
 	nBitG = (uint32_t *) lBitmapG;
 	nBitB = (uint32_t *) lBitmapB;
@@ -23,11 +27,12 @@ jobject bitB ) {
 	int y, x;
 	for ( y = 0; y < lBitmapInfo.height; y++ ) {
 		for ( x = 0; x < lBitmapInfo.width; x++ ) {
-			nBitG[y * lBitmapInfo.width + x] = COLOR( nBitR[y * lBitmapInfo.width + x],
+			nBitResult[y * lBitmapInfo.width + x] = COLOR( nBitR[y * lBitmapInfo.width + x],
 					nBitG[y * lBitmapInfo.width + x], nBitB[y * lBitmapInfo.width + x] );
 		}
 	}
 
+	AndroidBitmap_unlockPixels( pEnv, bitResult );
 	AndroidBitmap_unlockPixels( pEnv, bitR );
 	AndroidBitmap_unlockPixels( pEnv, bitG );
 	AndroidBitmap_unlockPixels( pEnv, bitB );

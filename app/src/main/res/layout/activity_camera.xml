@@ -60,15 +60,24 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <ImageButton
-        android:id="@+id/ibShutter"
-        android:layout_width="@dimen/mode_menu_size"
-        android:layout_height="@dimen/mode_menu_size"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_margin="8dp"
-        android:background="@android:color/transparent"
-        android:scaleType="fitCenter"
-        android:src="@drawable/xml_btn_shutter"/>
+    <LinearLayout
+        android:background="#50000000"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_gravity="bottom|center_horizontal"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/ibShutter"
+            android:layout_width="@dimen/mode_menu_size"
+            android:layout_height="@dimen/mode_menu_size"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_margin="8dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/xml_btn_shutter"/>
+    </LinearLayout>
 
     <ImageButton
         android:id="@+id/ibSubmitEffect"
