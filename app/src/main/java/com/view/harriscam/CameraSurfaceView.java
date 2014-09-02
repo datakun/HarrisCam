@@ -62,16 +62,19 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public CameraSurfaceView( Context context ) {
         super( context );
         init( context, null, 0 );
+        HarrisUtil.jlog( "1111" );
     }
 
     public CameraSurfaceView( Context context, AttributeSet attrs ) {
         super( context, attrs );
         init( context, attrs, 0 );
+        HarrisUtil.jlog( "2222" );
     }
 
     public CameraSurfaceView( Context context, AttributeSet attrs, int defStyle ) {
         super( context, attrs, defStyle );
         init( context, attrs, defStyle );
+        HarrisUtil.jlog( "3333" );
     }
 
     private void init( Context context, AttributeSet attrs, int defStyle ) {
@@ -91,10 +94,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             progressApplying.setIndeterminate( true );
             progressApplying.setCancelable( false );
         }
+
+        HarrisUtil.jlog( "inited" );
     }
 
     @Override
     public void surfaceCreated( SurfaceHolder holder ) {
+        HarrisUtil.jlog( "created" );
         openCamera( HarrisConfig.FLAG_CAMERA );
 
         totalOfCamera = Camera.getNumberOfCameras();
@@ -173,6 +179,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceChanged( SurfaceHolder holder, int format, int width, int height ) {
+        HarrisUtil.jlog( "changed" );
         startCamera();
     }
 
@@ -185,15 +192,26 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             cameraParameters.setPreviewSize( previewSize.width, previewSize.height );
             camera.setParameters( cameraParameters );
             camera.startPreview();
+
+            setAutoFocus();
+
+            setFocusable( true );
+            setFocusableInTouchMode( true );
         }
     }
 
     @Override
     public void surfaceDestroyed( SurfaceHolder holder ) {
+        HarrisUtil.jlog( "destroyed" );
         releaseCamera();
     }
 
+    public void setAutoFocus() {
+        camera.autoFocus( afCallback );
+    }
+
     public void releaseCamera() {
+        HarrisUtil.jlog( "released" );
         if ( camera != null ) {
             try {
                 camera.setPreviewCallback( null );
@@ -246,6 +264,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     private void playSound() {
         tone.startTone( ToneGenerator.TONE_PROP_BEEP );
     }
+
+    Camera.AutoFocusCallback afCallback = new Camera.AutoFocusCallback() {
+
+        public void onAutoFocus(boolean success, Camera camera) {
+            HarrisUtil.jlog( "auto focus" );
+        }
+    };
 
     public void takePhotos() {
         HarrisConfig.DOIN_CAPTURE = true;

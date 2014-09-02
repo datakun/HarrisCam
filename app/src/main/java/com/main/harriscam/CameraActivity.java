@@ -39,7 +39,7 @@ import java.util.Date;
 public class CameraActivity extends Activity {
     // Views
     // TODO: Programmatically add CameraSurfaceView
-//    private LinearLayout llCameraContainer;
+    private LinearLayout llCameraContainer;
     private CameraSurfaceView cameraSurfaceView;
     private ModeSelectMenuView modeSelectMenuView;
     private OptionSelectMenuView optionSelectMenuView;
@@ -82,8 +82,8 @@ public class CameraActivity extends Activity {
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
                     // TODO: Programmatically add CameraSurfaceView
-//                    cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
-//                    llCameraContainer.addView( cameraSurfaceView );
+                    cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+                    llCameraContainer.addView( cameraSurfaceView );
 
                     if ( photoSelectMenuView.isSelectedAnyPhoto() )
                         askCancelApplyEffect();
@@ -105,9 +105,9 @@ public class CameraActivity extends Activity {
                     HarrisConfig.FLAG_MODE = HarrisConfig.GALLERY;
 
                     // TODO: Programmatically add CameraSurfaceView
-//                    llCameraContainer.removeAllViews();
-//                    cameraSurfaceView.releaseCamera();
-//                    cameraSurfaceView = null;
+                    llCameraContainer.removeAllViews();
+                    cameraSurfaceView.releaseCamera();
+                    cameraSurfaceView = null;
 
                     if ( HarrisConfig.BD_GALLERY_BACKGROUND == null ) {
                         flGalleryModeBackground.setBackgroundDrawable( new ColorDrawable( Color.BLACK ) );
@@ -220,8 +220,17 @@ public class CameraActivity extends Activity {
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_camera );
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         initializeView();
+
+        loadPreference();
+
+        initializeEnvironment();
 
         showModeMenu();
 
@@ -232,15 +241,6 @@ public class CameraActivity extends Activity {
                 hideModeMenu();
             }
         }, 1000 );
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        loadPreference();
-
-        initializeEnvironment();
     }
 
     @Override
@@ -286,11 +286,11 @@ public class CameraActivity extends Activity {
     }
 
     private void initializeView() {
-        cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
+//        cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
         // TODO: Programmatically add CameraSurfaceView
-//        llCameraContainer = ( LinearLayout ) findViewById( R.id.llCameraContainer );
-//        cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
-//        llCameraContainer.addView( cameraSurfaceView );
+        llCameraContainer = ( LinearLayout ) findViewById( R.id.llCameraContainer );
+        cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+        llCameraContainer.addView( cameraSurfaceView );
 
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
@@ -467,6 +467,10 @@ public class CameraActivity extends Activity {
                     isPossibleTracking = false;
                     stopTrackPointX = x;
                     animatePointUp();
+                }
+
+                if ( cameraSurfaceView != null ) {
+                    cameraSurfaceView.setAutoFocus();
                 }
 
                 break;
