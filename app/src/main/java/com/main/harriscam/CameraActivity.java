@@ -49,6 +49,7 @@ public class CameraActivity extends Activity {
     private ImageView ivHarrisResult;
     private ImageButton ibSubmitEffect;
     private DrawGuidelineView drawLineView;
+    private boolean isInitialized;
 
     // Control to tracking pointer
     private int startTrackPointX;
@@ -81,23 +82,10 @@ public class CameraActivity extends Activity {
 
             switch ( v.getId() ) {
                 case R.id.ibCameraMode:
-                    // TODO: Programmatically add CameraSurfaceView
-                    cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
-                    llCameraContainer.addView( cameraSurfaceView );
-
-                    if ( photoSelectMenuView.isSelectedAnyPhoto() )
+                    if ( photoSelectMenuView.isSelectedAnyPhoto() ) {
                         askCancelApplyEffect();
-                    else {
-                        HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
-                        if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
-                            HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-                            HarrisConfig.BD_GALLERY_BACKGROUND = null;
-                        }
-                        flGalleryModeBackground.setVisibility( View.GONE );
-                        modeSelectMenuView.hideMenu();
-                        showShutterButton();
-                        ibShutter.setVisibility( View.VISIBLE );
-                        ibSubmitEffect.setVisibility( View.GONE );
+                    } else {
+                        setCameraPreview();
                     }
 
                     break;
@@ -200,16 +188,10 @@ public class CameraActivity extends Activity {
                 HarrisUtil.saveBitmapToFileCache( HarrisConfig.BMP_HARRIS_RESULT, HarrisConfig.FILE_PATH + "fx.jpg", 100 );
                 HarrisUtil.singleBroadcast( CameraActivity.this, HarrisConfig.FILE_PATH + "fx.jpg" );
 
-                HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
-                if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
-                    HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
-                    HarrisConfig.BD_GALLERY_BACKGROUND = null;
-                }
-                flGalleryModeBackground.setVisibility( View.GONE );
-                modeSelectMenuView.hideMenu();
-                showShutterButton();
-                ibShutter.setVisibility( View.VISIBLE );
-                ibSubmitEffect.setVisibility( View.GONE );
+                modeSelectMenuView.setEnableMenu( true );
+                modeSelectMenuView.setEnableCameraMode( false );
+
+                setCameraPreview();
 
                 HarrisUtil.toast( CameraActivity.this, getString( R.string.msg_saved_image ) );
             }
@@ -220,33 +202,56 @@ public class CameraActivity extends Activity {
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_camera );
+
+        isInitialized = false;
+
+        initializeView();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        initializeView();
+        if ( isInitialized == false ) {
+            isInitialized = true;
 
-        loadPreference();
+            if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA ) {
+                HarrisUtil.jlog( "camera!!!!" );
+                // cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
+                // TODO: Programmatically add CameraSurfaceView
+//                cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+//                llCameraContainer.addView( cameraSurfaceView );
+//                cameraSurfaceView.setShutterButton( ibShutter );
+                setCameraPreview();
+                cameraSurfaceView.setShutterButton( ibShutter );
 
-        initializeEnvironment();
+                showModeMenu();
 
-        showModeMenu();
-
-        final Handler h = new Handler();
-        h.postDelayed( new Runnable() {
-            @Override
-            public void run() {
-                hideModeMenu();
+                final Handler h = new Handler();
+                h.postDelayed( new Runnable() {
+                    @Override
+                    public void run() {
+                        hideModeMenu();
+                    }
+                }, 1000 );
             }
-        }, 1000 );
+
+            loadPreference();
+
+            initializeEnvironment();
+        }
     }
 
     @Override
     protected void onPause() {
-        if ( cameraSurfaceView != null ) {
-            cameraSurfaceView.releaseCamera();
+        isInitialized = false;
+
+        if ( HarrisConfig.FLAG_MODE == HarrisConfig.CAMERA ) {
+            if ( cameraSurfaceView != null ) {
+                llCameraContainer.removeAllViews();
+                cameraSurfaceView.releaseCamera();
+                cameraSurfaceView = null;
+            }
         }
 
         super.onPause();
@@ -286,12 +291,7 @@ public class CameraActivity extends Activity {
     }
 
     private void initializeView() {
-//        cameraSurfaceView = ( CameraSurfaceView ) findViewById( R.id.cameraSurfaceView );
-        // TODO: Programmatically add CameraSurfaceView
         llCameraContainer = ( LinearLayout ) findViewById( R.id.llCameraContainer );
-        cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
-        llCameraContainer.addView( cameraSurfaceView );
-
         modeSelectMenuView = ( ModeSelectMenuView ) findViewById( R.id.modeSelectMenu );
         optionSelectMenuView = ( OptionSelectMenuView ) findViewById( R.id.optionSelectMenu );
         photoSelectMenuView = ( PhotoSelectMenuView ) findViewById( R.id.photoSelectMenu );
@@ -303,7 +303,6 @@ public class CameraActivity extends Activity {
         optionSelectMenuView.setOnMenuTouchListener( listenerTouchOption );
         ibShutter = ( ImageButton ) findViewById( R.id.ibShutter );
         ibShutter.setOnClickListener( listenerClickShutter );
-        cameraSurfaceView.setShutterButton( ibShutter );
         photoSelectMenuView.setResultImageView( ivHarrisResult );
         ibSubmitEffect.setOnClickListener( listenerClickSubmit );
 
@@ -427,6 +426,24 @@ public class CameraActivity extends Activity {
         }
 
         return super.onKeyDown( keyCode, event );
+    }
+
+    private void setCameraPreview() {
+        // TODO: Programmatically add CameraSurfaceView
+        cameraSurfaceView = new CameraSurfaceView( CameraActivity.this );
+        llCameraContainer.addView( cameraSurfaceView );
+
+        HarrisConfig.FLAG_MODE = HarrisConfig.CAMERA;
+        if ( HarrisConfig.BD_GALLERY_BACKGROUND != null ) {
+            HarrisConfig.BD_GALLERY_BACKGROUND.getBitmap().recycle();
+            HarrisConfig.BD_GALLERY_BACKGROUND = null;
+        }
+        photoSelectMenuView.clearImageViewDrawable();
+        flGalleryModeBackground.setVisibility( View.GONE );
+        modeSelectMenuView.hideMenu();
+        showShutterButton();
+        ibShutter.setVisibility( View.VISIBLE );
+        ibSubmitEffect.setVisibility( View.GONE );
     }
 
     @Override

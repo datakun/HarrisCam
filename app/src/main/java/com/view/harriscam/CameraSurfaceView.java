@@ -61,23 +61,20 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public CameraSurfaceView( Context context ) {
         super( context );
-        init( context, null, 0 );
-        HarrisUtil.jlog( "1111" );
+        init( context );
     }
 
     public CameraSurfaceView( Context context, AttributeSet attrs ) {
         super( context, attrs );
-        init( context, attrs, 0 );
-        HarrisUtil.jlog( "2222" );
+        init( context );
     }
 
     public CameraSurfaceView( Context context, AttributeSet attrs, int defStyle ) {
         super( context, attrs, defStyle );
-        init( context, attrs, defStyle );
-        HarrisUtil.jlog( "3333" );
+        init( context );
     }
 
-    private void init( Context context, AttributeSet attrs, int defStyle ) {
+    private void init( Context context ) {
         this.context = context;
 
         holder = getHolder();
@@ -94,14 +91,12 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             progressApplying.setIndeterminate( true );
             progressApplying.setCancelable( false );
         }
-
-        HarrisUtil.jlog( "inited" );
     }
 
     @Override
     public void surfaceCreated( SurfaceHolder holder ) {
-        HarrisUtil.jlog( "created" );
         openCamera( HarrisConfig.FLAG_CAMERA );
+        HarrisUtil.jlog( "surface created" );
 
         totalOfCamera = Camera.getNumberOfCameras();
         isFlashlightEnable = cameraParameters.getFlashMode() != null;
@@ -109,8 +104,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     }
 
     public void openCamera( int camNum ) {
-        releaseCamera();
-
+        HarrisUtil.jlog( "open" );
         try {
             camera = Camera.open( camNum );
             camera.setPreviewCallback( previewCallback );
@@ -127,7 +121,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         } catch ( IOException e ) {
             HarrisUtil.jlog( e );
 
-            openCamera( Camera.CameraInfo.CAMERA_FACING_BACK );
+            HarrisUtil.toast( context, getResources().getString( R.string.msg_camera_failed ) );
         }
     }
 
@@ -179,7 +173,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceChanged( SurfaceHolder holder, int format, int width, int height ) {
-        HarrisUtil.jlog( "changed" );
         startCamera();
     }
 
@@ -202,16 +195,17 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceDestroyed( SurfaceHolder holder ) {
-        HarrisUtil.jlog( "destroyed" );
         releaseCamera();
     }
 
     public void setAutoFocus() {
-        camera.autoFocus( afCallback );
+        if (camera != null) {
+            camera.autoFocus( afCallback );
+        }
     }
 
     public void releaseCamera() {
-        HarrisUtil.jlog( "released" );
+        HarrisUtil.jlog( "release" );
         if ( camera != null ) {
             try {
                 camera.setPreviewCallback( null );
@@ -274,7 +268,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     public void takePhotos() {
         HarrisConfig.DOIN_CAPTURE = true;
-        lastTime = System.currentTimeMillis();
 
         if ( HarrisConfig.FILE_PATH.equals( "" ) ) {
             Date now = new Date();
@@ -287,6 +280,12 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
         this.ibShutter = ibShutter;
     }
 
+    private void saveImageProcess(byte[] data) {
+        rawImages[ indexOfImages ] = data;
+        new SaveBitmapFromYuv().execute( indexOfImages++ );
+        playSound();
+    }
+
     Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
         @Override
         public void onPreviewFrame( byte[] data, Camera camera ) {
@@ -297,13 +296,10 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 if ( HarrisConfig.CAPTURE_INTERVAL > 0 ) {
                     setFlashlight();
                     if ( indexOfImages == 0 ) {
-                        rawImages[ indexOfImages ] = data;
-                        new SaveBitmapFromYuv().execute( indexOfImages++ );
-                        playSound();
+                        saveImageProcess(data);
+                        lastTime = System.currentTimeMillis();
                     } else if ( HarrisConfig.CAPTURE_INTERVAL <= System.currentTimeMillis() - lastTime ) {
-                        rawImages[ indexOfImages ] = data;
-                        new SaveBitmapFromYuv().execute( indexOfImages++ );
-                        playSound();
+                        saveImageProcess(data);
                         lastTime = System.currentTimeMillis();
                     }
                 } else {
@@ -314,9 +310,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
                         } catch ( InterruptedException e ) {
                             HarrisUtil.jlog( e );
                         }
-                        rawImages[ indexOfImages ] = data;
-                        new SaveBitmapFromYuv().execute( indexOfImages++ );
-                        playSound();
+                        saveImageProcess(data);
                         HarrisConfig.DOIN_CAPTURE = false;
                         ( ( Activity ) context ).runOnUiThread( new Runnable() {
 

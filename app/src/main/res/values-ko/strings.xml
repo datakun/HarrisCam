@@ -25,6 +25,7 @@
     <string name="msg_choose_email">E-mail로 보내기</string>
     <string name="msg_ask_cancel">효과 적용을 취소하시겠습니까?</string>
     <string name="msg_saved_image">사진을 저장했습니다.</string>
+    <string name="msg_camera_failed">카메라 설정에 실패 했습니다. 앱을 다시 실행해주세요.</string>
 
     <!-- Preference -->
     <string name="title_activity_settings">설정</string>

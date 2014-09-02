@@ -67,7 +67,7 @@ public class ModeSelectMenuView extends FrameLayout {
         llMainContainer.setX( -modeMenuSize );
     }
 
-    public void setOnMenuClickListener(OnClickListener listener) {
+    public void setOnMenuClickListener( OnClickListener listener ) {
         ibCameraMode.setOnClickListener( listener );
         ibGalleryMode.setOnClickListener( listener );
         ibSettings.setOnClickListener( listener );
@@ -141,5 +141,9 @@ public class ModeSelectMenuView extends FrameLayout {
         ibCameraMode.setEnabled( isEnable );
         ibGalleryMode.setEnabled( isEnable );
         ibSettings.setEnabled( isEnable );
+    }
+
+    public void setEnableCameraMode( boolean isEnable ) {
+        ibCameraMode.setEnabled( isEnable );
     }
 }

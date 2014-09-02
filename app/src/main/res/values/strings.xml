@@ -25,6 +25,7 @@
     <string name="msg_choose_email">Send via email</string>
     <string name="msg_ask_cancel">Do you want to cancel apply effect?</string>
     <string name="msg_saved_image">Successfully image saved.</string>
+    <string name="msg_camera_failed">Failed to initialize the camera. Please re-run the app.</string>
 
     <!-- Activity -->
     <string name="title_activity_settings">Settings</string>
